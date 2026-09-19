@@ -15,7 +15,7 @@ vacunación —edad mínima e intervalo entre dosis— antes de aceptar cada reg
 |---|---|---|
 | `backend/` | RESTful API en ASP.NET Core (C#) con los cuatro bounded contexts | Construido |
 | `landing-page/` | Sitio estático en HTML5, CSS3 y JavaScript | Construido |
-| `web-application/` | Aplicación web para el personal de la clínica (Vue + PrimeVue) | Pendiente |
+| `web-application/` | Aplicación web para el personal de la clínica (Vue + PrimeVue) | Construida |
 | `mobile-application/` | Aplicación móvil para el dueño de la mascota (Flutter) | Pendiente |
 | `docs/design/` | Wireframes, mock-ups y prototipos navegables | Anexos E, F y G |
 | `docs/spikes/` | Resultados de las spike stories | |
@@ -100,3 +100,13 @@ informe. El español vive en el HTML —es lo que ve quien llega sin JavaScript 
 con un rastreador— y el inglés en el diccionario de `assets/js/i18n.js`. El
 idioma inicial sale del parámetro `?lang=`, de la elección recordada o del
 navegador, en ese orden.
+
+## Aplicación web
+
+```bash
+cd web-application
+npm install
+npm run dev        # http://localhost:5173, requiere la API en ejecución
+```
+
+Detalles de estructura y decisiones en `web-application/README.md`.

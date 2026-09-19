@@ -44,7 +44,10 @@ public static class VaccinationCardResourceFromEntityAssembler
             dose.Id,
             dose.VaccineId,
             name,
+            // La etiqueta viaja armada para clientes que no compongan texto,
+            // y el indicador de refuerzo para los que sí lo hagan en su idioma.
             $"{name} · {LabelFor(dose)}",
+            dose.MinimumAgeInWeeks >= BoosterMinimumAgeInWeeks,
             dose.SequenceNumber,
             dose.ExpectedDate,
             dose.ApplicationDate,

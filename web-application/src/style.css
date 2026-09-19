@@ -1,0 +1,106 @@
+/* ==========================================================================
+   VetPass — Aplicación web
+   Style Guidelines de la sección 4.1: Poppins e Inter, la paleta documentada,
+   retícula de 8 px y densidad media, que es la que permite al veterinario
+   abarcar el mayor número de registros sin desplazar la vista.
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@500;600&display=swap');
+
+:root {
+  --vp-primary-700: #0f766e;
+  --vp-primary-800: #115e59;
+  --vp-primary-50:  #f0fdfa;
+  --vp-secondary:   #f59e0b;
+  --vp-neutral-900: #0f172a;
+  --vp-neutral-600: #475569;
+  --vp-neutral-200: #e2e8f0;
+  --vp-surface-50:  #f8fafc;
+  --vp-success:     #15803d;
+  --vp-success-bg:  #ecfdf5;
+  --vp-warning:     #b45309;
+  --vp-warning-bg:  #fffbeb;
+  --vp-danger:      #b91c1c;
+  --vp-danger-bg:   #fef2f2;
+
+  --vp-space-1: 4px;  --vp-space-2: 8px;  --vp-space-3: 16px;
+  --vp-space-4: 24px; --vp-space-5: 32px; --vp-space-6: 48px;
+
+  --vp-radius: 8px;
+  --vp-radius-control: 6px;
+  --vp-shadow-1: 0 1px 2px rgba(15, 23, 42, .06);
+  --vp-shadow-2: 0 4px 12px rgba(15, 23, 42, .08);
+
+  --vp-sidebar: 248px;
+  --vp-topbar: 64px;
+  --vp-content-max: 1200px;
+
+  --vp-font-brand: 'Poppins', system-ui, sans-serif;
+  --vp-font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--vp-font-ui);
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--vp-neutral-900);
+  background: var(--vp-surface-50);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { margin: 0; font-family: var(--vp-font-brand); font-weight: 600; }
+h1 { font-size: 28px; line-height: 36px; }
+h2 { font-size: 24px; line-height: 32px; font-weight: 500; }
+h3 { font-family: var(--vp-font-ui); font-size: 20px; line-height: 28px; }
+p { margin: 0; }
+
+.vp-page { width: 100%; max-width: var(--vp-content-max); margin-inline: auto; }
+.vp-muted { color: var(--vp-neutral-600); }
+.vp-small { font-size: 14px; line-height: 20px; }
+.vp-caption { font-size: 12px; line-height: 16px; }
+
+/* Encabezado de sección: título a la izquierda, acción primaria a la derecha
+   (sección 4.2.5). */
+.vp-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--vp-space-3); flex-wrap: wrap; margin-bottom: var(--vp-space-4);
+}
+
+.vp-card {
+  background: #fff; border: 1px solid var(--vp-neutral-200);
+  border-radius: var(--vp-radius); box-shadow: var(--vp-shadow-1);
+}
+.vp-card__body { padding: var(--vp-space-4); }
+
+/* Etiqueta de estado: color, texto e icono, nunca color solo (4.1.1). */
+.vp-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: 13px; line-height: 20px; font-weight: 600;
+  border: 1px solid currentColor;
+}
+.vp-status--UpToDate { color: var(--vp-success); background: var(--vp-success-bg); }
+.vp-status--Pending  { color: var(--vp-warning); background: var(--vp-warning-bg); }
+.vp-status--Overdue  { color: var(--vp-danger);  background: var(--vp-danger-bg); }
+.vp-status--Applied  { color: var(--vp-success); background: var(--vp-success-bg); }
+
+.vp-form-grid { display: grid; gap: var(--vp-space-3); }
+@media (min-width: 768px) { .vp-form-grid--2 { grid-template-columns: 1fr 1fr; } }
+.vp-field { display: grid; gap: var(--vp-space-1); }
+.vp-field label { font-size: 14px; line-height: 20px; font-weight: 500; }
+.vp-field small { color: var(--vp-danger); }
+.vp-actions { display: flex; gap: var(--vp-space-2); justify-content: flex-end; flex-wrap: wrap; }
+
+/* Densidad media: 48 px de alto de fila en tablas, 40 px en controles. */
+.p-datatable .p-datatable-tbody > tr > td { padding: 12px 16px; }
+.p-datatable .p-datatable-thead > tr > th { padding: 12px 16px; font-size: 13px; }
+.p-button { font-family: var(--vp-font-ui); font-weight: 600; }
+
+/* La fila que corresponde aplicar hoy se distingue del resto. */
+.vp-row-today { background: var(--vp-primary-50) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

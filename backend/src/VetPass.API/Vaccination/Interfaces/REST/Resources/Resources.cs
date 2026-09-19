@@ -12,6 +12,7 @@ public record DoseResource(
     Guid VaccineId,
     string VaccineName,
     string Label,
+    bool IsBooster,
     int SequenceNumber,
     DateOnly ExpectedDate,
     DateOnly? ApplicationDate,

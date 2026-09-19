@@ -23,19 +23,42 @@ Requiere el SDK de Flutter en el PATH y la API en ejecución.
 
 ```bash
 flutter pub get
-flutter run                      # teléfono conectado o emulador
-flutter run -d chrome            # para revisar el diseño sin emulador
-```
-
-La dirección de la API se puede fijar al compilar, sin tocar el código:
-
-```bash
 flutter run --dart-define=VETPASS_API=http://10.0.2.2:5199/api/v1
 ```
 
+La dirección de la API se fija al compilar y no se toca en el código.
 `10.0.2.2` es la dirección con la que el emulador de Android alcanza el
 `localhost` de la máquina anfitriona; un teléfono físico necesita la IP de la
-red local.
+máquina en la red local.
+
+Para revisar el diseño sin emulador, la aplicación también compila para web:
+`flutter run -d web-server --web-port 5190`.
+
+### Configuración del entorno Android
+
+Si el SDK de Android se instaló con Android Studio y Flutter no lo encuentra
+—`flutter devices` no lista el emulador—, hay que indicárselo:
+
+```bash
+flutter config --android-sdk ~/Android/Sdk
+flutter config --jdk-dir <ruta de Android Studio>/jbr
+```
+
+La segunda línea importa en distribuciones con un JDK reciente del sistema:
+Gradle todavía no admite las versiones más nuevas, y el JDK que Android Studio
+trae consigo sí es compatible.
+
+`flutter doctor` también pide el componente *cmdline-tools*, que se instala
+desde Android Studio en *SDK Manager → SDK Tools → Android SDK Command-line
+Tools*. Sin él, `flutter doctor` no puede comprobar el estado de las licencias,
+aunque la compilación funcione.
+
+### Tráfico en claro durante el desarrollo
+
+Android bloquea HTTP sin cifrar desde Android 9. La compilación de depuración
+incluye una configuración de seguridad de red que lo permite **solo** hacia
+`10.0.2.2`, `localhost` y `127.0.0.1`, que son las direcciones de la API de
+desarrollo. Las compilaciones de entrega no la incluyen.
 
 ## Estructura
 

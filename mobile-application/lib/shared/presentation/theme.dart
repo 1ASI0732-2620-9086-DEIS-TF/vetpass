@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Paleta y tipografía de la sección 4.1 del informe, llevadas a Material
 /// Design 3, que es el sistema de diseño nativo de Flutter y el que la
@@ -36,21 +35,19 @@ ThemeData buildVetPassTheme() {
 
   final base = ThemeData(colorScheme: esquema, useMaterial3: true);
 
-  // Poppins para titulares y elementos de marca, Inter para cuerpo e interfaz.
-  final texto = GoogleFonts.interTextTheme(base.textTheme).copyWith(
-    headlineMedium: GoogleFonts.poppins(
-        fontSize: 28, height: 36 / 28, fontWeight: FontWeight.w600),
-    headlineSmall: GoogleFonts.poppins(
-        fontSize: 24, height: 32 / 24, fontWeight: FontWeight.w600),
-    titleLarge: GoogleFonts.poppins(
-        fontSize: 20, height: 28 / 20, fontWeight: FontWeight.w600),
-    titleMedium: GoogleFonts.inter(
-        fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w600),
-    bodyLarge: GoogleFonts.inter(fontSize: 16, height: 24 / 16),
-    bodyMedium: GoogleFonts.inter(fontSize: 14, height: 20 / 14),
-    labelSmall: GoogleFonts.inter(
-        fontSize: 12, height: 16 / 12, fontWeight: FontWeight.w500),
-  );
+  // Poppins para titulares y elementos de marca, Inter para cuerpo e interfaz,
+  // con la escala tipográfica de la sección 4.1.1.
+  final texto = base.textTheme.copyWith(
+    headlineMedium: _poppins(28, 36, FontWeight.w600),
+    headlineSmall: _poppins(24, 32, FontWeight.w600),
+    titleLarge: _poppins(20, 28, FontWeight.w600),
+    titleMedium: _inter(16, 24, FontWeight.w600),
+    bodyLarge: _inter(16, 24, FontWeight.w400),
+    bodyMedium: _inter(14, 20, FontWeight.w400),
+    labelLarge: _inter(15, 20, FontWeight.w600),
+    labelMedium: _inter(14, 20, FontWeight.w500),
+    labelSmall: _inter(12, 16, FontWeight.w500),
+  ).apply(bodyColor: VetPassColors.neutral900, displayColor: VetPassColors.neutral900);
 
   return base.copyWith(
     scaffoldBackgroundColor: VetPassColors.surface,
@@ -77,7 +74,7 @@ ThemeData buildVetPassTheme() {
       style: FilledButton.styleFrom(
         // Área táctil mínima de 44 px, conforme a 4.1.3.
         minimumSize: const Size.fromHeight(48),
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: _inter(16, 24, FontWeight.w600),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
@@ -102,10 +99,25 @@ ThemeData buildVetPassTheme() {
       backgroundColor: Colors.white,
       indicatorColor: VetPassColors.primarySurface,
       surfaceTintColor: Colors.transparent,
-      labelTextStyle: WidgetStateProperty.all(
-        GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
-      ),
+      labelTextStyle: WidgetStateProperty.all(_inter(12, 16, FontWeight.w500)),
     ),
     dividerTheme: const DividerThemeData(color: VetPassColors.neutral200, space: 1),
   );
 }
+
+TextStyle _poppins(double tamano, double alto, FontWeight peso) => TextStyle(
+      fontFamily: 'Poppins',
+      fontSize: tamano,
+      height: alto / tamano,
+      fontWeight: peso,
+    );
+
+/// Inter se empaqueta como fuente variable: el peso se pide por el eje `wght`,
+/// además de por `fontWeight`, que es lo que la fuente interpola.
+TextStyle _inter(double tamano, double alto, FontWeight peso) => TextStyle(
+      fontFamily: 'Inter',
+      fontSize: tamano,
+      height: alto / tamano,
+      fontWeight: peso,
+      fontVariations: [FontVariation('wght', peso.value.toDouble())],
+    );

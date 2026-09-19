@@ -73,13 +73,20 @@
 
   const estado = document.querySelector('#form-status');
 
+  // Los mensajes se resuelven en el idioma activo en el momento de mostrarlos,
+  // de modo que un cambio de idioma con el formulario a medio llenar no deje
+  // avisos en el idioma anterior.
+  const mensaje = (clave, espanol) => window.VetPassI18n?.texto(clave, espanol) ?? espanol;
+
   const reglas = {
-    nombre: (valor) => (valor.trim().length >= 3 ? '' : 'Ingresa tu nombre y apellido.'),
-    clinica: (valor) => (valor.trim().length >= 2 ? '' : 'Ingresa el nombre de tu clínica.'),
+    nombre: (valor) => (valor.trim().length >= 3
+      ? '' : mensaje('validacion.nombre', 'Ingresa tu nombre y apellido.')),
+    clinica: (valor) => (valor.trim().length >= 2
+      ? '' : mensaje('validacion.clinica', 'Ingresa el nombre de tu clínica.')),
     correo: (valor) => (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor.trim())
-      ? '' : 'Ingresa un correo electrónico válido.'),
+      ? '' : mensaje('validacion.correo', 'Ingresa un correo electrónico válido.')),
     telefono: (valor) => (valor.replace(/\D/g, '').length >= 6
-      ? '' : 'Ingresa un número de teléfono de contacto.')
+      ? '' : mensaje('validacion.telefono', 'Ingresa un número de teléfono de contacto.'))
   };
 
   /** Comunica la validación junto al campo que la origina (4.1.2). */
@@ -118,6 +125,13 @@
     // de esta versión: la página es estática y no expone ningún endpoint.
     formulario.reset();
     campos.forEach((campo) => campo.removeAttribute('aria-invalid'));
-    estado.textContent = 'Gracias. Te contactaremos para coordinar la demostración.';
+    estado.textContent = mensaje('form.exito',
+      'Gracias. Te contactaremos para coordinar la demostración.');
+  });
+
+  // Al cambiar de idioma, los avisos que siguen en pantalla se rehacen.
+  document.addEventListener('vetpass:idioma', () => {
+    estado.textContent = '';
+    formulario.querySelectorAll('input[aria-invalid="true"]').forEach(validarCampo);
   });
 })();

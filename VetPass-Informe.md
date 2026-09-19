@@ -1925,6 +1925,14 @@ la sección 1.2.1. El resto del contenido es cualitativo, decisión tomada para
 evitar presentar como dato de mercado información que proviene de las entrevistas
 del equipo.
 
+La página se presenta en español e inglés, conforme al criterio de la sección
+4.2.2, mediante un selector situado en la barra de navegación. Es el primer
+producto donde esa decisión se materializa, por ser también la primera interfaz
+que el segmento objetivo encuentra. El español reside en el documento y el
+inglés en un diccionario que se aplica en el cliente, de modo que la versión
+indexable por los buscadores sea la del idioma del mercado al que se dirige el
+producto.
+
 **Enlace al diseño:** https://claude.ai/artifact/KLHFGfcy9bcdB41ePsEezJ
 
 ### 4.3.1. Landing Page Wireframe

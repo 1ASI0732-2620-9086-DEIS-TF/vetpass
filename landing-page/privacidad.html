@@ -15,32 +15,36 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="container header__inner">
-      <a class="brand" href="index.html" aria-label="VetPass, inicio">
+    <div class="container header__inner" style="justify-content:space-between;gap:16px">
+      <a class="brand" href="index.html" aria-label="VetPass, inicio" data-i18n-aria="a11y.inicio">
         <img class="brand__mark" src="assets/img/logo.svg" alt="" width="32" height="32">
         <span class="brand__name">VetPass</span>
       </a>
-      <a class="btn btn--ghost" href="index.html">Volver al inicio</a>
+        <div class="lang" role="group" aria-label="Idioma / Language">
+          <button type="button" class="lang__btn" data-lang="es" aria-pressed="true" lang="es">ES</button>
+          <button type="button" class="lang__btn" data-lang="en" aria-pressed="false" lang="en">EN</button>
+        </div>
+      <a class="btn btn--ghost" href="index.html" data-i18n="legal.volver">Volver al inicio</a>
     </div>
   </header>
 
   <main class="section">
     <div class="container container--narrow">
-      <h1>Política de privacidad</h1>
-      <p class="section__lead">
+      <h1 data-i18n="legal.privacidadTitulo">Política de privacidad</h1>
+      <p class="section__lead" data-i18n="legal.pendiente">
         Documento pendiente de redacción legal. Su contenido definitivo se incorporará antes
         de la puesta en producción de la plataforma.
       </p>
       <div class="faq" style="margin-top:32px">
         <details class="faq__item" open>
-          <summary>Datos que trata la plataforma</summary>
-          <p>Datos de contacto del cliente de la clínica, datos de identificación de sus
+          <summary data-i18n="legal.p1p">Datos que trata la plataforma</summary>
+          <p data-i18n="legal.p1r">Datos de contacto del cliente de la clínica, datos de identificación de sus
             mascotas y la información clínica que el personal veterinario registra: dosis
             aplicadas, atenciones y recetas.</p>
         </details>
         <details class="faq__item">
-          <summary>Quién accede a la información</summary>
-          <p>El personal de la clínica que registró al paciente y el dueño de la mascota, cada
+          <summary data-i18n="legal.p2p">Quién accede a la información</summary>
+          <p data-i18n="legal.p2r">El personal de la clínica que registró al paciente y el dueño de la mascota, cada
             uno con los permisos que le corresponden. La información clínica no se comparte con
             terceros.</p>
         </details>
@@ -52,14 +56,15 @@
     <div class="container footer__inner">
       <div class="footer__brand">
         <img src="assets/img/logo.svg" alt="" width="28" height="28">
-        <div><p class="footer__name">VetPass</p><p class="footer__by">por PawCode Studio</p></div>
+        <div><p class="footer__name">VetPass</p><p class="footer__by" data-i18n="footer.por">por PawCode Studio</p></div>
       </div>
-      <nav class="footer__nav" aria-label="Navegación del pie de página">
-        <a href="index.html">Inicio</a>
-        <a href="terminos.html">Términos y condiciones</a>
+      <nav class="footer__nav" aria-label="Navegación del pie de página" data-i18n-aria="a11y.navPie">
+        <a href="index.html" data-i18n="legal.inicio">Inicio</a>
+        <a href="terminos.html" data-i18n="footer.terminos">Términos y condiciones</a>
       </nav>
-      <p class="footer__place">Lima, Perú · 2026</p>
+      <p class="footer__place" data-i18n="footer.lugar">Lima, Perú · 2026</p>
     </div>
   </footer>
+  <script src="assets/js/i18n.js"></script>
 </body>
 </html>

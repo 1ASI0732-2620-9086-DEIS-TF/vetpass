@@ -94,3 +94,9 @@ python3 -m http.server 5180
 El acceso a la aplicación web (US03) se resuelve con la constante `WEB_APP_URL`
 de `assets/js/main.js`, que es el único punto a cambiar cuando esa aplicación
 se despliegue.
+
+**Idiomas.** La página está en español e inglés, conforme a la sección 4.2.2 del
+informe. El español vive en el HTML —es lo que ve quien llega sin JavaScript o
+con un rastreador— y el inglés en el diccionario de `assets/js/i18n.js`. El
+idioma inicial sale del parámetro `?lang=`, de la elección recordada o del
+navegador, en ese orden.

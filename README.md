@@ -13,8 +13,8 @@ vacunación —edad mínima e intervalo entre dosis— antes de aceptar cada reg
 
 | Carpeta | Contenido | Estado |
 |---|---|---|
-| `backend/` | RESTful API en ASP.NET Core (C#) con los cuatro bounded contexts | En desarrollo |
-| `landing-page/` | Sitio estático en HTML5, CSS3 y JavaScript | Pendiente |
+| `backend/` | RESTful API en ASP.NET Core (C#) con los cuatro bounded contexts | Construido |
+| `landing-page/` | Sitio estático en HTML5, CSS3 y JavaScript | Construido |
 | `web-application/` | Aplicación web para el personal de la clínica (Vue + PrimeVue) | Pendiente |
 | `mobile-application/` | Aplicación móvil para el dueño de la mascota (Flutter) | Pendiente |
 | `docs/design/` | Wireframes, mock-ups y prototipos navegables | Anexos E, F y G |
@@ -80,3 +80,17 @@ cada arranque. Para incorporar además el caso de demostración de los mock-ups
 —Veterinaria San Miguel y sus pacientes, entre ellos el cachorro cuya segunda
 dosis vence hoy— se activa `Seed:Demo`, que ya viene habilitado en el entorno
 de desarrollo.
+
+## Landing page
+
+Sitio estático, sin dependencias ni proceso de compilación. Para verlo basta con
+servir la carpeta:
+
+```bash
+cd landing-page
+python3 -m http.server 5180
+```
+
+El acceso a la aplicación web (US03) se resuelve con la constante `WEB_APP_URL`
+de `assets/js/main.js`, que es el único punto a cambiar cuando esa aplicación
+se despliegue.

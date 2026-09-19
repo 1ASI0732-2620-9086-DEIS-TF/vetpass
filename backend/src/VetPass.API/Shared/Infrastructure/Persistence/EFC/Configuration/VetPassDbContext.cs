@@ -147,9 +147,10 @@ public class VetPassDbContext(DbContextOptions<VetPassDbContext> options) : DbCo
             // registration: the uniqueness is a rule of the domain (4.10).
             card.HasIndex(c => c.PetId).IsUnique();
             card.HasOne<Pet>().WithMany().HasForeignKey(c => c.PetId).OnDelete(DeleteBehavior.Cascade);
-            card.Metadata.FindNavigation(nameof(VaccinationCard.Doses))!
-                .SetPropertyAccessMode(PropertyAccessMode.Field);
+            // La colección se expone como sólo lectura, de modo que Entity
+            // Framework debe escribirla por el campo y no por la propiedad.
             card.HasMany(c => c.Doses).WithOne().HasForeignKey(d => d.CardId).OnDelete(DeleteBehavior.Cascade);
+            card.Navigation(c => c.Doses).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         builder.Entity<Dose>(dose =>
@@ -197,6 +198,7 @@ public class VetPassDbContext(DbContextOptions<VetPassDbContext> options) : DbCo
             visit.HasOne<UserProfile>().WithMany().HasForeignKey(v => v.VeterinarianId).OnDelete(DeleteBehavior.Restrict);
             visit.HasOne(v => v.Prescription).WithOne()
                 .HasForeignKey<Prescription>(p => p.VisitId).OnDelete(DeleteBehavior.Cascade);
+            visit.Navigation(v => v.Prescription).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         builder.Entity<Prescription>(prescription =>
@@ -207,10 +209,9 @@ public class VetPassDbContext(DbContextOptions<VetPassDbContext> options) : DbCo
             prescription.Property(p => p.VisitId).HasColumnName("visit_id").IsRequired();
             prescription.Property(p => p.IssuedAt).HasColumnName("issued_at");
             prescription.HasIndex(p => p.VisitId).IsUnique();
-            prescription.Metadata.FindNavigation(nameof(Prescription.Items))!
-                .SetPropertyAccessMode(PropertyAccessMode.Field);
             prescription.HasMany(p => p.Items).WithOne()
                 .HasForeignKey(i => i.PrescriptionId).OnDelete(DeleteBehavior.Cascade);
+            prescription.Navigation(p => p.Items).UsePropertyAccessMode(PropertyAccessMode.Field);
         });
 
         builder.Entity<PrescriptionItem>(item =>

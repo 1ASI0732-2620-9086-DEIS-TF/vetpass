@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using VetPass.API.IAM.Domain.Model.Aggregates;
 using VetPass.API.Shared.Domain.Exceptions;
+using VetPass.API.Vaccination.Domain.Services;
 
 namespace VetPass.API.Shared.Interfaces.ASP.Middleware;
 
@@ -69,12 +70,12 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
     {
         switch (exception)
         {
-            case Vaccination.Domain.Services.MinimumAgeNotReachedException age:
+            case MinimumAgeNotReachedException age:
                 problem.Extensions["ageInWeeks"] = age.AgeInWeeks;
                 problem.Extensions["requiredWeeks"] = age.RequiredWeeks;
                 problem.Extensions["earliestAdmissibleDate"] = age.EarliestAdmissibleDate.ToString("yyyy-MM-dd");
                 break;
-            case Vaccination.Domain.Services.MinimumIntervalNotMetException interval:
+            case MinimumIntervalNotMetException interval:
                 problem.Extensions["elapsedWeeks"] = interval.ElapsedWeeks;
                 problem.Extensions["requiredWeeks"] = interval.RequiredWeeks;
                 problem.Extensions["earliestAdmissibleDate"] = interval.EarliestAdmissibleDate.ToString("yyyy-MM-dd");

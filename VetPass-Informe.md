@@ -2168,7 +2168,7 @@ sección 3.2, el equipo identificó cuatro bounded contexts:
 
 | Bounded Context | Tipo | Responsabilidad |
 |---|---|---|
-| Identity and Access | Soporte | Autenticación de usuarios y control de permisos según rol. |
+| Identity and Access | Soporte | Control de permisos según rol y perfil del usuario dentro del dominio. La custodia de las credenciales y la emisión de tokens se delegan en Supabase Auth. |
 | Patients | Core | Registro de clientes y de sus mascotas, y su localización dentro de la clínica. |
 | Vaccination | Core | Generación de la cartilla según la especie, registro de dosis con las reglas del esquema y cálculo del estado. |
 | Medical Records | Core | Registro de atenciones veterinarias y emisión de recetas. |
@@ -2181,6 +2181,16 @@ nacimiento de la mascota, pero no modifican su información. Los tres
 contextos de negocio mantienen una relación *Conformist* con Identity and
 Access, del que reciben la identidad y el rol del usuario sin poder
 alterar su modelo.
+
+Identity and Access mantiene a su vez una relación *Conformist* con
+Supabase Auth, el proveedor de identidad sobre el que se apoya la
+plataforma: acepta su modelo de cuenta y su formato de token sin
+modificarlos, y se limita a traducir la identidad recibida a los términos
+del dominio, que son el rol del usuario y la clínica o el cliente al que
+pertenece. Esta decisión sitúa fuera del producto la custodia de
+contraseñas y el ciclo de vida de las sesiones, y mantiene dentro la
+regla que sí es del negocio: quién puede registrar información clínica y
+quién solo consultarla.
 
 Vaccination concentra la complejidad del dominio y es el contexto donde
 se sitúan las reglas que la suite de pruebas del capítulo VI verifica de
@@ -2202,11 +2212,21 @@ usuario: el visitante que llega al sitio web, el personal de la clínica
 que registra la información clínica, y el dueño de la mascota que la
 consulta.
 
-La solución no integra sistemas externos. Esta ausencia es una decisión
-de alcance declarada en la sección 1.2.1: quedan fuera del producto la
-facturación electrónica, la mensajería por canales de terceros y las
-pasarelas de pago, que son precisamente los puntos donde los sistemas
-veterinarios del mercado establecen sus integraciones.
+La solución integra un único sistema externo, **Supabase Auth**, que actúa
+como proveedor de identidad: custodia las credenciales de los usuarios y
+emite los tokens de acceso que la RESTful API verifica en cada solicitud.
+Se adopta un servicio externo para esta función porque la autenticación no
+es parte del dominio del problema, y delegarla evita implementar dentro
+del producto el almacenamiento de contraseñas y la gestión de sesiones,
+cuyos errores tienen consecuencias de seguridad desproporcionadas frente
+al valor que aportan al usuario.
+
+Fuera de esa integración, la solución no se conecta con ningún otro
+sistema. Esta ausencia es una decisión de alcance declarada en la sección
+1.2.1: quedan fuera del producto la facturación electrónica, la mensajería
+por canales de terceros y las pasarelas de pago, que son precisamente los
+puntos donde los sistemas veterinarios del mercado establecen sus
+integraciones.
 
 ### 4.8.2. Software Architecture Container Diagrams
 
@@ -2221,7 +2241,7 @@ Structurizr.*
 | Web Application | Vue, PrimeVue | Interfaz de registro y consulta para el personal de la clínica. |
 | Mobile Application | Flutter | Interfaz de consulta para el dueño de la mascota, en Android e iOS. |
 | RESTful API | ASP.NET Core, C# | Exponer los servicios del dominio y concentrar todas las reglas de negocio. |
-| Database | PostgreSQL | Persistir la información de clientes, mascotas, cartillas, dosis, atenciones y recetas. |
+| Database | PostgreSQL gestionado en Supabase | Persistir la información de clientes, mascotas, cartillas, dosis, atenciones y recetas. |
 
 Las tres interfaces de usuario no contienen reglas de negocio: toda
 validación del esquema de vacunación reside en la RESTful API. Esta
@@ -2229,6 +2249,17 @@ decisión es deliberada y responde al objeto del curso, porque concentra
 la lógica verificable en un único container y permite que las pruebas
 unitarias y de integración cubran el comportamiento del producto sin
 depender de la interfaz.
+
+La misma razón sostiene el trato dado a los servicios de Supabase. La base
+de datos se hospeda en esa plataforma, pero la API es su único cliente:
+las tablas de la aplicación residen en el esquema `vetpass`, que no se
+expone a través de la interfaz REST automática del proveedor, de modo que
+ninguna aplicación alcanza los datos clínicos sin atravesar las reglas del
+dominio. Del mismo modo, las aplicaciones web y móvil no se autentican
+contra Supabase Auth de forma directa: envían sus credenciales a la API,
+que es quien dialoga con el proveedor de identidad y devuelve el token
+junto con el rol del usuario. El contrato que consumen las tres interfaces
+sigue siendo, por tanto, el de la RESTful API y solo el de ella.
 
 ### 4.8.3. Software Architecture Components Diagrams
 
@@ -2245,7 +2276,7 @@ cada uno con la misma estructura de cuatro capas:
 | Interface | Controllers REST, transformación de recursos y códigos de respuesta HTTP. |
 | Application | Command y Query Handlers, coordinación de casos de uso y transacciones. |
 | Domain | Aggregates, entidades, value objects, servicios de dominio y reglas del negocio. |
-| Infrastructure | Repositorios y persistencia mediante Entity Framework Core. |
+| Infrastructure | Repositorios y persistencia mediante Entity Framework Core, y adaptadores hacia los servicios externos de los que depende el módulo. |
 
 **Componentes del módulo Vaccination**
 
@@ -2258,10 +2289,28 @@ cada uno con la misma estructura de cuatro capas:
 | Vaccination Schedule Policy | Domain | Provee el esquema de la especie y valida edad mínima e intervalo entre dosis. |
 | Vaccination Card Repository | Infrastructure | Persiste y recupera la cartilla y sus dosis. |
 
-Los módulos Patients, Medical Records e Identity and Access replican esta
-estructura con sus propios aggregates. El módulo Vaccination es el único
-que incorpora un componente de política de dominio, porque es el único
-cuyo comportamiento depende de reglas externas al propio dato.
+**Componentes del módulo Identity and Access**
+
+| Componente | Capa | Responsabilidad |
+|---|---|---|
+| Authentication Controller | Interface | Expone el inicio de sesión, la renovación del token y la consulta del usuario en sesión. |
+| IAM Application Service | Application | Coordina la autenticación y el alta de cuentas de personal de clínica y de dueños. |
+| Supabase Auth Gateway | Infrastructure | Traduce entre la API y el proveedor de identidad: valida credenciales, obtiene el token y crea cuentas con su rol asociado. |
+| User Profile Aggregate | Domain | Rol del usuario y su vínculo con la clínica o el cliente; decide si puede registrar información clínica. |
+| User Profile Repository | Infrastructure | Persiste y recupera los perfiles de usuario. |
+
+Los módulos Patients y Medical Records replican esta estructura con sus
+propios aggregates. Vaccination es el único que incorpora un componente de
+política de dominio, porque es el único cuyo comportamiento depende de
+reglas externas al propio dato; e Identity and Access es el único que
+incorpora un componente de pasarela, porque es el único que depende de un
+sistema externo.
+
+La pasarela concentra todo el conocimiento sobre el proveedor de identidad
+en un solo componente de la capa de infraestructura. Las capas de
+aplicación y de dominio del módulo operan sobre el rol y el perfil del
+usuario, y desconocen tanto el formato del token como el mecanismo con que
+se verifica.
 
 #### Código fuente de los diagramas C4 (Structurizr DSL)
 
@@ -2273,6 +2322,10 @@ workspace "VetPass" "Plataforma de cartilla de vacunación digital e historial v
         clinicStaff = person "Personal de clínica" "Médico veterinario o personal de recepción que registra la información clínica."
         petOwner = person "Dueño de mascota" "Persona responsable de un perro o un gato atendido en la clínica."
 
+        supabaseAuth = softwareSystem "Supabase Auth" "Proveedor de identidad: custodia las credenciales de los usuarios y emite los tokens de acceso." {
+            tags "External"
+        }
+
         vetpass = softwareSystem "VetPass" "Digitaliza la cartilla de vacunación y el historial veterinario de perros y gatos." {
 
             landing = container "Landing Page" "Comunica la propuesta de valor y da acceso a la aplicación web." "HTML5, CSS3, JavaScript"
@@ -2281,10 +2334,11 @@ workspace "VetPass" "Plataforma de cartilla de vacunación digital e historial v
 
             api = container "RESTful API" "Expone los servicios del dominio y concentra las reglas de negocio." "ASP.NET Core, C#" {
 
-                authController = component "Authentication Controller" "Autenticación y emisión de tokens." "Interface"
-                iamService = component "IAM Application Service" "Valida credenciales y resuelve el rol." "Application"
-                userAggregate = component "User Aggregate" "Usuario, rol y permisos." "Domain"
-                userRepository = component "User Repository" "Persistencia de usuarios." "Infrastructure"
+                authController = component "Authentication Controller" "Inicio de sesión, renovación de token y usuario en sesión." "Interface"
+                iamService = component "IAM Application Service" "Coordina la autenticación y el alta de cuentas." "Application"
+                userProfileAggregate = component "User Profile Aggregate" "Rol del usuario y su vínculo con la clínica o el cliente." "Domain"
+                authGateway = component "Supabase Auth Gateway" "Valida credenciales, obtiene el token y crea cuentas en el proveedor." "Infrastructure"
+                userProfileRepository = component "User Profile Repository" "Persistencia de perfiles de usuario." "Infrastructure"
 
                 patientsController = component "Patients Controller" "Alta y consulta de clientes y mascotas." "Interface"
                 patientsService = component "Patients Application Service" "Casos de uso de clientes y mascotas." "Application"
@@ -2305,7 +2359,7 @@ workspace "VetPass" "Plataforma de cartilla de vacunación digital e historial v
                 recordsRepository = component "Medical Records Repository" "Persistencia de atenciones y recetas." "Infrastructure"
             }
 
-            db = container "Database" "Almacena clientes, mascotas, cartillas, dosis, atenciones y recetas." "PostgreSQL" {
+            db = container "Database" "Almacena clientes, mascotas, cartillas, dosis, atenciones y recetas." "PostgreSQL gestionado en Supabase" {
                 tags "Database"
             }
         }
@@ -2318,6 +2372,7 @@ workspace "VetPass" "Plataforma de cartilla de vacunación digital e historial v
         webapp -> api "Consume" "HTTPS/JSON"
         mobile -> api "Consume" "HTTPS/JSON"
         api -> db "Lee y escribe" "Entity Framework Core"
+        api -> supabaseAuth "Valida credenciales, verifica tokens y crea cuentas" "HTTPS/JSON"
 
         webapp -> authController "Autentica al usuario" "HTTPS/JSON"
         mobile -> authController "Autentica al usuario" "HTTPS/JSON"
@@ -2328,9 +2383,11 @@ workspace "VetPass" "Plataforma de cartilla de vacunación digital e historial v
         mobile -> recordsController "Consulta el historial y las recetas" "HTTPS/JSON"
 
         authController -> iamService "Invoca"
-        iamService -> userAggregate "Usa"
-        iamService -> userRepository "Usa"
-        userRepository -> db "Lee y escribe"
+        iamService -> userProfileAggregate "Usa"
+        iamService -> userProfileRepository "Usa"
+        iamService -> authGateway "Usa"
+        authGateway -> supabaseAuth "Valida credenciales y crea cuentas" "HTTPS/JSON"
+        userProfileRepository -> db "Lee y escribe"
 
         patientsController -> patientsService "Invoca"
         patientsService -> petAggregate "Usa"
@@ -2387,6 +2444,10 @@ workspace "VetPass" "Plataforma de cartilla de vacunación digital e historial v
                 background #5EEAD4
                 color #0F172A
             }
+            element "External" {
+                background #94A3B8
+                color #ffffff
+            }
         }
     }
 }
@@ -2415,6 +2476,14 @@ política del esquema antes de alterar el estado interno. De este modo,
 resulta imposible construir una cartilla en un estado inválido, lo que
 convierte a cada invariante en un caso de prueba unitario directo.
 
+Cada `Dose` conserva la edad mínima y el intervalo que le corresponden,
+copiados de su `ScheduleItem` en el momento de generarse la cartilla. Esta
+materialización es la que permite que `RegisterDose` valide sus reglas sin
+recibir la plantilla como argumento, y es también la que hace cierta la
+afirmación de la sección 4.10: una cartilla emitida conserva el esquema
+vigente al momento de su creación, y una modificación posterior de la
+plantilla no la altera.
+
 Una decisión de diseño transversal atraviesa todo el modelo: los métodos
 `RegisterDose` y `GetStatus` reciben la fecha actual como parámetro en lugar de
 leerla del reloj del sistema. Esto permite que las pruebas unitarias del capítulo
@@ -2436,10 +2505,12 @@ package "Vaccination" {
     - species : Species
     - petBirthDate : DateOnly
     - doses : List<Dose>
-    + GenerateFrom(schedule : VaccinationSchedule, birthDate : DateOnly) : void
+    + {static} GenerateFrom(petId : Guid, schedule : VaccinationSchedule, birthDate : DateOnly) : VaccinationCard
     + RegisterDose(doseId : Guid, applicationDate : DateOnly, batchCode : BatchCode, veterinarianId : Guid, today : DateOnly) : void
     + GetStatus(today : DateOnly) : CardStatus
+    + NextExpectedDose() : Dose
     - PreviousAppliedDose(dose : Dose) : Dose
+    - RescheduleFollowingDose(applied : Dose) : void
   }
 
   class Dose <<Entity>> {
@@ -2451,9 +2522,12 @@ package "Vaccination" {
     - batchCode : BatchCode?
     - veterinarianId : Guid?
     - status : DoseStatus
+    - minimumAgeInWeeks : int
+    - minimumIntervalInWeeks : int
     + MarkAsApplied(date : DateOnly, batchCode : BatchCode, veterinarianId : Guid) : void
     + IsApplied() : bool
     + IsOverdue(today : DateOnly) : bool
+    + Reschedule(expectedDate : DateOnly) : void
   }
 
   class VaccinationSchedule <<Domain Service>> {
@@ -2461,8 +2535,8 @@ package "Vaccination" {
     - items : List<ScheduleItem>
     + ItemsFor(species : Species) : List<ScheduleItem>
     + ExpectedDateFor(item : ScheduleItem, birthDate : DateOnly) : DateOnly
-    + EnsureMinimumAge(item : ScheduleItem, birthDate : DateOnly, applicationDate : DateOnly) : void
-    + EnsureMinimumInterval(item : ScheduleItem, previous : Dose, applicationDate : DateOnly) : void
+    + EnsureMinimumAge(dose : Dose, birthDate : DateOnly, applicationDate : DateOnly) : void
+    + EnsureMinimumInterval(dose : Dose, previous : Dose, applicationDate : DateOnly) : void
   }
 
   class ScheduleItem <<Value Object>> {
@@ -2575,16 +2649,28 @@ package "MedicalRecords" {
 }
 
 package "IdentityAndAccess" {
-  class User <<Aggregate Root>> {
+  class UserProfile <<Aggregate Root>> {
     - id : Guid
     - email : string
-    - passwordHash : string
+    - fullName : string
     - role : Role
     - clinicId : Guid?
     - clientId : Guid?
-    + VerifyPassword(password : string) : bool
     + CanRegisterClinicalData() : bool
   }
+
+  interface IIdentityProvider <<Port>> {
+    + SignIn(email : string, password : string) : AccessToken
+    + CreateAccount(email : string, password : string, role : Role) : Guid
+  }
+
+  note right of IIdentityProvider
+    Puerto hacia el proveedor de identidad.
+    Lo implementa Supabase Auth Gateway,
+    en la capa de infraestructura.
+    El identificador de UserProfile es el
+    mismo de la cuenta en el proveedor.
+  end note
 
   class Clinic <<Aggregate Root>> {
     - id : Guid
@@ -2604,8 +2690,9 @@ Pet --> Sex
 Visit "1" *-- "0..1" Prescription : emite
 Prescription "1" *-- "1..*" PrescriptionItem : contiene
 Visit ..> Pet : referencia
-User --> Role
-Clinic "1" o-- "0..*" User : emplea
+UserProfile --> Role
+UserProfile ..> IIdentityProvider : se autentica mediante
+Clinic "1" o-- "0..*" UserProfile : emplea
 Clinic "1" o-- "0..*" Client : atiende
 
 @enduml
@@ -2617,9 +2704,9 @@ Clinic "1" o-- "0..*" Client : atiende
 
 | Clase | Tipo | Descripción |
 |---|---|---|
-| `VaccinationCard` | Aggregate Root | Cartilla de vacunación de una mascota. Contiene todas las dosis de su esquema y calcula su estado global. Atributos: `Id`, `PetId`, `Species`, `PetBirthDate`, `Doses`. Métodos: `GenerateFrom(schedule, birthDate)`, `RegisterDose(doseId, applicationDate, batchCode, veterinarianId, today)`, `GetStatus(today)`. |
-| `Dose` | Entity | Cada dosis del esquema. Atributos: `Id`, `VaccineId`, `SequenceNumber`, `ExpectedDate`, `ApplicationDate`, `BatchCode`, `VeterinarianId`, `Status`. Métodos: `MarkAsApplied(date, batchCode, veterinarianId)`, `IsApplied()`, `IsOverdue(today)`. |
-| `VaccinationSchedule` | Domain Service | Plantilla del esquema de una especie. Atributos: `Species`, `Items`. Métodos: `ItemsFor(species)`, `ExpectedDateFor(item, birthDate)`. |
+| `VaccinationCard` | Aggregate Root | Cartilla de vacunación de una mascota. Contiene todas las dosis de su esquema y calcula su estado global. Atributos: `Id`, `PetId`, `Species`, `PetBirthDate`, `Doses`. Métodos: `GenerateFrom(petId, schedule, birthDate)`, `RegisterDose(doseId, applicationDate, batchCode, veterinarianId, today)`, `GetStatus(today)`, `NextExpectedDose()`. |
+| `Dose` | Entity | Cada dosis del esquema. Conserva la edad mínima y el intervalo copiados de su `ScheduleItem` al generarse la cartilla. Atributos: `Id`, `VaccineId`, `SequenceNumber`, `ExpectedDate`, `ApplicationDate`, `BatchCode`, `VeterinarianId`, `Status`, `MinimumAgeInWeeks`, `MinimumIntervalInWeeks`. Métodos: `MarkAsApplied(date, batchCode, veterinarianId)`, `IsApplied()`, `IsOverdue(today)`, `Reschedule(expectedDate)`. |
+| `VaccinationSchedule` | Domain Service | Plantilla del esquema de una especie y política que la valida. Atributos: `Species`, `Items`. Métodos: `ItemsFor(species)`, `ExpectedDateFor(item, birthDate)`, `EnsureMinimumAge(dose, birthDate, applicationDate)`, `EnsureMinimumInterval(dose, previous, applicationDate)`. |
 | `ScheduleItem` | Value Object | Definición de una dosis dentro del esquema. Atributos: `VaccineId`, `SequenceNumber`, `MinimumAgeInWeeks`, `MinimumIntervalInWeeks`. |
 | `Vaccine` | Entity | Vacuna disponible. Atributos: `Id`, `Name`, `Species`, `IsCore`. |
 | `BatchCode` | Value Object | Código de lote del frasco aplicado. Atributo: `Value`. Valida formato no vacío. |
@@ -2655,10 +2742,11 @@ Clinic "1" o-- "0..*" Client : atiende
 
 | Clase | Tipo | Descripción |
 |---|---|---|
-| `User` | Aggregate Root | Usuario de la plataforma. Atributos: `Id`, `Email`, `PasswordHash`, `Role`, `ClinicId`, `ClientId`. Métodos: `VerifyPassword(password)`, `CanRegisterClinicalData()`. |
+| `UserProfile` | Aggregate Root | Perfil del usuario dentro del dominio: el rol que ostenta y el vínculo con su clínica o su cliente. No custodia credenciales; su `Id` es el mismo identificador de la cuenta en el proveedor de identidad. Atributos: `Id`, `Email`, `FullName`, `Role`, `ClinicId`, `ClientId`. Métodos: `CanRegisterClinicalData()`. |
+| `IIdentityProvider` | Port | Puerto hacia el proveedor de identidad, implementado por el componente Supabase Auth Gateway. Métodos: `SignIn(email, password)`, `CreateAccount(email, password, role)`. |
 | `Role` | Enumeration | `ClinicStaff`, `PetOwner`. |
 | `Clinic` | Aggregate Root | Establecimiento veterinario. Atributos: `Id`, `Name`, `Address`. |
-| `InvalidCredentialsException` | Domain Exception | Las credenciales no corresponden a ningún usuario. |
+| `InvalidCredentialsException` | Domain Exception | Las credenciales no corresponden a ningún usuario. Se origina en la respuesta del proveedor de identidad y se traduce a una respuesta 401. |
 | `ForbiddenOperationException` | Domain Exception | El rol del usuario no permite la operación solicitada. |
 
 ---
@@ -2678,18 +2766,27 @@ relaciones. Además, la integridad referencial resulta aquí un requisito
 del negocio y no una preferencia técnica, dado que ninguna dosis puede
 existir sin su cartilla ni ninguna cartilla sin su mascota.
 
+La base de datos se hospeda en Supabase, que provee PostgreSQL como
+servicio gestionado. Las tablas de la aplicación residen en el esquema
+`vetpass`, separado del esquema `auth` que el proveedor administra para
+las cuentas de usuario. Esta separación cumple dos propósitos: mantiene
+fuera del modelo del producto las tablas que no le pertenecen, y deja las
+tablas clínicas fuera de los esquemas que el proveedor expone a través de
+su interfaz REST automática, de modo que el único camino hacia ellas sea
+la RESTful API.
+
 **Tablas**
 
 | Tabla | Descripción | Campos principales |
 |---|---|---|
 | `clinics` | Establecimientos veterinarios. | `id` (PK), `name`, `address` |
-| `users` | Usuarios de la plataforma. | `id` (PK), `email` (UQ), `password_hash`, `role`, `clinic_id` (FK), `client_id` (FK) |
+| `user_profiles` | Perfil de los usuarios de la plataforma. Su `id` es el de la cuenta en el esquema `auth`. | `id` (PK, FK a `auth.users`), `email` (UQ), `full_name`, `role`, `clinic_id` (FK), `client_id` (FK) |
 | `clients` | Clientes de una clínica. | `id` (PK), `clinic_id` (FK), `full_name`, `phone_number`, `email` |
 | `pets` | Mascotas registradas como pacientes. | `id` (PK), `client_id` (FK), `name`, `species`, `breed`, `sex`, `birth_date` |
 | `vaccines` | Vacunas disponibles por especie. | `id` (PK), `name`, `species`, `is_core` |
 | `schedule_items` | Plantilla del esquema por especie. | `id` (PK), `vaccine_id` (FK), `species`, `sequence_number`, `minimum_age_weeks`, `minimum_interval_weeks` |
-| `vaccination_cards` | Cartilla de una mascota. | `id` (PK), `pet_id` (FK, UQ), `species`, `created_at` |
-| `doses` | Cada dosis de una cartilla. | `id` (PK), `card_id` (FK), `vaccine_id` (FK), `sequence_number`, `expected_date`, `application_date`, `batch_code`, `veterinarian_id` (FK), `status` |
+| `vaccination_cards` | Cartilla de una mascota. | `id` (PK), `pet_id` (FK, UQ), `species`, `pet_birth_date`, `created_at` |
+| `doses` | Cada dosis de una cartilla, con las reglas del esquema materializadas. | `id` (PK), `card_id` (FK), `vaccine_id` (FK), `sequence_number`, `expected_date`, `application_date`, `batch_code`, `veterinarian_id` (FK), `status`, `minimum_age_weeks`, `minimum_interval_weeks` |
 | `visits` | Atenciones veterinarias. | `id` (PK), `pet_id` (FK), `veterinarian_id` (FK), `visit_date`, `reason`, `findings`, `diagnosis`, `treatment`, `weight_kg` |
 | `prescriptions` | Receta emitida en una atención. | `id` (PK), `visit_id` (FK, UQ), `issued_at` |
 | `prescription_items` | Medicamentos de una receta. | `id` (PK), `prescription_id` (FK), `medication`, `dosage`, `duration` |
@@ -2698,6 +2795,7 @@ existir sin su cartilla ni ninguna cartilla sin su mascota.
 
 | Relación | Cardinalidad |
 |---|---|
+| `clinics` → `user_profiles` | Uno a muchos |
 | `clinics` → `clients` | Uno a muchos |
 | `clients` → `pets` | Uno a muchos |
 | `pets` → `vaccination_cards` | Uno a uno |
@@ -2707,8 +2805,9 @@ existir sin su cartilla ni ninguna cartilla sin su mascota.
 | `pets` → `visits` | Uno a muchos |
 | `visits` → `prescriptions` | Uno a uno |
 | `prescriptions` → `prescription_items` | Uno a muchos |
-| `users` → `doses` (como responsable) | Uno a muchos |
-| `users` → `visits` (como responsable) | Uno a muchos |
+| `user_profiles` → `doses` (como responsable) | Uno a muchos |
+| `user_profiles` → `visits` (como responsable) | Uno a muchos |
+| `auth.users` → `user_profiles` | Uno a uno |
 
 **Decisiones de diseño**
 
@@ -2729,11 +2828,32 @@ El campo `status` de `doses` es derivable de `application_date`, pero se
 almacena de forma explícita para hacer legibles las consultas y permitir
 indexar el filtro por estado de cartilla que utiliza la aplicación web.
 
+Los campos `minimum_age_weeks` y `minimum_interval_weeks` de `doses`
+duplican los de `schedule_items` de forma deliberada. Son la copia de la
+regla vigente cuando la cartilla se emitió, y sin ella la materialización
+descrita arriba quedaría incompleta: las fechas esperadas serían las del
+esquema de entonces, pero las validaciones responderían al esquema de
+ahora.
+
+La tabla `user_profiles` comparte su clave primaria con `auth.users`, la
+tabla de cuentas que administra Supabase Auth, mediante una clave foránea
+con borrado en cascada. De este modo, una cuenta y su perfil son el mismo
+usuario visto desde los dos lados de la frontera, y no existe forma de que
+quede un perfil sin cuenta que lo respalde. Las contraseñas no aparecen en
+este modelo: residen en el esquema `auth`, fuera del alcance de la
+aplicación.
+
+La entidad `AUTH_USERS` del diagrama corresponde a la tabla `auth.users`,
+que administra Supabase Auth y que la aplicación no modela ni modifica. Se
+representa porque `user_profiles` depende de ella, y porque hace visible
+dónde residen las credenciales que este modelo deliberadamente no contiene.
+
 #### Código fuente del diagrama entidad-relación (Mermaid)
 
 ```mermaid
 erDiagram
-    CLINICS ||--o{ USERS : emplea
+    AUTH_USERS ||--|| USER_PROFILES : identifica
+    CLINICS ||--o{ USER_PROFILES : emplea
     CLINICS ||--o{ CLIENTS : atiende
     CLIENTS ||--o{ PETS : posee
     PETS ||--|| VACCINATION_CARDS : tiene
@@ -2743,18 +2863,24 @@ erDiagram
     PETS ||--o{ VISITS : recibe
     VISITS ||--o| PRESCRIPTIONS : emite
     PRESCRIPTIONS ||--o{ PRESCRIPTION_ITEMS : contiene
-    USERS ||--o{ DOSES : aplica
-    USERS ||--o{ VISITS : atiende
+    USER_PROFILES ||--o{ DOSES : aplica
+    USER_PROFILES ||--o{ VISITS : atiende
 
     CLINICS {
         uuid id PK
         varchar name
         varchar address
     }
-    USERS {
+    AUTH_USERS {
         uuid id PK
+        varchar email
+        varchar encrypted_password
+        jsonb app_metadata
+    }
+    USER_PROFILES {
+        uuid id PK "FK a auth.users"
         varchar email UK
-        varchar password_hash
+        varchar full_name
         varchar role
         uuid clinic_id FK
         uuid client_id FK
@@ -2793,6 +2919,7 @@ erDiagram
         uuid id PK
         uuid pet_id FK "UNIQUE"
         varchar species
+        date pet_birth_date
         timestamp created_at
     }
     DOSES {
@@ -2805,6 +2932,8 @@ erDiagram
         varchar batch_code
         uuid veterinarian_id FK
         varchar status
+        int minimum_age_weeks
+        int minimum_interval_weeks
     }
     VISITS {
         uuid id PK
@@ -2841,6 +2970,9 @@ Tenencia y crianza de mascotas 2025*. INEI.
 [Completar con la referencia de la tesis de la Universidad Peruana Cayetano
 Heredia sobre el registro de establecimientos veterinarios en el Perú. Buscar
 autor y año exactos en el repositorio institucional antes de citarla.]
+
+Supabase. (2026). *Supabase Auth documentation*. Supabase Inc.
+https://supabase.com/docs/guides/auth
 
 [Completar con las referencias de las guías WSAVA de vacunación, del código de
 ética de ACM/IEEE, del Material Design 3, de las Human Interface Guidelines de

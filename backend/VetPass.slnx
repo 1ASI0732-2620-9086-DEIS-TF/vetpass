@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/VetPass.API/VetPass.API.csproj" />
+  </Folder>
+</Solution>

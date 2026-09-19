@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using VetPass.API.IAM.Application.Internal.CommandServices;
 using VetPass.API.IAM.Application.Internal.QueryServices;
 using VetPass.API.IAM.Domain.Repositories;
@@ -138,18 +138,19 @@ builder.Services.AddSwaggerGen(options =>
     });
     options.EnableAnnotations();
 
-    var scheme = new OpenApiSecurityScheme
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = SecuritySchemeType.Http,
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Token obtenido en /api/v1/authentication/sign-in.",
-        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-    };
-    options.AddSecurityDefinition("Bearer", scheme);
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement { [scheme] = [] });
+        Description = "Token obtenido en /api/v1/authentication/sign-in."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
 });
 
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>

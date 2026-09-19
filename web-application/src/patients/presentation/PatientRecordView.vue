@@ -47,9 +47,13 @@ const descripcion = computed(() => {
   const p = paciente.value;
   if (!p) return '';
 
-  const edad = p.ageInWeeks < 52
+  // Semanas mientras es cachorro, que es como el esquema mide su edad;
+  // meses durante el primer par de años y años a partir de ahí.
+  const edad = p.ageInWeeks < 16
     ? t('ficha.semanas', { n: p.ageInWeeks })
-    : t('ficha.anos', Math.floor(p.ageInWeeks / 52), { named: { n: Math.floor(p.ageInWeeks / 52) } });
+    : p.ageInWeeks < 104
+      ? t('ficha.meses', { n: Math.round(p.ageInWeeks / 4.345) })
+      : t('ficha.anos', Math.floor(p.ageInWeeks / 52), { named: { n: Math.floor(p.ageInWeeks / 52) } });
 
   return [t(`especie.${p.species}`), p.breed, t(`sexo.${p.sex}`), edad,
     `${t('ficha.dueno')}: ${p.owner.fullName}`].filter(Boolean).join(' · ');

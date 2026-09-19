@@ -9,7 +9,7 @@ using VetPass.API.Shared.Domain.Services;
 namespace VetPass.API.IAM.Application.Internal.CommandServices;
 
 /// <summary>Session opened by a user, with the profile the domain recognises.</summary>
-public record AuthenticatedSession(AccessToken Token, UserProfile Profile);
+public record AuthenticatedSession(AccessToken Token, UserProfile Profile, string? ClinicName);
 
 /// <summary>
 /// Account just created. The temporary password is returned once and is not
@@ -21,6 +21,7 @@ public record CreatedAccount(UserProfile Profile, string TemporaryPassword);
 public class AuthenticationCommandService(
     IIdentityProvider identityProvider,
     IUserProfileRepository userProfiles,
+    IClinicRepository clinics,
     IUnitOfWork unitOfWork)
 {
     public async Task<AuthenticatedSession> SignInAsync(SignInCommand command,
@@ -34,7 +35,13 @@ public class AuthenticationCommandService(
         var profile = await userProfiles.FindByEmailAsync(command.Email, cancellationToken)
                       ?? throw new InvalidCredentialsException();
 
-        return new AuthenticatedSession(token, profile);
+        // El dueño ve en su aplicación la clínica que lo atiende, de modo que
+        // el nombre acompaña a la sesión desde el primer momento.
+        var clinica = profile.ClinicId is null
+            ? null
+            : await clinics.FindByIdAsync(profile.ClinicId.Value, cancellationToken);
+
+        return new AuthenticatedSession(token, profile, clinica?.Name);
     }
 
     public async Task<AccessToken> RefreshAsync(RefreshSessionCommand command,

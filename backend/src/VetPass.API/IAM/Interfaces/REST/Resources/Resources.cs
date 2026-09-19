@@ -23,7 +23,8 @@ public record UserResource(
     string FullName,
     string Role,
     Guid? ClinicId,
-    Guid? ClientId);
+    Guid? ClientId,
+    string? ClinicName);
 
 public record AuthenticatedSessionResource(
     string AccessToken,

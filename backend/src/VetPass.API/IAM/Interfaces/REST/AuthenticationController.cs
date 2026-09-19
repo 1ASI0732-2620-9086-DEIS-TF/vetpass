@@ -69,8 +69,8 @@ public class AuthenticationController(
     [ProducesResponseType(typeof(UserResource), StatusCodes.Status200OK)]
     public async Task<IActionResult> Me(CancellationToken cancellationToken)
     {
-        var profile = await queryService.GetByIdAsync(currentUser.Id, cancellationToken);
-        return Ok(UserResourceFromEntityAssembler.ToResource(profile));
+        var vista = await queryService.GetViewByIdAsync(currentUser.Id, cancellationToken);
+        return Ok(UserResourceFromEntityAssembler.ToResource(vista.Profile, vista.ClinicName));
     }
 
     /// <summary>

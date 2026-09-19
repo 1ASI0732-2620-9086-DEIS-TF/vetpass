@@ -7,13 +7,14 @@ namespace VetPass.API.IAM.Interfaces.REST.Transform;
 
 public static class UserResourceFromEntityAssembler
 {
-    public static UserResource ToResource(UserProfile profile) => new(
+    public static UserResource ToResource(UserProfile profile, string? clinicName = null) => new(
         profile.Id,
         profile.Email,
         profile.FullName,
         profile.Role.ToClaimValue(),
         profile.ClinicId,
-        profile.ClientId);
+        profile.ClientId,
+        clinicName);
 }
 
 public static class AuthenticatedSessionResourceFromEntityAssembler
@@ -23,7 +24,7 @@ public static class AuthenticatedSessionResourceFromEntityAssembler
         session.Token.RefreshToken,
         session.Token.ExpiresInSeconds,
         "Bearer",
-        UserResourceFromEntityAssembler.ToResource(session.Profile));
+        UserResourceFromEntityAssembler.ToResource(session.Profile, session.ClinicName));
 }
 
 public static class CreatedAccountResourceFromEntityAssembler

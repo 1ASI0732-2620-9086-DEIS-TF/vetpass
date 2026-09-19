@@ -69,6 +69,7 @@ export default {
     historial: 'Historial',
     dueno: 'Dueño',
     semanas: '{n} semanas',
+    meses: '{n} meses',
     anos: '{n} años | {n} año | {n} años'
   },
 

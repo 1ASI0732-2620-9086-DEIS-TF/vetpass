@@ -16,7 +16,7 @@ vacunación —edad mínima e intervalo entre dosis— antes de aceptar cada reg
 | `backend/` | RESTful API en ASP.NET Core (C#) con los cuatro bounded contexts | Construido |
 | `landing-page/` | Sitio estático en HTML5, CSS3 y JavaScript | Construido |
 | `web-application/` | Aplicación web para el personal de la clínica (Vue + PrimeVue) | Construida |
-| `mobile-application/` | Aplicación móvil para el dueño de la mascota (Flutter) | Pendiente |
+| `mobile-application/` | Aplicación móvil para el dueño de la mascota (Flutter) | Construida |
 | `docs/design/` | Wireframes, mock-ups y prototipos navegables | Anexos E, F y G |
 | `docs/spikes/` | Resultados de las spike stories | |
 | `VetPass-Informe.md` | Informe del proyecto, capítulos I a IV | |
@@ -110,3 +110,13 @@ npm run dev        # http://localhost:5173, requiere la API en ejecución
 ```
 
 Detalles de estructura y decisiones en `web-application/README.md`.
+
+## Aplicación móvil
+
+```bash
+cd mobile-application
+flutter pub get
+flutter run        # teléfono o emulador; requiere la API en ejecución
+```
+
+Detalles en `mobile-application/README.md`.

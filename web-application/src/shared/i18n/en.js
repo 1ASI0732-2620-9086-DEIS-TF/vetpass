@@ -70,6 +70,7 @@ export default {
     historial: 'Record',
     dueno: 'Owner',
     semanas: '{n} weeks',
+    meses: '{n} months',
     anos: '{n} years | {n} year | {n} years'
   },
 

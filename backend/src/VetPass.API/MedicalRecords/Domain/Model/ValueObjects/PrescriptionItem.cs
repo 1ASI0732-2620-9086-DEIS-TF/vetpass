@@ -25,13 +25,10 @@ public class PrescriptionItem
         if (string.IsNullOrWhiteSpace(duration))
             throw new RequiredPrescriptionFieldException("duración");
 
-        Id = Guid.NewGuid();
         Medication = medication.Trim();
         Dosage = dosage.Trim();
         Duration = duration.Trim();
     }
-
-    internal void AttachTo(Guid prescriptionId) => PrescriptionId = prescriptionId;
 }
 
 public class RequiredPrescriptionFieldException(string field)

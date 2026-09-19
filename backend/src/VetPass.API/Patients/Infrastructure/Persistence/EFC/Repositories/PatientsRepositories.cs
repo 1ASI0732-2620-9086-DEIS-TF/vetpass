@@ -28,38 +28,48 @@ public class PetRepository(VetPassDbContext context)
         await Context.Pets.FirstOrDefaultAsync(pet => pet.Id == id, cancellationToken);
 
     public async Task<Patient?> FindPatientByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        await JoinedPatients().FirstOrDefaultAsync(patient => patient.Pet.Id == id, cancellationToken);
+        await (from pet in Context.Pets
+               join client in Context.Clients on pet.ClientId equals client.Id
+               where pet.Id == id
+               select new Patient(pet, client))
+            .FirstOrDefaultAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Patient>> SearchAsync(Guid clinicId, string? term, Species? species,
         CancellationToken cancellationToken = default)
     {
-        var query = JoinedPatients().Where(patient => patient.Owner.ClinicId == clinicId);
+        // El filtrado ocurre sobre el par mascota-cliente y la proyección al
+        // resultado se deja para el final: un filtro aplicado sobre el objeto
+        // ya proyectado no es traducible a SQL.
+        var query = from pet in Context.Pets
+                    join client in Context.Clients on pet.ClientId equals client.Id
+                    where client.ClinicId == clinicId
+                    select new { pet, client };
 
         if (!string.IsNullOrWhiteSpace(term))
         {
             var pattern = $"%{term.Trim()}%";
-            query = query.Where(patient =>
-                EF.Functions.ILike(patient.Pet.Name, pattern) ||
-                EF.Functions.ILike(patient.Owner.FullName, pattern));
+            query = query.Where(row =>
+                EF.Functions.ILike(row.pet.Name, pattern) ||
+                EF.Functions.ILike(row.client.FullName, pattern));
         }
 
         if (species is not null)
-            query = query.Where(patient => patient.Pet.Species == species);
+            query = query.Where(row => row.pet.Species == species);
 
-        // Alphabetical, so that a name can be located inside a long listing
-        // without going through all of it (section 4.2.1).
-        return await query.OrderBy(patient => patient.Pet.Name).ToListAsync(cancellationToken);
+        // Alfabético, para ubicar un nombre dentro de un listado extenso sin
+        // recorrerlo por completo (sección 4.2.1).
+        return await query
+            .OrderBy(row => row.pet.Name)
+            .Select(row => new Patient(row.pet, row.client))
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<Patient>> ListByClientAsync(Guid clientId,
         CancellationToken cancellationToken = default) =>
-        await JoinedPatients()
-            .Where(patient => patient.Pet.ClientId == clientId)
-            .OrderBy(patient => patient.Pet.Name)
+        await (from pet in Context.Pets
+               join client in Context.Clients on pet.ClientId equals client.Id
+               where pet.ClientId == clientId
+               orderby pet.Name
+               select new Patient(pet, client))
             .ToListAsync(cancellationToken);
-
-    private IQueryable<Patient> JoinedPatients() =>
-        from pet in Context.Pets
-        join client in Context.Clients on pet.ClientId equals client.Id
-        select new Patient(pet, client);
 }

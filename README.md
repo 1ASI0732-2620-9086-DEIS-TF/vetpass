@@ -47,8 +47,11 @@ custodia Supabase Auth en el esquema `auth`.
 
 ### Requisitos
 
-- SDK de .NET 10 (`sudo pacman -S dotnet-sdk aspnet-runtime` en Arch Linux)
+- SDK de .NET 10. En Arch Linux: `sudo pacman -Syu dotnet-sdk aspnet-runtime`
 - Herramienta de EF Core: `dotnet tool install --global dotnet-ef`
+
+El SDK empaquetado por Arch no incluye los datos de *pruning* del framework de
+ASP.NET Core, por lo que el proyecto declara `AllowMissingPrunePackageData`.
 
 ### Configuración
 
@@ -66,7 +69,14 @@ dotnet user-secrets set "ConnectionStrings:VetPassDb" "<cadena del session poole
 
 ```bash
 cd backend
+dotnet ef database update --project src/VetPass.API   # aplica el esquema
 dotnet run --project src/VetPass.API
 ```
 
 La documentación de la API queda disponible en `/swagger`.
+
+El catálogo de vacunas y la plantilla del esquema de vacunación se cargan en
+cada arranque. Para incorporar además el caso de demostración de los mock-ups
+—Veterinaria San Miguel y sus pacientes, entre ellos el cachorro cuya segunda
+dosis vence hoy— se activa `Seed:Demo`, que ya viene habilitado en el entorno
+de desarrollo.

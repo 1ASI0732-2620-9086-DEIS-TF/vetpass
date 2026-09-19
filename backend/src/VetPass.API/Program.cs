@@ -78,11 +78,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             options.TokenValidationParameters.IssuerSigningKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(legacySecret));
         }
-        else
+        else if (!string.IsNullOrWhiteSpace(supabase.Url))
         {
             options.Authority = supabase.AuthUrl;
             options.MetadataAddress = $"{supabase.AuthUrl}/.well-known/openid-configuration";
             options.RequireHttpsMetadata = true;
+        }
+        else if (!builder.Environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "Falta la configuración de Supabase: sin ella no hay forma de validar los tokens.");
         }
     });
 

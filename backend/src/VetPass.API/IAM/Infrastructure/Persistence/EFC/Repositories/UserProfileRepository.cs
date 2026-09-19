@@ -18,6 +18,13 @@ public class UserProfileRepository(VetPassDbContext context)
 
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default) =>
         await Context.UserProfiles.AnyAsync(profile => profile.Email == email.Trim().ToLower(), cancellationToken);
+
+    public async Task<IReadOnlyList<Guid>> ListClientIdsWithAccountAsync(Guid clinicId,
+        CancellationToken cancellationToken = default) =>
+        await Context.UserProfiles
+            .Where(profile => profile.ClinicId == clinicId && profile.ClientId != null)
+            .Select(profile => profile.ClientId!.Value)
+            .ToListAsync(cancellationToken);
 }
 
 public class ClinicRepository(VetPassDbContext context)

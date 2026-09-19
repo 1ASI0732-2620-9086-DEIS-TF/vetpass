@@ -143,7 +143,19 @@ export default {
     telefono: 'Phone number',
     correo: 'Email address',
     mascotas: 'Pets',
-    sinCorreo: 'No email'
+    sinCorreo: 'No email',
+    acceso: 'Application access',
+    conAcceso: 'Has access',
+    darAcceso: 'Grant access',
+    dialogoTitulo: 'Grant access to the mobile application',
+    dialogoNota: 'The account for {nombre} will be created and the system will generate a temporary password. Hand it over at the reception desk: it is shown only once.',
+    correoRequerido: 'This client has no email on record. Enter one to create their account.',
+    crear: 'Create account',
+    creada: 'Account created for {nombre}',
+    contrasenaTemporal: 'Temporary password',
+    entregar: 'Write it down or copy it now: it will not be shown again.',
+    copiar: 'Copy',
+    copiada: 'Copied'
   },
 
   estado: {

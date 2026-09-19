@@ -142,7 +142,19 @@ export default {
     telefono: 'Teléfono',
     correo: 'Correo electrónico',
     mascotas: 'Mascotas',
-    sinCorreo: 'Sin correo'
+    sinCorreo: 'Sin correo',
+    acceso: 'Acceso a la aplicación',
+    conAcceso: 'Con acceso',
+    darAcceso: 'Dar acceso',
+    dialogoTitulo: 'Dar acceso a la aplicación móvil',
+    dialogoNota: 'Se creará la cuenta de {nombre} y el sistema generará una contraseña temporal. Entrégasela en recepción: solo se muestra una vez.',
+    correoRequerido: 'Este cliente no tiene correo registrado. Ingresa uno para crear su cuenta.',
+    crear: 'Crear cuenta',
+    creada: 'Cuenta creada para {nombre}',
+    contrasenaTemporal: 'Contraseña temporal',
+    entregar: 'Anótala o cópiala ahora: no volverá a mostrarse.',
+    copiar: 'Copiar',
+    copiada: 'Copiada'
   },
 
   estado: {

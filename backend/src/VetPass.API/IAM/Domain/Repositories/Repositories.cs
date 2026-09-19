@@ -7,6 +7,13 @@ public interface IUserProfileRepository
     Task<UserProfile?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<UserProfile?> FindByEmailAsync(string email, CancellationToken cancellationToken = default);
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Clientes de la clínica que ya tienen acceso a la aplicación móvil. La
+    /// interfaz lo necesita para distinguir a quién le falta entregárselo.
+    /// </summary>
+    Task<IReadOnlyList<Guid>> ListClientIdsWithAccountAsync(Guid clinicId,
+        CancellationToken cancellationToken = default);
     Task AddAsync(UserProfile profile, CancellationToken cancellationToken = default);
 }
 

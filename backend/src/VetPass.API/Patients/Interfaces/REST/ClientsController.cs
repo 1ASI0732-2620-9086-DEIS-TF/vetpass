@@ -2,6 +2,7 @@ using System.Net.Mime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using VetPass.API.IAM.Domain.Repositories;
 using VetPass.API.Patients.Application.Internal.CommandServices;
 using VetPass.API.Patients.Application.Internal.QueryServices;
 using VetPass.API.Patients.Domain.Model.Commands;
@@ -21,6 +22,7 @@ namespace VetPass.API.Patients.Interfaces.REST;
 public class ClientsController(
     PatientsCommandService commandService,
     PatientsQueryService queryService,
+    IUserProfileRepository userProfiles,
     ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>Registers a client of the clinic (US06).</summary>
@@ -42,8 +44,12 @@ public class ClientsController(
     [ProducesResponseType(typeof(IEnumerable<ClientResource>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List(CancellationToken cancellationToken)
     {
-        var clients = await queryService.ListClientsAsync(ClinicOfCurrentUser(), cancellationToken);
-        return Ok(clients.Select(ClientResourceFromEntityAssembler.ToResource));
+        var clinicId = ClinicOfCurrentUser();
+        var clients = await queryService.ListClientsAsync(clinicId, cancellationToken);
+        var conAcceso = await userProfiles.ListClientIdsWithAccountAsync(clinicId, cancellationToken);
+
+        return Ok(clients.Select(client =>
+            ClientResourceFromEntityAssembler.ToResource(client, conAcceso.Contains(client.Id))));
     }
 
     [HttpGet("{id:guid}")]

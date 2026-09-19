@@ -15,7 +15,7 @@ public record CreatePetResource(
     [Required] string Sex,
     [Required] DateOnly BirthDate);
 
-public record ClientResource(Guid Id, string FullName, string PhoneNumber, string? Email);
+public record ClientResource(Guid Id, string FullName, string PhoneNumber, string? Email, bool HasAccount);
 
 public record PetResource(
     Guid Id,

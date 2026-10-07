@@ -1,0 +1,39 @@
+name: Start the VetPass backend
+description: >
+  Supabase local (database and authentication) and the RESTful API with the
+  demonstration case, for the system tests. It never touches production.
+inputs:
+  demo-password:
+    description: Password of the demonstration accounts the API seeds.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+    - uses: supabase/setup-cli@v1
+      with:
+        version: latest
+    - name: Start Supabase
+      shell: bash
+      run: supabase start -x studio,imgproxy,storage-api,realtime,edge-runtime,logflare,vector,postgres-meta
+    - name: Start the API
+      shell: bash
+      env:
+        DEMO_PASSWORD: ${{ inputs.demo-password }}
+      run: |
+        eval "$(supabase status -o env | sed 's/^/export /')"
+        export ASPNETCORE_ENVIRONMENT=Development
+        export ConnectionStrings__VetPassDb="Host=127.0.0.1;Port=54322;Database=postgres;Username=postgres;Password=postgres"
+        export Supabase__Url="$API_URL" Supabase__AnonKey="$ANON_KEY"
+        export Supabase__ServiceRoleKey="$SERVICE_ROLE_KEY" Supabase__JwtSecret="$JWT_SECRET"
+        export Seed__Demo=true Seed__Password="$DEMO_PASSWORD"
+        nohup dotnet run --project backend/src/VetPass.API -c Release --no-launch-profile \
+          --urls http://127.0.0.1:5199 > "$RUNNER_TEMP/api.log" 2>&1 &
+        for i in $(seq 1 90); do
+          curl -sf http://127.0.0.1:5199/api/v1/health && exit 0
+          sleep 2
+        done
+        cat "$RUNNER_TEMP/api.log"
+        exit 1

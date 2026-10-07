@@ -116,13 +116,85 @@ jobs:
           name: vetpass-apk
           path: mobile-application/build/app/outputs/flutter-apk/app-release.apk
 
+  system-web:
+    name: System tests (web)
+    needs: [backend, web]
+    runs-on: ubuntu-latest
+    env:
+      VETPASS_DEMO_PASSWORD: VetPass.System2026
+      VETPASS_API_URL: http://127.0.0.1:5199/api/v1
+      VITE_API_URL: http://127.0.0.1:5199/api/v1
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/start-backend
+        with:
+          demo-password: ${{ env.VETPASS_DEMO_PASSWORD }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web-application/package-lock.json
+      - name: Install dependencies and Chromium
+        working-directory: web-application
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Playwright
+        working-directory: web-application
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: web-application/playwright-report
+
+  system-mobile:
+    name: System tests (mobile)
+    # El emulador tarda; se ejecuta a pedido (Run workflow).
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: [backend, mobile]
+    runs-on: ubuntu-latest
+    env:
+      VETPASS_DEMO_PASSWORD: VetPass.System2026
+    steps:
+      - uses: actions/checkout@v5
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: ./.github/actions/start-backend
+        with:
+          demo-password: ${{ env.VETPASS_DEMO_PASSWORD }}
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.5
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: mobile-application
+      - name: Integration tests on the emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          working-directory: mobile-application
+          script: flutter test integration_test --dart-define=VETPASS_API=http://10.0.2.2:5199/api/v1 --dart-define=VETPASS_DEMO_PASSWORD=${{ env.VETPASS_DEMO_PASSWORD }}
+
   ci:
     name: CI
     if: ${{ always() }}
-    needs: [backend, web, mobile]
+    needs: [backend, web, mobile, system-web, system-mobile]
     runs-on: ubuntu-latest
     steps:
       - name: Result
         run: |
           echo "backend: ${{ needs.backend.result }} · web: ${{ needs.web.result }} · mobile: ${{ needs.mobile.result }}"
+          echo "system-web: ${{ needs.system-web.result }} · system-mobile: ${{ needs.system-mobile.result }}"
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then exit 1; fi

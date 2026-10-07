@@ -63,6 +63,7 @@ test('registra una atención con receta y la muestra en el historial', async ({ 
   await page.getByRole('textbox', { name: 'Dosificación', exact: true }).last().fill('Una tableta');
   await page.getByRole('textbox', { name: 'Duración', exact: true }).last().fill('Dosis única');
   await page.getByRole('button', { name: 'Guardar atención' }).click();
+  await page.getByRole('tab', { name: 'Historial' }).click();
 
   await expect(page.getByText('Control anual')).toBeVisible();
   await expect(page.getByText('Con receta')).toBeVisible();

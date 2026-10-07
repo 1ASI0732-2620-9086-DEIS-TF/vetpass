@@ -43,11 +43,13 @@ void main() {
     await tester.pageBack();
     await waitFor(tester, find.text('Kiara'));
     await tester.tap(find.text('Kiara'));
-    await waitFor(tester, find.text('Historial'));
-    await tester.tap(find.text('Historial'));
-    await waitFor(tester, find.text('Con receta'));
+    await waitFor(tester, find.widgetWithText(Tab, 'Historial'));
     await settle(tester);
-    await tester.tap(find.textContaining('Enrojecimiento'));
+    await tester.tap(find.widgetWithText(Tab, 'Historial'));
+    await tester.pumpAndSettle();
+    final visit = find.textContaining('Enrojecimiento');
+    await tester.ensureVisible(visit);
+    await tester.tap(visit);
     await waitFor(tester, find.text('Cefalexina 250 mg'));
   });
 
@@ -61,11 +63,8 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), temporary.password);
     await tester.enterText(find.byType(TextField).at(1), 'Perrito2026');
     await tester.enterText(find.byType(TextField).at(2), 'Perrito2026');
+    // «Listo» en el teclado guarda la contraseña, como lo haría el dueño.
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await settle(tester);
-    // Con el teclado abierto, el botón puede quedar fuera de la lista visible.
-    await tester.dragUntilVisible(find.text('Guardar contraseña'), find.byType(ListView), const Offset(0, -200));
-    await tester.tap(find.text('Guardar contraseña'));
 
     await waitFor(tester, find.text('Mis mascotas'));
   });

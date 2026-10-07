@@ -266,6 +266,7 @@ a { color: var(--primary-700); }
 .section--tint { background: var(--surface-50); }
 .section__head { max-width: 62ch; margin-bottom: var(--space-6); }
 .section__lead { margin-top: var(--space-3); font-size: 17px; line-height: 26px; color: var(--neutral-600); }
+.legal__fecha { margin-top: var(--space-2); font-size: 13px; line-height: 18px; color: var(--neutral-600); }
 .eyebrow {
   margin-bottom: var(--space-2);
   font-size: 12px; line-height: 16px; font-weight: 500;

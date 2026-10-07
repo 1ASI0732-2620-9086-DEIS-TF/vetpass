@@ -5,6 +5,7 @@
  * pacientes (US04-E2).
  */
 import { ref } from 'vue';
+import { TERMINOS_URL } from '../../shared/legal';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Button from 'primevue/button';
@@ -88,12 +89,16 @@ async function ingresar() {
         />
 
         <p class="vp-caption vp-muted">{{ t('acceso.ayuda') }}</p>
+        <a class="vp-caption terminos" :href="TERMINOS_URL" target="_blank" rel="noopener">
+          {{ t('comun.terminos') }}
+        </a>
       </form>
     </section>
   </div>
 </template>
 
 <style scoped>
+.terminos { color: var(--vp-neutral-600); text-align: center; }
 .acceso { display: grid; min-height: 100vh; }
 
 .acceso__marca {

@@ -207,11 +207,15 @@ await using (var scope = app.Services.CreateAsyncScope())
 
 app.UseExceptionHandler();
 
-if (app.Environment.IsDevelopment())
+// La documentación OpenAPI se publica también en producción: es la referencia
+// de los endpoints para quienes integran las aplicaciones (sección 5.2.7 del
+// informe). No expone datos; cada operación sigue exigiendo su token.
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options => options.SwaggerEndpoint("/swagger/v1/swagger.json", "VetPass API v1"));
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "VetPass API v1");
+    options.DocumentTitle = "VetPass API";
+});
 
 app.UseCors();
 app.UseAuthentication();

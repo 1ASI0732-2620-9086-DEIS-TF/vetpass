@@ -223,6 +223,7 @@ export default {
     cargando: 'Loading…',
     obligatorio: 'This field is required.',
     errorInesperado: 'Something went wrong while processing the request.',
-    volver: 'Back'
+    volver: 'Back',
+    terminos: 'Terms and conditions'
   }
 };

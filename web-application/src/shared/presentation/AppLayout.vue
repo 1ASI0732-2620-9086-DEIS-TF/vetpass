@@ -6,6 +6,7 @@
  * del personal de la clínica (4.2.4).
  */
 import { ref } from 'vue';
+import { TERMINOS_URL } from '../legal';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import Button from 'primevue/button';
@@ -74,6 +75,9 @@ function buscar() {
           <i class="pi pi-ellipsis-v" aria-hidden="true" />
         </button>
         <Menu ref="menuUsuario" :model="opcionesUsuario" popup />
+        <a class="terminos vp-caption" :href="TERMINOS_URL" target="_blank" rel="noopener">
+          {{ t('comun.terminos') }}
+        </a>
       </div>
     </aside>
 
@@ -152,6 +156,7 @@ function buscar() {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .usuario__rol { color: var(--vp-neutral-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.terminos { display: block; margin-top: var(--vp-space-2); padding: 0 var(--vp-space-2); color: var(--vp-neutral-600); }
 
 .principal { display: flex; flex-direction: column; min-width: 0; }
 

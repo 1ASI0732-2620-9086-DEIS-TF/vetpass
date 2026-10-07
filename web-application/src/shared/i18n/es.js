@@ -224,6 +224,7 @@ export default {
     cargando: 'Cargando…',
     obligatorio: 'Este campo es obligatorio.',
     errorInesperado: 'Ocurrió un problema al procesar la solicitud.',
-    volver: 'Volver'
+    volver: 'Volver',
+    terminos: 'Términos y condiciones'
   }
 };

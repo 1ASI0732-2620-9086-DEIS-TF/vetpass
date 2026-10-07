@@ -137,7 +137,7 @@ public class DemoDataSeeder(
     private async Task<Client> AddClientAsync(string fullName, string phone, string? email,
         CancellationToken cancellationToken)
     {
-        var client = new Client(ClinicId, fullName, phone, email);
+        var client = new Client(ClinicId, fullName, PhoneNumber.Parse(phone), email);
         await context.Clients.AddAsync(client, cancellationToken);
         return client;
     }

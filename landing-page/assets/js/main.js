@@ -85,8 +85,43 @@
       ? '' : mensaje('validacion.clinica', 'Ingresa el nombre de tu clínica.')),
     correo: (valor) => (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor.trim())
       ? '' : mensaje('validacion.correo', 'Ingresa un correo electrónico válido.')),
-    telefono: (valor) => (valor.replace(/\D/g, '').length >= 6
-      ? '' : mensaje('validacion.telefono', 'Ingresa un número de teléfono de contacto.'))
+    telefono: (valor) => (esTelefonoPeruano(valor)
+      ? '' : mensaje('validacion.telefono',
+        'Ingresa un número peruano: celular de 9 dígitos o fijo con su código de área.'))
+  };
+
+  /**
+   * Número peruano según el plan de numeración: celular de nueve dígitos que
+   * empieza con 9, fijo de Lima con código 1 y siete dígitos, o fijo de
+   * provincia con código de dos dígitos y seis dígitos. Se admite con o sin
+   * +51, con espacios, guiones o paréntesis, y con el 0 de larga distancia.
+   *
+   * Es la misma regla que el value object PhoneNumber de la API; aquí se repite
+   * porque la landing es estática y no tiene un servidor que la aplique.
+   */
+  const esTelefonoPeruano = (texto) => {
+    const escrito = texto.trim();
+    if (!/^\+?[\d\s().-]+$/.test(escrito)) return false;
+
+    const digitos = escrito.replace(/\D/g, '');
+    let nacional;
+    if (escrito.startsWith('+')) {
+      if (!digitos.startsWith('51')) return false;
+      nacional = digitos.slice(2);
+    } else if (digitos.startsWith('00')) {
+      if (!digitos.startsWith('0051')) return false;
+      nacional = digitos.slice(4);
+    } else if ((digitos.length === 10 || digitos.length === 11) && digitos.startsWith('51')) {
+      nacional = digitos.slice(2);
+    } else {
+      nacional = digitos;
+    }
+
+    if (nacional.length === 9 && nacional.startsWith('0')) nacional = nacional.slice(1);
+
+    return /^9\d{8}$/.test(nacional)
+      || /^1\d{7}$/.test(nacional)
+      || /^(4[1-4]|5[1-46]|6[1-7]|7[2-46]|8[2-4])\d{6}$/.test(nacional);
   };
 
   /** Comunica la validación junto al campo que la origina (4.1.2). */

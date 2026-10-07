@@ -75,6 +75,11 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
                 problem.Extensions["requiredWeeks"] = age.RequiredWeeks;
                 problem.Extensions["earliestAdmissibleDate"] = age.EarliestAdmissibleDate.ToString("yyyy-MM-dd");
                 break;
+            case Patients.Domain.Model.Aggregates.ImplausibleBirthDateException birth:
+                problem.Extensions["ageInYears"] = birth.AgeInYears;
+                problem.Extensions["maximumAgeInYears"] = birth.MaximumAgeInYears;
+                problem.Extensions["species"] = birth.Species.ToString();
+                break;
             case MinimumIntervalNotMetException interval:
                 problem.Extensions["elapsedWeeks"] = interval.ElapsedWeeks;
                 problem.Extensions["requiredWeeks"] = interval.RequiredWeeks;

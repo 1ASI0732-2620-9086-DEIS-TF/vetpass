@@ -30,6 +30,14 @@ public class Pet
         if (birthDate > today)
             throw new FutureBirthDateException(birthDate, today);
 
+        // A birth date too far back is almost always a typing error in the
+        // year, and accepting it would issue a card whose every dose is
+        // already overdue (US07-E4).
+        var maximumAge = species.MaximumPlausibleAgeInYears();
+        if (birthDate < today.AddYears(-maximumAge))
+            throw new ImplausibleBirthDateException(birthDate, species,
+                CompletedYears(birthDate, today), maximumAge);
+
         Id = Guid.NewGuid();
         ClientId = clientId;
         Name = name.Trim();
@@ -44,6 +52,12 @@ public class Pet
     /// Age in completed weeks. The vaccination schedule expresses its minimum
     /// ages in weeks, so this is the unit the domain reasons in.
     /// </summary>
+    private static int CompletedYears(DateOnly birthDate, DateOnly today)
+    {
+        var years = today.Year - birthDate.Year;
+        return birthDate > today.AddYears(-years) ? years - 1 : years;
+    }
+
     public int AgeInWeeks(DateOnly today) => today.DayNumber - BirthDate.DayNumber < 0
         ? 0
         : (today.DayNumber - BirthDate.DayNumber) / 7;
@@ -60,4 +74,16 @@ public class RequiredPetFieldException(string field)
     : InvalidDomainDataException($"El campo '{field}' de la mascota es obligatorio.")
 {
     public override string Code => "required-pet-field";
+}
+
+public class ImplausibleBirthDateException(DateOnly birthDate, Species species, int ageInYears, int maximumAgeInYears)
+    : InvalidDomainDataException(
+        $"La fecha de nacimiento {birthDate:dd/MM/yyyy} supone una edad de {ageInYears} años, por encima " +
+        $"de los {maximumAgeInYears} años que se admiten para la especie {species.ToSpanishName()}. " +
+        "Revisa el año ingresado.")
+{
+    public override string Code => "implausible-birth-date";
+    public int AgeInYears { get; } = ageInYears;
+    public int MaximumAgeInYears { get; } = maximumAgeInYears;
+    public Species Species { get; } = species;
 }

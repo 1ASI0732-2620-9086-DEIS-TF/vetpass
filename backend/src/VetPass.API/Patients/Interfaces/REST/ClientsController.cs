@@ -6,6 +6,7 @@ using VetPass.API.IAM.Domain.Repositories;
 using VetPass.API.Patients.Application.Internal.CommandServices;
 using VetPass.API.Patients.Application.Internal.QueryServices;
 using VetPass.API.Patients.Domain.Model.Commands;
+using VetPass.API.Patients.Domain.Model.ValueObjects;
 using VetPass.API.Patients.Interfaces.REST.Resources;
 using VetPass.API.Patients.Interfaces.REST.Transform;
 using VetPass.API.Shared.Domain.Exceptions;
@@ -33,7 +34,8 @@ public class ClientsController(
         CancellationToken cancellationToken)
     {
         var client = await commandService.CreateClientAsync(
-            new CreateClientCommand(ClinicOfCurrentUser(), resource.FullName, resource.PhoneNumber, resource.Email),
+            new CreateClientCommand(ClinicOfCurrentUser(), resource.FullName,
+                PhoneNumber.Parse(resource.PhoneNumber), resource.Email),
             cancellationToken);
 
         var created = ClientResourceFromEntityAssembler.ToResource(client);

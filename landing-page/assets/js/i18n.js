@@ -125,7 +125,7 @@ window.VetPassI18n = (() => {
     'validacion.nombre': 'Enter your full name.',
     'validacion.clinica': 'Enter the name of your clinic.',
     'validacion.correo': 'Enter a valid email address.',
-    'validacion.telefono': 'Enter a contact phone number.',
+    'validacion.telefono': 'Enter a Peruvian number: a 9-digit mobile or a landline with its area code.',
     'form.exito': 'Thank you. We will contact you to arrange the demo.',
 
     'legal.volver': 'Back to home',

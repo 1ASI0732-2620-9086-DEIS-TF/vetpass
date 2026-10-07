@@ -62,7 +62,12 @@ export default {
     aviso: 'On saving, VetPass will create the card for {nombre} with the {especie} vaccination schedule and calculate the due date of every dose.',
     avisoSinNombre: 'On saving, VetPass will create the card with the schedule of its species and calculate the due date of every dose.',
     guardar: 'Save patient',
-    guardado: '{nombre} was registered together with their vaccination card.'
+    guardado: '{nombre} was registered together with their vaccination card.',
+    telefonoAyuda: '9-digit mobile, or landline with its area code.',
+    telefonoInvalido: 'Enter a Peruvian number: a 9-digit mobile beginning with 9, or a landline with its area code (01 for Lima).',
+    nacimientoFuturo: 'The date of birth cannot be later than today.',
+    nacimientoImplausible: 'That date would make the pet {edad} years old, above the {maximo} admitted for the {especie} species. Please check the year.',
+    clienteYaCreado: 'The client was registered. Correct the pet details and save again: it will be linked to the same client.'
   },
 
   ficha: {
@@ -166,7 +171,7 @@ export default {
     cartilla: { UpToDate: 'Card up to date', Pending: 'Card pending', Overdue: 'Card overdue' }
   },
 
-  especie: { Canine: 'Canine', Feline: 'Feline', canino: 'canine', felino: 'feline' },
+  especie: { Canine: 'Canine', Feline: 'Feline', canino: 'canine', felino: 'feline', canina: 'canine', felina: 'feline' },
 
   vacunas: {
     'Quíntuple': 'DHPP',

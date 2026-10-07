@@ -49,7 +49,10 @@ export function problemOf(error) {
     detail: datos.detail ?? primerErrorDeValidacion(datos),
     ageInWeeks: datos.ageInWeeks,
     requiredWeeks: datos.requiredWeeks,
-    earliestAdmissibleDate: datos.earliestAdmissibleDate
+    earliestAdmissibleDate: datos.earliestAdmissibleDate,
+    ageInYears: datos.ageInYears,
+    maximumAgeInYears: datos.maximumAgeInYears,
+    species: datos.species
   };
 }
 

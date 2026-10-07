@@ -1408,8 +1408,8 @@ que cada historia resulte verificable mediante pruebas automatizadas.
 | US03 | Visitante | Alta | EP01 | Acceso a la aplicación web desde la landing page | Como visitante registrado, deseo ingresar a la aplicación web desde la landing page, para iniciar mi sesión de trabajo. | **E1: Redirección a la aplicación**<br>Dado que el visitante se encuentra en la landing page<br>Cuando selecciona la acción de ingreso<br>Entonces el sistema lo dirige a la aplicación web de la clínica. |
 | US04 | Personal de clínica | Media | EP02 | Autenticación del personal de la clínica | Como personal de la clínica, deseo iniciar sesión en la aplicación web, para acceder a la información de mis pacientes. | **E1: Credenciales válidas**<br>Dado que el usuario está registrado en el sistema<br>Cuando envía sus credenciales correctas<br>Entonces el sistema le concede acceso con permisos de registro y consulta.<br><br>**E2: Credenciales inválidas**<br>Dado que el usuario no está registrado o sus credenciales no coinciden<br>Cuando envía sus credenciales<br>Entonces el sistema deniega el acceso y no expone información de pacientes. |
 | US05 | Dueño de mascota | Media | EP02 | Autenticación del dueño en la aplicación móvil | Como dueño de mascota, deseo iniciar sesión en la aplicación móvil, para consultar la información de mis mascotas. | **E1: Acceso concedido**<br>Dado que el dueño fue registrado por una clínica<br>Cuando envía sus credenciales correctas<br>Entonces el sistema le concede acceso con permisos de consulta únicamente.<br><br>**E2: Aislamiento de información**<br>Dado que el dueño tiene una sesión activa<br>Cuando solicita información de una mascota que no le pertenece<br>Entonces el sistema deniega la solicitud. |
-| US06 | Personal de clínica | Alta | EP03 | Registro de cliente | Como personal de la clínica, deseo registrar a un cliente con sus datos de contacto, para vincularlo posteriormente con sus mascotas. | **E1: Registro exitoso**<br>Dado que el personal de la clínica ingresa los datos obligatorios del cliente<br>Cuando confirma el registro<br>Entonces el sistema crea el cliente y lo asocia a la clínica.<br><br>**E2: Datos incompletos**<br>Dado que el personal omite un dato obligatorio<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e informa el dato faltante. |
-| US07 | Personal de clínica | Alta | EP03 | Registro de mascota | Como personal de la clínica, deseo registrar una mascota asociada a un cliente, indicando su especie y fecha de nacimiento, para incorporarla como paciente. | **E1: Registro exitoso**<br>Dado que existe un cliente registrado<br>Cuando se registra una mascota con especie canina o felina y fecha de nacimiento válida<br>Entonces el sistema crea la mascota y la asocia al cliente.<br><br>**E2: Especie no soportada**<br>Dado que se intenta registrar una mascota de una especie distinta de canina o felina<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación.<br><br>**E3: Fecha de nacimiento futura**<br>Dado que se ingresa una fecha de nacimiento posterior a la fecha actual<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación. |
+| US06 | Personal de clínica | Alta | EP03 | Registro de cliente | Como personal de la clínica, deseo registrar a un cliente con sus datos de contacto, para vincularlo posteriormente con sus mascotas. | **E1: Registro exitoso**<br>Dado que el personal de la clínica ingresa los datos obligatorios del cliente<br>Cuando confirma el registro<br>Entonces el sistema crea el cliente y lo asocia a la clínica.<br><br>**E2: Datos incompletos**<br>Dado que el personal omite un dato obligatorio<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e informa el dato faltante.<br><br>**E3: Teléfono no peruano**<br>Dado que el personal ingresa un teléfono que no corresponde a un número peruano válido<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e indica el formato admitido. |
+| US07 | Personal de clínica | Alta | EP03 | Registro de mascota | Como personal de la clínica, deseo registrar una mascota asociada a un cliente, indicando su especie y fecha de nacimiento, para incorporarla como paciente. | **E1: Registro exitoso**<br>Dado que existe un cliente registrado<br>Cuando se registra una mascota con especie canina o felina y fecha de nacimiento válida<br>Entonces el sistema crea la mascota y la asocia al cliente.<br><br>**E2: Especie no soportada**<br>Dado que se intenta registrar una mascota de una especie distinta de canina o felina<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación.<br><br>**E3: Fecha de nacimiento futura**<br>Dado que se ingresa una fecha de nacimiento posterior a la fecha actual<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación.<br><br>**E4: Fecha de nacimiento no plausible**<br>Dado que se ingresa una fecha de nacimiento que supone una edad superior a la máxima admitida para la especie<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación e indica la edad resultante y la máxima admitida. |
 | US08 | Personal de clínica | Alta | EP03 | Búsqueda de paciente | Como personal de la clínica, deseo localizar a una mascota por su nombre o por el de su dueño, para acceder a su expediente al iniciar la atención. | **E1: Coincidencias encontradas**<br>Dado que existen mascotas registradas en la clínica<br>Cuando se realiza una búsqueda por nombre de mascota o de dueño<br>Entonces el sistema devuelve las coincidencias con su especie y su dueño asociado.<br><br>**E2: Sin coincidencias**<br>Dado que no existe ninguna mascota que coincida con el criterio<br>Cuando se realiza la búsqueda<br>Entonces el sistema informa que no se hallaron resultados. |
 | US09 | Personal de clínica | Alta | EP04 | Generación automática de la cartilla de vacunación | Como personal de la clínica, deseo que la cartilla de vacunación se genere automáticamente al registrar una mascota, para no tener que definir manualmente las dosis que le corresponden. | **E1: Generación según especie**<br>Dado que se registra una mascota de una especie soportada<br>Cuando el registro se completa<br>Entonces el sistema genera su cartilla con todas las dosis del esquema de su especie en estado pendiente.<br><br>**E2: Cálculo de fechas esperadas**<br>Dado que la cartilla ha sido generada<br>Cuando se consultan sus dosis pendientes<br>Entonces cada dosis presenta una fecha esperada calculada a partir de la fecha de nacimiento y la edad mínima de la vacuna. |
 | US10 | Personal de clínica | Alta | EP04 | Registro de dosis aplicada | Como personal de la clínica, deseo registrar la aplicación de una dosis indicando fecha, lote y responsable, para dejar constancia verificable en la cartilla. | **E1: Registro válido**<br>Dado que una dosis se encuentra pendiente y se cumplen las reglas del esquema<br>Cuando se registra su aplicación con fecha, lote y veterinario responsable<br>Entonces el sistema marca la dosis como aplicada y conserva esos datos.<br><br>**E2: Edad mínima no alcanzada**<br>Dado que la mascota no alcanza la edad mínima de la vacuna en la fecha indicada<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la restricción incumplida.<br><br>**E3: Intervalo mínimo no cumplido**<br>Dado que no ha transcurrido el intervalo mínimo desde la dosis anterior<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la restricción incumplida.<br><br>**E4: Fecha de aplicación futura**<br>Dado que la fecha de aplicación es posterior a la fecha actual<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro. |
@@ -2600,7 +2600,13 @@ package "Patients" {
     - phoneNumber : string
     - email : string
     - clinicId : Guid
-    + UpdateContactInfo(phone : string, email : string) : void
+    + UpdateContactInfo(phone : PhoneNumber, email : string) : void
+  }
+
+  class PhoneNumber <<Value Object>> {
+    + value : string
+    + IsMobile() : bool
+    + {static} Parse(input : string) : PhoneNumber
   }
 
   class Pet <<Aggregate Root>> {
@@ -2617,6 +2623,7 @@ package "Patients" {
   enum Species {
     Canine
     Feline
+    + MaximumPlausibleAgeInYears() : int
   }
 
   enum Sex {
@@ -2693,6 +2700,7 @@ package "IdentityAndAccess" {
 }
 
 Client "1" o-- "0..*" Pet : posee
+Client ..> PhoneNumber : valida con
 Pet --> Species
 Pet --> Sex
 Visit "1" *-- "0..1" Prescription : emite
@@ -2729,12 +2737,15 @@ Clinic "1" o-- "0..*" Client : atiende
 
 | Clase | Tipo | Descripción |
 |---|---|---|
-| `Client` | Aggregate Root | Cliente de la clínica. Atributos: `Id`, `FullName`, `PhoneNumber`, `Email`, `ClinicId`. Métodos: `UpdateContactInfo(phone, email)`. |
-| `Pet` | Aggregate Root | Mascota registrada como paciente. Atributos: `Id`, `ClientId`, `Name`, `Species`, `Breed`, `Sex`, `BirthDate`. Métodos: `AgeInWeeks(today)`. |
-| `Species` | Enumeration | `Canine`, `Feline`. Cualquier otro valor es rechazado al registrar. |
+| `Client` | Aggregate Root | Cliente de la clínica. Recibe el teléfono ya validado como `PhoneNumber`, de modo que no puede existir un cliente con un número fuera del Perú. Atributos: `Id`, `FullName`, `PhoneNumber`, `Email`, `ClinicId`. Métodos: `UpdateContactInfo(phone, email)`. |
+| `PhoneNumber` | Value Object | Teléfono peruano según el plan de numeración: celular de nueve dígitos que empieza con 9, fijo de Lima con código 1 y siete dígitos, o fijo de provincia con código de área de dos dígitos y seis dígitos. Acepta el número con o sin +51, con separadores y con el prefijo 0 de larga distancia, y lo conserva en forma E.164 (+51 seguido del número nacional), de modo que dos maneras de escribir el mismo número son el mismo valor. Métodos: `Parse(input)`, `IsMobile()`. |
+| `Pet` | Aggregate Root | Mascota registrada como paciente. Rechaza una fecha de nacimiento futura o que suponga una edad superior a la máxima plausible de su especie. Atributos: `Id`, `ClientId`, `Name`, `Species`, `Breed`, `Sex`, `BirthDate`. Métodos: `AgeInWeeks(today)`. |
+| `Species` | Enumeration | `Canine`, `Feline`. Cualquier otro valor es rechazado al registrar. Define la edad máxima plausible con que una mascota puede registrarse: 25 años para la especie canina y 30 para la felina. No pretende ser el récord de longevidad, sino el límite a partir del cual una fecha es mucho más probablemente un error de digitación del año que un animal real. |
 | `Sex` | Enumeration | `Male`, `Female`. |
 | `UnsupportedSpeciesException` | Domain Exception | La especie indicada no está soportada por la plataforma. |
 | `FutureBirthDateException` | Domain Exception | La fecha de nacimiento es posterior a la fecha actual. |
+| `ImplausibleBirthDateException` | Domain Exception | La fecha de nacimiento supone una edad superior a la máxima plausible de la especie. Informa la edad resultante y la máxima admitida. |
+| `InvalidPhoneNumberException` | Domain Exception | El teléfono no corresponde a un número peruano válido. |
 
 **Bounded Context: Medical Records**
 
@@ -2831,6 +2842,12 @@ su fecha esperada ya calculada. Esta materialización permite que cada
 cartilla conserve el esquema vigente al momento de su creación, de modo
 que una futura modificación de la plantilla no altere las cartillas ya
 emitidas.
+
+El campo `phone_number` de `clients` almacena el teléfono en forma E.164
+—`+51` seguido del número nacional—, cualquiera sea la manera en que se haya
+escrito al registrarlo. Una sola forma por número evita que el mismo cliente
+aparezca con teléfonos distintos y deja el dato listo para canales que exigen
+ese formato, como la mensajería.
 
 El campo `status` de `doses` es derivable de `application_date`, pero se
 almacena de forma explícita para hacer legibles las consultas y permitir

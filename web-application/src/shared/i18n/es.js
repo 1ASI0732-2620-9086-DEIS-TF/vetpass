@@ -61,7 +61,12 @@ export default {
     aviso: 'Al guardar, VetPass creará la cartilla de {nombre} con el esquema de vacunación {especie} y calculará la fecha esperada de cada dosis.',
     avisoSinNombre: 'Al guardar, VetPass creará la cartilla con el esquema de vacunación de su especie y calculará la fecha esperada de cada dosis.',
     guardar: 'Guardar paciente',
-    guardado: '{nombre} quedó registrada con su cartilla.'
+    guardado: '{nombre} quedó registrada con su cartilla.',
+    telefonoAyuda: 'Celular de 9 dígitos, o fijo con su código de área.',
+    telefonoInvalido: 'Ingresa un número peruano: un celular de 9 dígitos que empieza con 9, o un fijo con su código de área (01 para Lima).',
+    nacimientoFuturo: 'La fecha de nacimiento no puede ser posterior a hoy.',
+    nacimientoImplausible: 'Con esa fecha tendría {edad} años, por encima de los {maximo} que se admiten para la especie {especie}. Revisa el año.',
+    clienteYaCreado: 'El cliente quedó registrado. Corrige los datos de la mascota y vuelve a guardar: se asociará al mismo cliente.'
   },
 
   ficha: {
@@ -165,7 +170,7 @@ export default {
     cartilla: { UpToDate: 'Cartilla al día', Pending: 'Cartilla pendiente', Overdue: 'Cartilla vencida' }
   },
 
-  especie: { Canine: 'Canina', Feline: 'Felina', canino: 'canino', felino: 'felino' },
+  especie: { Canine: 'Canina', Feline: 'Felina', canino: 'canino', felino: 'felino', canina: 'canina', felina: 'felina' },
 
   // Nombres comerciales de las vacunas del esquema de SP01. Se traducen porque
   // en inglés se conocen por su sigla.

@@ -8,7 +8,7 @@
  * la interfaz no duplica reglas de negocio, solo presenta lo que aquella
  * responde.
  */
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useToast } from 'primevue/usetoast';
@@ -18,6 +18,8 @@ import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
 import Message from 'primevue/message';
 import SelectButton from 'primevue/selectbutton';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
 import Breadcrumb from 'primevue/breadcrumb';
 import { patientsApi } from '../infrastructure/patients.api';
 import { problemOf } from '../../shared/infrastructure/http';
@@ -35,6 +37,35 @@ const mascota = ref({ name: '', species: 'Canine', breed: '', sex: 'Female', bir
 
 const guardando = ref(false);
 const error = ref('');
+const avisoCliente = ref('');
+
+// Avisos que la API devuelve sobre un campo concreto: se muestran junto a ese
+// campo y no al pie del formulario, conforme a la sección 4.1.2. El texto se
+// compone a partir del código y de los valores que la API entrega; la regla
+// sigue viviendo solo en la API.
+const erroresCampo = ref({ telefono: '', nacimiento: '' });
+watch(() => cliente.value.phoneNumber, () => { erroresCampo.value.telefono = ''; });
+watch(() => [mascota.value.birthDate, mascota.value.species], () => { erroresCampo.value.nacimiento = ''; });
+
+function avisoDeCampo(problema) {
+  switch (problema.code) {
+    case 'invalid-phone-number':
+      erroresCampo.value.telefono = t('registro.telefonoInvalido');
+      return true;
+    case 'future-birth-date':
+      erroresCampo.value.nacimiento = t('registro.nacimientoFuturo');
+      return true;
+    case 'implausible-birth-date':
+      erroresCampo.value.nacimiento = t('registro.nacimientoImplausible', {
+        edad: problema.ageInYears,
+        maximo: problema.maximumAgeInYears,
+        especie: t(problema.species === 'Canine' ? 'especie.canina' : 'especie.felina')
+      });
+      return true;
+    default:
+      return false;
+  }
+}
 
 const migas = computed(() => [{ label: t('pacientes.titulo'), route: { name: 'pacientes' } }]);
 const inicio = { icon: 'pi pi-home', route: { name: 'pacientes' } };
@@ -74,7 +105,10 @@ function comoISO(fecha) {
 
 async function guardar() {
   error.value = '';
+  erroresCampo.value = { telefono: '', nacimiento: '' };
+  avisoCliente.value = '';
   guardando.value = true;
+  let clienteRecienCreado = false;
   try {
     let duenoId = clienteId.value;
 
@@ -85,6 +119,14 @@ async function guardar() {
         email: cliente.value.email || null
       });
       duenoId = data.id;
+
+      // El cliente ya existe. Si la mascota es rechazada, un segundo intento
+      // debe asociarla a este cliente y no crear otro igual: el formulario
+      // pasa a «cliente ya registrado» con él seleccionado.
+      clientes.value = [...clientes.value, data];
+      clienteId.value = data.id;
+      modoCliente.value = 'existente';
+      clienteRecienCreado = true;
     }
 
     const { data: creada } = await patientsApi.registrarMascota({
@@ -103,7 +145,9 @@ async function guardar() {
     });
     router.push({ name: 'paciente', params: { petId: creada.id } });
   } catch (fallo) {
-    error.value = problemOf(fallo).detail ?? t('comun.errorInesperado');
+    const problema = problemOf(fallo);
+    if (!avisoDeCampo(problema)) error.value = problema.detail ?? t('comun.errorInesperado');
+    if (clienteRecienCreado) avisoCliente.value = t('registro.clienteYaCreado');
   } finally {
     guardando.value = false;
   }
@@ -159,7 +203,23 @@ async function guardar() {
             </div>
             <div class="vp-field">
               <label for="c-telefono">{{ t('registro.telefono') }}</label>
-              <InputText id="c-telefono" v-model="cliente.phoneNumber" required />
+              <InputGroup>
+                <InputGroupAddon>+51</InputGroupAddon>
+                <InputText
+                  id="c-telefono"
+                  v-model="cliente.phoneNumber"
+                  inputmode="tel"
+                  autocomplete="tel-national"
+                  placeholder="987 654 321"
+                  :invalid="Boolean(erroresCampo.telefono)"
+                  aria-describedby="c-telefono-ayuda"
+                  required
+                />
+              </InputGroup>
+              <small v-if="erroresCampo.telefono" id="c-telefono-ayuda" class="campo-error">
+                {{ erroresCampo.telefono }}
+              </small>
+              <span v-else id="c-telefono-ayuda" class="vp-caption vp-muted">{{ t('registro.telefonoAyuda') }}</span>
             </div>
             <div class="vp-field">
               <label for="c-correo">{{ t('registro.correo') }}</label>
@@ -209,9 +269,14 @@ async function guardar() {
                 v-model="mascota.birthDate"
                 date-format="dd/mm/yy"
                 :max-date="new Date()"
+                :invalid="Boolean(erroresCampo.nacimiento)"
+                aria-describedby="m-nacimiento-error"
                 show-icon
                 required
               />
+              <small v-if="erroresCampo.nacimiento" id="m-nacimiento-error" class="campo-error">
+                {{ erroresCampo.nacimiento }}
+              </small>
             </div>
           </div>
         </div>
@@ -222,6 +287,7 @@ async function guardar() {
         <span class="vp-small">{{ avisoEsquema }}</span>
       </Message>
 
+      <Message v-if="avisoCliente" severity="warn" :closable="false">{{ avisoCliente }}</Message>
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
       <div class="vp-actions">
@@ -245,4 +311,5 @@ form { display: grid; gap: var(--vp-space-3); }
 h3 { margin-bottom: var(--vp-space-3); }
 .modo { margin-bottom: var(--vp-space-3); }
 .aviso :deep(.p-message-text) { display: grid; gap: 4px; }
+.campo-error { color: var(--vp-danger); font-size: 13px; line-height: 18px; }
 </style>

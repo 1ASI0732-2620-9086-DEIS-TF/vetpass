@@ -68,3 +68,26 @@ export function etiquetaDosis(dosis, t, idioma = i18n.global.locale.value) {
 
   return `${nombre} · ${sufijo}`;
 }
+
+/**
+ * Teléfono para mostrar. La API lo entrega en su forma canónica (+51 seguido
+ * del número nacional) y aquí solo se agrupan los dígitos como se leen en el
+ * Perú. Un valor que no esté en esa forma —registrado antes de que existiera
+ * la regla— se muestra tal cual, sin intentar corregirlo.
+ */
+export function formatearTelefono(valor) {
+  if (!valor) return '—';
+  const nacional = valor.startsWith('+51') ? valor.slice(3) : null;
+  if (!nacional) return valor;
+
+  if (/^9\d{8}$/.test(nacional)) {
+    return `+51 ${nacional.slice(0, 3)} ${nacional.slice(3, 6)} ${nacional.slice(6)}`;
+  }
+  if (/^1\d{7}$/.test(nacional)) {
+    return `+51 1 ${nacional.slice(1, 4)} ${nacional.slice(4)}`;
+  }
+  if (/^\d{8}$/.test(nacional)) {
+    return `+51 ${nacional.slice(0, 2)} ${nacional.slice(2, 5)} ${nacional.slice(5)}`;
+  }
+  return valor;
+}

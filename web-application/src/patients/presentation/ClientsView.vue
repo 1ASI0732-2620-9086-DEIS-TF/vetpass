@@ -19,6 +19,7 @@ import Tag from 'primevue/tag';
 import { patientsApi } from '../infrastructure/patients.api';
 import { authenticationApi } from '../../iam/infrastructure/authentication.api';
 import { problemOf } from '../../shared/infrastructure/http';
+import { formatearTelefono } from '../../shared/i18n';
 
 const { t } = useI18n();
 const toast = useToast();
@@ -104,7 +105,11 @@ async function copiar() {
           <template #body="{ data }"><span class="nombre">{{ data.fullName }}</span></template>
         </Column>
 
-        <Column field="phoneNumber" :header="t('clientes.telefono')" />
+        <Column field="phoneNumber" :header="t('clientes.telefono')">
+          <template #body="{ data }">
+            <span class="telefono">{{ formatearTelefono(data.phoneNumber) }}</span>
+          </template>
+        </Column>
 
         <Column field="email" :header="t('clientes.correo')">
           <template #body="{ data }">
@@ -193,6 +198,7 @@ async function copiar() {
 
 <style scoped>
 .nombre { font-weight: 600; }
+.telefono { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nota { margin-bottom: var(--vp-space-3); }
 .aviso { margin-top: var(--vp-space-3); }
 .contrasena {

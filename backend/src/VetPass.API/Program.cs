@@ -231,3 +231,6 @@ app.MapGet("/api/v1/health", (IClinicClock clock) =>
     .ExcludeFromDescription();
 
 app.Run();
+
+// Visible para WebApplicationFactory en las pruebas de integración y de aceptación.
+public partial class Program;

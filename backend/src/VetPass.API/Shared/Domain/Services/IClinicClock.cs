@@ -18,6 +18,14 @@ public class ClinicClock(TimeProvider timeProvider) : IClinicClock
 {
     private static readonly TimeZoneInfo ClinicTimeZone = ResolveTimeZone();
 
+    /// <summary>
+    /// Zone actually resolved on this machine. A container image without the
+    /// time zone database resolves UTC, which would move "today" a day ahead
+    /// every evening in Lima; the health endpoint reports it so a deployment
+    /// can be checked.
+    /// </summary>
+    public static string TimeZoneId => ClinicTimeZone.Id;
+
     public DateOnly Today => DateOnly.FromDateTime(
         TimeZoneInfo.ConvertTimeFromUtc(timeProvider.GetUtcNow().UtcDateTime, ClinicTimeZone));
 

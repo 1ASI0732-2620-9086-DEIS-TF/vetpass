@@ -7,11 +7,13 @@
   'use strict';
 
   /**
-   * Dirección de la aplicación web de la clínica (US03). Es el único punto
-   * que hay que tocar cuando la aplicación se despliegue: mientras tanto
-   * apunta al servidor de desarrollo.
+   * Dirección de la aplicación web de la clínica (US03). Abierta en la propia
+   * máquina, la landing lleva al servidor de desarrollo; publicada, a la
+   * aplicación desplegada.
    */
-  const WEB_APP_URL = 'http://localhost:5173';
+  const EN_DESARROLLO = location.protocol === 'file:' ||
+    ['localhost', '127.0.0.1'].includes(location.hostname);
+  const WEB_APP_URL = EN_DESARROLLO ? 'http://localhost:5173' : 'https://vetpass-web.vercel.app';
 
   document.querySelectorAll('[data-app-link]').forEach((enlace) => {
     enlace.href = WEB_APP_URL;

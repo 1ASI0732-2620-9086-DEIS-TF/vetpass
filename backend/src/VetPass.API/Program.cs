@@ -32,6 +32,12 @@ using VetPass.API.Vaccination.Infrastructure.Persistence.EFC.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// En un contenedor (Vercel) la plataforma indica en PORT dónde debe escuchar
+// la API. En desarrollo no existe y manda la configuración habitual.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 // ---------------------------------------------------------------- persistencia
 builder.Services.AddDbContext<VetPassDbContext>(options =>
 {
@@ -158,8 +164,20 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Orígenes que pueden llamar a la API desde un navegador: la aplicación web
+// de la clínica. La aplicación móvil no los necesita, porque no es un
+// navegador. Sin orígenes configurados, desarrollo admite cualquiera y
+// producción ninguno.
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? string.Empty)
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
 builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+{
+    if (allowedOrigins.Length > 0)
+        policy.WithOrigins(allowedOrigins).AllowAnyMethod().AllowAnyHeader();
+    else if (builder.Environment.IsDevelopment())
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+}));
 
 var app = builder.Build();
 
@@ -169,12 +187,16 @@ await using (var scope = app.Services.CreateAsyncScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<VetPassDbContext>();
 
+    // Las migraciones y el catálogo de vacunas —datos de la plataforma, no de
+    // una clínica— se aplican al arrancar en desarrollo. En producción la API
+    // se apaga y vuelve a arrancar con el tráfico, de modo que la base se
+    // prepara una sola vez al desplegar (Database:AutoMigrate = false) y cada
+    // arranque en frío no repite ese trabajo.
     if (app.Configuration.GetValue("Database:AutoMigrate", true))
+    {
         await context.Database.MigrateAsync();
-
-    // El catálogo de vacunas y la plantilla del esquema son datos de la
-    // plataforma, no de una clínica: se cargan siempre.
-    await VaccinationCatalogSeeder.SeedAsync(context);
+        await VaccinationCatalogSeeder.SeedAsync(context);
+    }
 
     if (app.Configuration.GetValue("Seed:Demo", false))
     {
@@ -195,5 +217,13 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Responde sin tocar la base: sirve para despertar la API antes de usarla y
+// para que un monitor compruebe que está en línea. Informa además la fecha y
+// la zona horaria con que la API calcula la cartilla.
+app.MapGet("/api/v1/health", (IClinicClock clock) =>
+        Results.Ok(new { status = "ok", today = clock.Today, timeZone = ClinicClock.TimeZoneId }))
+    .AllowAnonymous()
+    .ExcludeFromDescription();
 
 app.Run();

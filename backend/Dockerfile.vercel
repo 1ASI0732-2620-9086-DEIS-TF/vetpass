@@ -1,0 +1,23 @@
+# Imagen de la RESTful API para Vercel Functions (runtime: container).
+# El contexto de construcción es la carpeta backend/.
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY src/VetPass.API/VetPass.API.csproj src/VetPass.API/
+RUN dotnet restore src/VetPass.API/VetPass.API.csproj
+COPY src/ src/
+RUN dotnet publish src/VetPass.API/VetPass.API.csproj -c Release --no-restore \
+    -o /app/publish /p:UseAppHost=false
+
+# La variante -extra incluye la base de zonas horarias. Sin ella, el reloj de
+# la clínica no encuentra America/Lima y pasa a UTC: desde las 19:00 de Lima,
+# «hoy» sería mañana para la cartilla.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra
+WORKDIR /app
+COPY --from=build /app/publish ./
+# La imagen corre sin privilegios de root: escucha en 8080, y el proyecto de
+# Vercel define PORT=8080 para enrutar el tráfico a ese puerto.
+ENV PORT=8080 \
+    ASPNETCORE_ENVIRONMENT=Production \
+    DOTNET_EnableDiagnostics=0
+ENTRYPOINT ["dotnet", "VetPass.API.dll"]

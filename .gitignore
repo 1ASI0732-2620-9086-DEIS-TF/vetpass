@@ -39,3 +39,9 @@ Thumbs.db
 **/build/
 *.iml
 .packages
+
+# ---- Resultados de pruebas ----
+TestResults/
+CoverageReport/
+test-results/
+playwright-report/

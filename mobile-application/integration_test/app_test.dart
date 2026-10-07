@@ -46,6 +46,7 @@ void main() {
     await waitFor(tester, find.text('Historial'));
     await tester.tap(find.text('Historial'));
     await waitFor(tester, find.text('Con receta'));
+    await settle(tester);
     await tester.tap(find.textContaining('Enrojecimiento'));
     await waitFor(tester, find.text('Cefalexina 250 mg'));
   });
@@ -60,6 +61,10 @@ void main() {
     await tester.enterText(find.byType(TextField).at(0), temporary.password);
     await tester.enterText(find.byType(TextField).at(1), 'Perrito2026');
     await tester.enterText(find.byType(TextField).at(2), 'Perrito2026');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await settle(tester);
+    // Con el teclado abierto, el botón puede quedar fuera de la lista visible.
+    await tester.dragUntilVisible(find.text('Guardar contraseña'), find.byType(ListView), const Offset(0, -200));
     await tester.tap(find.text('Guardar contraseña'));
 
     await waitFor(tester, find.text('Mis mascotas'));
@@ -78,6 +83,13 @@ void main() {
     await tester.tap(find.text('Sign out'));
     await waitFor(tester, find.text('Sign in to your account'));
   });
+}
+
+/// Lets animations —a tab sliding in, the keyboard closing— finish.
+Future<void> settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 /// Pumps until the finder shows up: the screens wait for the API, and a

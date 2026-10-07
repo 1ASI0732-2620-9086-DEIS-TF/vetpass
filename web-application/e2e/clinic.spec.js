@@ -59,9 +59,9 @@ test('registra una atención con receta y la muestra en el historial', async ({ 
   await page.locator('#a-motivo').fill('Control anual');
   await page.locator('#a-diagnostico').fill('Paciente sano');
   await page.getByRole('button', { name: 'Agregar medicamento' }).click();
-  await page.getByLabel('Medicamento').fill('Praziquantel 50 mg');
-  await page.getByLabel('Dosificación').fill('Una tableta');
-  await page.getByLabel('Duración').fill('Dosis única');
+  await page.getByRole('textbox', { name: 'Medicamento', exact: true }).last().fill('Praziquantel 50 mg');
+  await page.getByRole('textbox', { name: 'Dosificación', exact: true }).last().fill('Una tableta');
+  await page.getByRole('textbox', { name: 'Duración', exact: true }).last().fill('Dosis única');
   await page.getByRole('button', { name: 'Guardar atención' }).click();
 
   await expect(page.getByText('Control anual')).toBeVisible();

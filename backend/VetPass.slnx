@@ -3,6 +3,7 @@
     <Project Path="src/VetPass.API/VetPass.API.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/VetPass.AcceptanceTests/VetPass.AcceptanceTests.csproj" />
     <Project Path="tests/VetPass.IntegrationTests/VetPass.IntegrationTests.csproj" />
     <Project Path="tests/VetPass.Testing/VetPass.Testing.csproj" />
     <Project Path="tests/VetPass.UnitTests/VetPass.UnitTests.csproj" />

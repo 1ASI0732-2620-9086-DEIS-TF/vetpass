@@ -9,6 +9,19 @@ la mascota la consulta desde una aplicación móvil. La cartilla se genera de fo
 automática según la especie y el sistema valida las reglas del esquema de
 vacunación —edad mínima e intervalo entre dosis— antes de aceptar cada registro.
 
+## En línea
+
+| Pieza | Dirección |
+|---|---|
+| Landing page | https://vetpass-landing.vercel.app |
+| Aplicación web de la clínica | https://vetpass-web.vercel.app |
+| RESTful API | https://vetpass-api.vercel.app/api/v1 (estado en `/api/v1/health`) |
+| Aplicación móvil (APK para Android) | [Descargar la última versión](https://github.com/1ASI0732-2620-9086-DEIS-TF/vetpass/releases/latest/download/vetpass.apk) |
+
+Todo se despliega en Vercel desde este repositorio; la base de datos y la
+autenticación están en Supabase. Detalles, variables de entorno y migraciones
+en [`docs/despliegue.md`](docs/despliegue.md).
+
 ## Estructura del repositorio
 
 | Carpeta | Contenido | Estado |
@@ -75,8 +88,9 @@ dotnet run --project src/VetPass.API
 
 La documentación de la API queda disponible en `/swagger`.
 
-El catálogo de vacunas y la plantilla del esquema de vacunación se cargan en
-cada arranque. Para incorporar además el caso de demostración de los mock-ups
+El catálogo de vacunas y la plantilla del esquema de vacunación se cargan al
+arrancar junto con las migraciones (`Database:AutoMigrate`, activo por
+omisión; en producción se desactiva). Para incorporar además el caso de demostración de los mock-ups
 —Veterinaria San Miguel y sus pacientes, entre ellos el cachorro cuya segunda
 dosis vence hoy— se activa `Seed:Demo`, que ya viene habilitado en el entorno
 de desarrollo.
@@ -92,8 +106,8 @@ python3 -m http.server 5180
 ```
 
 El acceso a la aplicación web (US03) se resuelve con la constante `WEB_APP_URL`
-de `assets/js/main.js`, que es el único punto a cambiar cuando esa aplicación
-se despliegue.
+de `assets/js/main.js`: abierta en la propia máquina lleva al servidor de
+desarrollo, y publicada, a la aplicación desplegada.
 
 **Idiomas.** La página está en español e inglés, conforme a la sección 4.2.2 del
 informe. El español vive en el HTML —es lo que ve quien llega sin JavaScript o

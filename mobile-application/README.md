@@ -60,6 +60,25 @@ incluye una configuración de seguridad de red que lo permite **solo** hacia
 `10.0.2.2`, `localhost` y `127.0.0.1`, que son las direcciones de la API de
 desarrollo. Las compilaciones de entrega no la incluyen.
 
+### Pruebas
+
+```bash
+flutter test
+```
+
+Cubren la renovación automática de la sesión y el arranque sin sesión.
+`flutter analyze` falla en rutas con caracteres no ASCII (por ejemplo, «ñ»):
+en ese caso, copiar `lib/`, `test/`, `pubspec.yaml` y `analysis_options.yaml`
+a otra ruta y ejecutarlo ahí.
+
+### Versión de entrega
+
+```bash
+flutter build apk --release --dart-define=VETPASS_API=https://vetpass-api.vercel.app/api/v1
+```
+
+El APK se publica como asset `vetpass.apk` en las releases de GitHub.
+
 ## Estructura
 
 Espejo de los bounded contexts del backend:

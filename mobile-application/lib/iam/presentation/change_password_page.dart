@@ -74,7 +74,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       mensajero.showSnackBar(SnackBar(content: Text(textos.contrasenaActualizada)));
     } on ApiException catch (fallo) {
       if (fallo.noAutorizado) {
-        await widget.session.cerrarSesion();
+        await widget.session.cerrarSesion(expirada: true);
         return;
       }
       setState(() {

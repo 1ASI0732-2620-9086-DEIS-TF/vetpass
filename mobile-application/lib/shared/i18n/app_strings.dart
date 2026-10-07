@@ -26,6 +26,9 @@ class AppStrings {
       'No access yet? Ask for it at your clinic’s reception desk.');
   String get credencialesInvalidas =>
       _('El correo o la contraseña no coinciden.', 'The email or password do not match.');
+  String get sesionExpirada => _(
+      'Tu sesión expiró. Vuelve a ingresar.', 'Your session expired. Please sign in again.');
+  String get terminos => _('Términos y condiciones', 'Terms and conditions');
   String get sinConexion => _(
       'No fue posible contactar al servidor.', 'The server could not be reached.');
 

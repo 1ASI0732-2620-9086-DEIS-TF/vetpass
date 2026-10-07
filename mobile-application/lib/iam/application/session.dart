@@ -59,19 +59,28 @@ class Usuario {
 /// Sesión del dueño. La aplicación solo consulta: el rol que la API concede a
 /// esta cuenta no permite registrar información clínica (US05-E1).
 class Session extends ChangeNotifier {
-  Session(this._api);
+  Session(this._api) {
+    _api.renovarSesion = _renovar;
+  }
 
   static const _clave = 'vetpass.sesion';
 
   final ApiClient _api;
   String? _token;
+  String? _refresh;
   Usuario? _usuario;
   bool _cargando = false;
+  bool _expirada = false;
+  Future<bool>? _renovacion;
 
   ApiClient get api => _api;
   Usuario? get usuario => _usuario;
   bool get autenticado => _token != null;
   bool get debeCambiarContrasena => _usuario?.requiresPasswordChange ?? false;
+
+  /// La sesión terminó porque venció y no pudo renovarse, no porque el dueño
+  /// la cerrara: el inicio de sesión lo explica.
+  bool get expirada => _expirada;
   bool get cargando => _cargando;
 
   Future<void> restaurar() async {
@@ -82,6 +91,7 @@ class Session extends ChangeNotifier {
     try {
       final datos = jsonDecode(guardado) as Map<String, dynamic>;
       _token = datos['token'] as String?;
+      _refresh = datos['refresh'] as String?;
       _usuario = Usuario.desdeJson(datos['usuario'] as Map<String, dynamic>);
       _api.token = _token;
       notifyListeners();
@@ -95,9 +105,11 @@ class Session extends ChangeNotifier {
     notifyListeners();
     try {
       final datos = await _api.post('/authentication/sign-in',
-          {'email': correo, 'password': contrasena}) as Map<String, dynamic>;
+          {'email': correo, 'password': contrasena}, sinSesion: true) as Map<String, dynamic>;
 
       _token = datos['accessToken'] as String;
+      _refresh = datos['refreshToken'] as String?;
+      _expirada = false;
       _usuario = Usuario.desdeJson(datos['user'] as Map<String, dynamic>);
       _api.token = _token;
 
@@ -119,14 +131,44 @@ class Session extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _guardar() async {
-    final preferencias = await SharedPreferences.getInstance();
-    await preferencias.setString(
-        _clave, jsonEncode({'token': _token, 'usuario': _usuario!.aJson()}));
+  /// Renueva el token de acceso con el de refresco. Si varias peticiones
+  /// llegan vencidas a la vez, comparten una sola renovación: el token de
+  /// refresco solo sirve una vez.
+  Future<bool> _renovar() => _renovacion ??= _renovarAhora().whenComplete(() => _renovacion = null);
+
+  Future<bool> _renovarAhora() async {
+    final refresh = _refresh;
+    if (refresh == null) {
+      await cerrarSesion(expirada: true);
+      return false;
+    }
+
+    try {
+      final datos = await _api.post('/authentication/refresh', {'refreshToken': refresh},
+          sinSesion: true) as Map<String, dynamic>;
+      _token = datos['accessToken'] as String;
+      _refresh = datos['refreshToken'] as String?;
+      _api.token = _token;
+      await _guardar();
+      return true;
+    } on ApiException catch (fallo) {
+      // Sin red no se cierra la sesión: el dueño reintenta cuando vuelva la
+      // conexión. Un rechazo de la API sí la termina.
+      if (!fallo.sinRed) await cerrarSesion(expirada: true);
+      return false;
+    }
   }
 
-  Future<void> cerrarSesion() async {
+  Future<void> _guardar() async {
+    final preferencias = await SharedPreferences.getInstance();
+    await preferencias.setString(_clave,
+        jsonEncode({'token': _token, 'refresh': _refresh, 'usuario': _usuario!.aJson()}));
+  }
+
+  Future<void> cerrarSesion({bool expirada = false}) async {
+    _expirada = expirada;
     _token = null;
+    _refresh = null;
     _usuario = null;
     _api.token = null;
     final preferencias = await SharedPreferences.getInstance();

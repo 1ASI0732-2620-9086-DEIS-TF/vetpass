@@ -23,8 +23,16 @@ Future<void> main() async {
   final session = Session(ApiClient());
   await session.restaurar();
 
+  // Al terminar la sesión se descartan las pantallas abiertas encima —una
+  // mascota, una atención—, para que el inicio de sesión quede a la vista.
+  session.addListener(() {
+    if (!session.autenticado) navegador.currentState?.popUntil((ruta) => ruta.isFirst);
+  });
+
   runApp(VetPassApp(session: session, idioma: idioma));
 }
+
+final navegador = GlobalKey<NavigatorState>();
 
 class VetPassApp extends StatelessWidget {
   const VetPassApp({super.key, required this.session, required this.idioma});
@@ -37,6 +45,7 @@ class VetPassApp extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([session, idioma]),
       builder: (context, _) => MaterialApp(
+        navigatorKey: navegador,
         title: 'VetPass',
         debugShowCheckedModeBanner: false,
         theme: buildVetPassTheme(),

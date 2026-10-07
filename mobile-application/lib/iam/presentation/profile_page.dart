@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../shared/i18n/app_strings.dart';
 import '../../shared/presentation/theme.dart';
 import '../application/session.dart';
@@ -6,6 +7,8 @@ import 'change_password_page.dart';
 
 /// Perfil y cierre de sesión. Recoge también el idioma, que es la decisión
 /// que la sección 4.2.2 del informe exige ofrecer en ambas aplicaciones.
+final _terminos = Uri.parse('https://vetpass-landing.vercel.app/terminos.html');
+
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key, required this.session, required this.idioma});
 
@@ -105,6 +108,17 @@ class ProfilePage extends StatelessWidget {
               onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                 builder: (_) => ChangePasswordPage(session: session, idioma: idioma),
               )),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.description_outlined, color: VetPassColors.primary),
+              title: Text(textos.terminos, style: Theme.of(context).textTheme.titleMedium),
+              trailing: const Icon(Icons.open_in_new, size: 20),
+              // El acuerdo de servicio vive en la landing page; la app enlaza
+              // a él, como exige el enunciado para todas las aplicaciones.
+              onTap: () => launchUrl(_terminos, mode: LaunchMode.externalApplication),
             ),
           ),
           const SizedBox(height: 24),

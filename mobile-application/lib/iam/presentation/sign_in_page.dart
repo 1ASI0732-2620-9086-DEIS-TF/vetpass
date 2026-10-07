@@ -87,6 +87,14 @@ class _SignInPageState extends State<SignInPage> {
                           .bodyMedium
                           ?.copyWith(color: VetPassColors.neutral600)),
                   const SizedBox(height: 24),
+                  if (_error == null && widget.session.expirada) ...[
+                    Text(textos.sesionExpirada,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: VetPassColors.primary)),
+                    const SizedBox(height: 16),
+                  ],
                   if (_error != null) ...[
                     Container(
                       padding: const EdgeInsets.all(12),

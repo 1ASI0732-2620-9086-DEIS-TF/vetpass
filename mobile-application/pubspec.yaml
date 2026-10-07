@@ -3,7 +3,7 @@ description: >-
   Aplicación móvil de VetPass para el dueño de la mascota. Interfaz de consulta:
   no permite registrar información clínica.
 publish_to: none
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.6.0
@@ -14,8 +14,11 @@ dependencies:
   http: ^1.2.2
   shared_preferences: ^2.3.3
   intl: ^0.20.1
+  url_launcher: ^6.3.1
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_lints: ^5.0.0
 
 flutter:

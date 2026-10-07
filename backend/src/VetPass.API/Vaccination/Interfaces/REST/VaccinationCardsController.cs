@@ -55,6 +55,8 @@ public class VaccinationCardsController(
     public async Task<IActionResult> RegisterDose(Guid petId, Guid doseId,
         [FromBody] RegisterDoseResource resource, CancellationToken cancellationToken)
     {
+        await EnsureAccessToPetAsync(petId, cancellationToken);
+
         await commandService.RegisterDoseAsync(
             new RegisterDoseCommand(petId, doseId, resource.ApplicationDate,
                 new BatchCode(resource.BatchCode), resource.VeterinarianId ?? currentUser.Id),
@@ -68,6 +70,6 @@ public class VaccinationCardsController(
     private async Task EnsureAccessToPetAsync(Guid petId, CancellationToken cancellationToken)
     {
         var patient = await patientsQueryService.GetPatientAsync(petId, cancellationToken);
-        currentUser.EnsureCanReadClient(patient.Owner.Id);
+        currentUser.EnsureCanAccess(patient.Owner.ClinicId, patient.Owner.Id);
     }
 }

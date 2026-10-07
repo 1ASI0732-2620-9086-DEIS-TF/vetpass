@@ -16,11 +16,14 @@ public interface ICurrentUser
     Guid? ClientId { get; }
 
     /// <summary>
-    /// Guards the information of a client against a request from another one:
-    /// the staff of the clinic reaches every patient, and the owner reaches only
-    /// those of the client the account belongs to (US05-E2).
+
+    /// The user may reach the information of a client: the staff, only within their
+
+    /// own clinic; the owner, only their own.
+
     /// </summary>
-    void EnsureCanReadClient(Guid clientId);
+
+    void EnsureCanAccess(Guid clinicId, Guid clientId);
 }
 
 public class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
@@ -42,9 +45,14 @@ public class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 
     public Guid? ClientId => Guid.TryParse(Principal.FindFirstValue(ClientClaim), out var id) ? id : null;
 
-    public void EnsureCanReadClient(Guid clientId)
+    public void EnsureCanAccess(Guid clinicId, Guid clientId)
     {
-        if (Role == Role.ClinicStaff) return;
+        if (Role == Role.ClinicStaff)
+        {
+            if (ClinicId == clinicId) return;
+            throw new ForbiddenOperationException("La información solicitada pertenece a otra clínica.");
+        }
+
         if (ClientId == clientId) return;
 
         throw new ForbiddenOperationException(

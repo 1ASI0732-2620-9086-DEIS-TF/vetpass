@@ -62,6 +62,8 @@ public class ClientsController(
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var client = await queryService.GetClientAsync(id, cancellationToken);
+        currentUser.EnsureCanAccess(client.ClinicId, client.Id);
+
         return Ok(ClientResourceFromEntityAssembler.ToResource(client));
     }
 

@@ -5,6 +5,15 @@ organización del curso en **GitHub**. Cada
 `git push` a `main` publica en producción, y cada rama obtiene su propia URL
 de vista previa. La base de datos y la autenticación siguen en **Supabase**.
 
+Cada proyecto de Vercel se reconstruye solo cuando cambió su carpeta desde su
+último despliegue correcto: un cambio en el informe o en `docs/` no reconstruye
+nada, y uno en `backend/` reconstruye solo la API. Lo decide el *Ignored Build
+Step* de cada proyecto:
+
+```bash
+git diff --quiet "${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}" HEAD -- .
+```
+
 | Pieza | Proyecto de Vercel | Carpeta raíz | URL |
 |---|---|---|---|
 | Landing page | `vetpass-landing` | `landing-page/` | https://vetpass-landing.vercel.app |
@@ -24,8 +33,10 @@ beta). La imagen se define en `backend/Dockerfile.vercel` y el servicio en
   `America/Lima`, pasa a UTC, y desde las 19:00 de Lima «hoy» sería mañana.
 - `GET /api/v1/health` responde sin tocar la base e informa la fecha y la zona
   horaria con que la API calcula la cartilla. Debe decir `America/Lima`.
-- La API se apaga tras 5 minutos sin tráfico. Antes de una demostración,
-  abre `/api/v1/health` para despertarla.
+- La API se apaga tras 5 minutos sin tráfico. La primera petición después
+  tarda unos 2 segundos (medido el 7 de octubre de 2026); las siguientes,
+  menos de uno. Antes de una demostración, abre `/api/v1/health` para
+  despertarla.
 
 ### Variables de entorno del proyecto `vetpass-api`
 

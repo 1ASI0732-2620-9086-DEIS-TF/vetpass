@@ -14,6 +14,9 @@ public interface IUserProfileRepository
     /// </summary>
     Task<IReadOnlyList<Guid>> ListClientIdsWithAccountAsync(Guid clinicId,
         CancellationToken cancellationToken = default);
+    /// <summary>The mobile account of a client of the clinic, if it has one.</summary>
+    Task<UserProfile?> FindByClientIdAsync(Guid clientId, CancellationToken cancellationToken = default);
+
     Task AddAsync(UserProfile profile, CancellationToken cancellationToken = default);
 }
 

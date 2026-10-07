@@ -4,9 +4,11 @@
  * guardar se generará la cartilla según la especie (US09), de modo que el
  * usuario sepa lo que el sistema hará por él.
  *
- * Las validaciones de especie y de fecha de nacimiento las resuelve la API:
- * la interfaz no duplica reglas de negocio, solo presenta lo que aquella
- * responde.
+ * Las validaciones de especie, de fecha de nacimiento y de documento las
+ * resuelve la API: la interfaz no duplica reglas de negocio, solo presenta lo
+ * que aquella responde. Si el documento ya pertenece a un cliente, la
+ * interfaz ofrece usarlo en lugar de registrar a la misma persona dos veces
+ * (US06-E4).
  */
 import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -23,7 +25,7 @@ import InputGroupAddon from 'primevue/inputgroupaddon';
 import Breadcrumb from 'primevue/breadcrumb';
 import { patientsApi } from '../infrastructure/patients.api';
 import { problemOf } from '../../shared/infrastructure/http';
-import { hoyISO } from '../../shared/i18n';
+import { formatearDocumento } from '../../shared/i18n';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -32,7 +34,7 @@ const toast = useToast();
 const modoCliente = ref('existente');
 const clientes = ref([]);
 const clienteId = ref(null);
-const cliente = ref({ fullName: '', phoneNumber: '', email: '' });
+const cliente = ref({ fullName: '', documentType: 'Dni', documentNumber: '', phoneNumber: '', email: '' });
 const mascota = ref({ name: '', species: 'Canine', breed: '', sex: 'Female', birthDate: null });
 
 const guardando = ref(false);
@@ -43,12 +45,24 @@ const avisoCliente = ref('');
 // campo y no al pie del formulario, conforme a la sección 4.1.2. El texto se
 // compone a partir del código y de los valores que la API entrega; la regla
 // sigue viviendo solo en la API.
-const erroresCampo = ref({ telefono: '', nacimiento: '' });
+const erroresCampo = ref({ telefono: '', nacimiento: '', documento: '' });
+const duplicado = ref(null);
 watch(() => cliente.value.phoneNumber, () => { erroresCampo.value.telefono = ''; });
+watch(() => [cliente.value.documentType, cliente.value.documentNumber], () => {
+  erroresCampo.value.documento = '';
+  duplicado.value = null;
+});
 watch(() => [mascota.value.birthDate, mascota.value.species], () => { erroresCampo.value.nacimiento = ''; });
 
 function avisoDeCampo(problema) {
   switch (problema.code) {
+    case 'invalid-identity-document':
+      erroresCampo.value.documento = t(`registro.documentoInvalido.${cliente.value.documentType}`);
+      return true;
+    case 'duplicate-client':
+      duplicado.value = { id: problema.existingClientId, nombre: problema.existingClientName };
+      erroresCampo.value.documento = t('registro.clienteDuplicado', { nombre: problema.existingClientName });
+      return true;
     case 'invalid-phone-number':
       erroresCampo.value.telefono = t('registro.telefonoInvalido');
       return true;
@@ -74,6 +88,18 @@ const opcionesModo = computed(() => [
   { etiqueta: t('registro.clienteExistente'), valor: 'existente' },
   { etiqueta: t('registro.clienteNuevo'), valor: 'nuevo' }
 ]);
+const opcionesDocumento = computed(() => [
+  { etiqueta: t('documento.corto.Dni'), valor: 'Dni' },
+  { etiqueta: t('documento.corto.ForeignerCard'), valor: 'ForeignerCard' }
+]);
+
+// El documento acompaña al nombre para distinguir a dos clientes homónimos, y
+// el filtro lo encuentra igual que al nombre.
+const opcionesCliente = computed(() => clientes.value.map((c) => ({
+  id: c.id,
+  etiqueta: `${c.fullName} · ${formatearDocumento(c, t)}`
+})));
+
 const opcionesEspecie = computed(() => [
   { etiqueta: t('especie.Canine'), valor: 'Canine' },
   { etiqueta: t('especie.Feline'), valor: 'Feline' }
@@ -98,6 +124,20 @@ onMounted(async () => {
   else modoCliente.value = 'nuevo';
 });
 
+/** El documento ya era de un cliente: se continúa con él. */
+async function usarClienteExistente() {
+  const { id } = duplicado.value;
+  if (!clientes.value.some((c) => c.id === id)) {
+    const { data } = await patientsApi.listarClientes();
+    clientes.value = data;
+  }
+  clienteId.value = id;
+  modoCliente.value = 'existente';
+  cliente.value = { fullName: '', documentType: 'Dni', documentNumber: '', phoneNumber: '', email: '' };
+  duplicado.value = null;
+  erroresCampo.value.documento = '';
+}
+
 function comoISO(fecha) {
   if (!fecha) return null;
   return new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -105,7 +145,8 @@ function comoISO(fecha) {
 
 async function guardar() {
   error.value = '';
-  erroresCampo.value = { telefono: '', nacimiento: '' };
+  erroresCampo.value = { telefono: '', nacimiento: '', documento: '' };
+  duplicado.value = null;
   avisoCliente.value = '';
   guardando.value = true;
   let clienteRecienCreado = false;
@@ -115,6 +156,8 @@ async function guardar() {
     if (modoCliente.value === 'nuevo') {
       const { data } = await patientsApi.registrarCliente({
         fullName: cliente.value.fullName,
+        documentType: cliente.value.documentType,
+        documentNumber: cliente.value.documentNumber,
         phoneNumber: cliente.value.phoneNumber,
         email: cliente.value.email || null
       });
@@ -188,8 +231,8 @@ async function guardar() {
             <Select
               input-id="cliente"
               v-model="clienteId"
-              :options="clientes"
-              option-label="fullName"
+              :options="opcionesCliente"
+              option-label="etiqueta"
               option-value="id"
               filter
               required
@@ -200,6 +243,44 @@ async function guardar() {
             <div class="vp-field">
               <label for="c-nombre">{{ t('registro.nombreCompleto') }}</label>
               <InputText id="c-nombre" v-model="cliente.fullName" required />
+            </div>
+            <div class="vp-field">
+              <label for="c-documento">{{ t('registro.tipoDocumento') }}</label>
+              <InputGroup>
+                <Select
+                  v-model="cliente.documentType"
+                  :options="opcionesDocumento"
+                  option-label="etiqueta"
+                  option-value="valor"
+                  :aria-label="t('registro.tipoDocumento')"
+                  class="tipo-documento"
+                />
+                <InputText
+                  id="c-documento"
+                  v-model="cliente.documentNumber"
+                  :inputmode="cliente.documentType === 'Dni' ? 'numeric' : 'text'"
+                  :maxlength="cliente.documentType === 'Dni' ? 8 : 14"
+                  :aria-label="t('registro.numeroDocumento')"
+                  :invalid="Boolean(erroresCampo.documento)"
+                  aria-describedby="c-documento-ayuda"
+                  required
+                />
+              </InputGroup>
+              <div v-if="erroresCampo.documento" id="c-documento-ayuda" class="campo-error duplicado">
+                <small>{{ erroresCampo.documento }}</small>
+                <Button
+                  v-if="duplicado"
+                  type="button"
+                  :label="t('registro.usarCliente')"
+                  icon="pi pi-user"
+                  size="small"
+                  text
+                  @click="usarClienteExistente"
+                />
+              </div>
+              <span v-else id="c-documento-ayuda" class="vp-caption vp-muted">
+                {{ t(`registro.documentoAyuda.${cliente.documentType}`) }}
+              </span>
             </div>
             <div class="vp-field">
               <label for="c-telefono">{{ t('registro.telefono') }}</label>
@@ -312,4 +393,8 @@ h3 { margin-bottom: var(--vp-space-3); }
 .modo { margin-bottom: var(--vp-space-3); }
 .aviso :deep(.p-message-text) { display: grid; gap: 4px; }
 .campo-error { color: var(--vp-danger); font-size: 13px; line-height: 18px; }
+.duplicado { display: flex; align-items: center; justify-content: space-between; gap: var(--vp-space-2); flex-wrap: wrap; }
+/* Un aviso bajo un campo no debe estirar a su vecino de fila. */
+.vp-form-grid { align-items: start; }
+.p-inputgroup .tipo-documento { flex: 0 0 6.5rem; width: 6.5rem; }
 </style>

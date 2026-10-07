@@ -41,7 +41,8 @@ export default {
     ultimaAtencion: 'Last visit',
     sinResultados: 'No patients match that criterion.',
     sinResultadosAccion: 'If this is a new patient, register them.',
-    sinAtenciones: 'No visits'
+    sinAtenciones: 'No visits',
+    edad: 'Age'
   },
 
   registro: {
@@ -67,7 +68,13 @@ export default {
     telefonoInvalido: 'Enter a Peruvian number: a 9-digit mobile beginning with 9, or a landline with its area code (01 for Lima).',
     nacimientoFuturo: 'The date of birth cannot be later than today.',
     nacimientoImplausible: 'That date would make the pet {edad} years old, above the {maximo} admitted for the {especie} species. Please check the year.',
-    clienteYaCreado: 'The client was registered. Correct the pet details and save again: it will be linked to the same client.'
+    clienteYaCreado: 'The client was registered. Correct the pet details and save again: it will be linked to the same client.',
+    tipoDocumento: 'ID document',
+    numeroDocumento: 'Document number',
+    documentoAyuda: { Dni: '8-digit DNI.', ForeignerCard: '9 to 12 letters or digits.' },
+    documentoInvalido: { Dni: 'The DNI must have exactly 8 digits.', ForeignerCard: 'The foreigner card must have 9 to 12 letters or digits.' },
+    clienteDuplicado: 'This document already belongs to {nombre}, registered at the clinic.',
+    usarCliente: 'Use this client'
   },
 
   ficha: {
@@ -77,6 +84,20 @@ export default {
     semanas: '{n} weeks',
     meses: '{n} months',
     anos: '{n} years | {n} year | {n} years'
+  },
+
+  // Calendar age: "2 months, 9 days", "3 years, 1 month".
+  edad: {
+    dias: '{n} days | {n} day | {n} days',
+    meses: '{n} months | {n} month | {n} months',
+    anos: '{n} years | {n} year | {n} years',
+    union: '{a}, {b}',
+    recienNacido: 'Newborn'
+  },
+
+  documento: {
+    corto: { Dni: 'DNI', ForeignerCard: 'CE' },
+    largo: { Dni: 'DNI (national ID)', ForeignerCard: 'CE (foreigner card)' }
   },
 
   cartilla: {
@@ -91,7 +112,8 @@ export default {
     estado: 'Status',
     esperada: 'Due: {fecha}',
     registrarDosis: 'Record dose',
-    nota: 'Doses follow the sequence of the schedule. The highlighted row is the one due today.'
+    nota: 'Doses follow the sequence of the schedule. The highlighted row is the one due today. Each vaccine is recorded in order; different vaccines can be given on the same day.',
+    antesLaDosis: 'First, the {dosis}'
   },
 
   dosis: {
@@ -101,11 +123,13 @@ export default {
     lote: 'Batch',
     veterinario: 'Administered by',
     valida: 'Meets the minimum age and the interval since the previous dose.',
-    aun_no: 'The schedule expects this dose on {fecha}. It cannot be recorded before that date.',
+    aun_no: 'It cannot be recorded before {fecha}: the minimum age or the interval since the previous dose is not met yet.',
     futura: 'The date of application cannot be later than today, {fecha}.',
     registrar: 'Record dose',
     otra: 'Record another dose of the schedule',
-    registrada: 'Dose recorded in the card of {nombre}.'
+    registrada: 'Dose recorded in the card of {nombre}.',
+    fueraDeOrden: 'The {dosis} must be recorded before this one: each vaccine is given in order.',
+    historica: 'If the dose was given on another date, enter it: the following doses of the series will be scheduled from today.'
   },
 
   historial: {
@@ -160,7 +184,16 @@ export default {
     contrasenaTemporal: 'Temporary password',
     entregar: 'Write it down or copy it now: it will not be shown again.',
     copiar: 'Copy',
-    copiada: 'Copied'
+    copiada: 'Copied',
+    documento: 'ID document',
+    contrasena: 'Password',
+    sinAcceso: 'No access',
+    restablecer: 'Reset',
+    restablecerTitulo: 'Reset password',
+    restablecerNota: 'A new temporary password will be generated for {nombre} and the current one will stop working. On signing in, the app will ask them to choose their own.',
+    restablecerConfirmar: 'Reset password',
+    restablecida: 'Password reset for {nombre}',
+    privacidad: 'VetPass neither stores nor shows client passwords: they can only be replaced with a temporary one.'
   },
 
   estado: {

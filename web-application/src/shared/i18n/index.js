@@ -91,3 +91,56 @@ export function formatearTelefono(valor) {
   }
   return valor;
 }
+
+function diasDelMes(ano, mes) {
+  return new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+}
+
+/** La fecha `meses` meses después; si ese día no existe, el último del mes (31/01 → 29/02). */
+function sumarMeses([ano, mes, dia], meses) {
+  const indice = mes - 1 + meses;
+  const a = ano + Math.floor(indice / 12);
+  const m = (indice % 12) + 1;
+  return Date.UTC(a, m - 1, Math.min(dia, diasDelMes(a, m)));
+}
+
+/**
+ * Edad de calendario a partir de la fecha de nacimiento: «9 días»,
+ * «2 meses, 9 días», «3 años, 1 mes». Se cuenta como se cuenta en la
+ * consulta, por meses y días reales, no dividiendo semanas.
+ */
+export function formatearEdad(nacimientoISO, t, hoy = hoyISO()) {
+  if (!nacimientoISO) return '—';
+
+  const nacimiento = nacimientoISO.slice(0, 10).split('-').map(Number);
+  const [ah, mh, dh] = hoy.slice(0, 10).split('-').map(Number);
+  const hoyUTC = Date.UTC(ah, mh - 1, dh);
+
+  // Meses cumplidos: los del calendario, menos uno si el día aún no llega.
+  let mesesCumplidos = (ah - nacimiento[0]) * 12 + (mh - nacimiento[1]);
+  if (sumarMeses(nacimiento, mesesCumplidos) > hoyUTC) mesesCumplidos -= 1;
+
+  const anos = Math.floor(mesesCumplidos / 12);
+  const meses = mesesCumplidos % 12;
+  const dias = Math.round((hoyUTC - sumarMeses(nacimiento, mesesCumplidos)) / 86400000);
+
+  const parte = (clave, n) => t(`edad.${clave}`, n, { named: { n } });
+
+  if (anos >= 1) {
+    return meses > 0
+      ? t('edad.union', { a: parte('anos', anos), b: parte('meses', meses) })
+      : parte('anos', anos);
+  }
+  if (meses >= 1) {
+    return dias > 0
+      ? t('edad.union', { a: parte('meses', meses), b: parte('dias', dias) })
+      : parte('meses', meses);
+  }
+  return dias > 0 ? parte('dias', dias) : t('edad.recienNacido');
+}
+
+/** Documento de un cliente para mostrar: «DNI 45879123», «CE 001827364». */
+export function formatearDocumento(cliente, t) {
+  if (!cliente?.documentNumber) return '—';
+  return `${t(`documento.corto.${cliente.documentType}`)} ${cliente.documentNumber}`;
+}

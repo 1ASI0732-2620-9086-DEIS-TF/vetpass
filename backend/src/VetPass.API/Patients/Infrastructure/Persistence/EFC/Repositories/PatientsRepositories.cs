@@ -7,7 +7,7 @@ using VetPass.API.Shared.Infrastructure.Persistence.EFC.Repositories;
 
 namespace VetPass.API.Patients.Infrastructure.Persistence.EFC.Repositories;
 
-public class ClientRepository(VetPassDbContext context)
+public partial class ClientRepository(VetPassDbContext context)
     : BaseRepository<Client>(context), IClientRepository
 {
     public async Task<Client?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
@@ -19,6 +19,16 @@ public class ClientRepository(VetPassDbContext context)
             .Where(client => client.ClinicId == clinicId)
             .OrderBy(client => client.FullName)
             .ToListAsync(cancellationToken);
+}
+
+public partial class ClientRepository
+{
+    public async Task<Client?> FindByDocumentAsync(Guid clinicId, IdentityDocument document,
+        CancellationToken cancellationToken = default) =>
+        await Context.Clients.FirstOrDefaultAsync(client =>
+            client.ClinicId == clinicId &&
+            client.DocumentType == document.Type &&
+            client.DocumentNumber == document.Number, cancellationToken);
 }
 
 public class PetRepository(VetPassDbContext context)

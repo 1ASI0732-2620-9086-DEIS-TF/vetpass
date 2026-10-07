@@ -68,6 +68,39 @@ class AppStrings {
   String get idiomaEtiqueta => _('Idioma', 'Language');
   String get ayuda => _('Ayuda', 'Help');
   String get cerrarSesion => _('Cerrar sesión', 'Sign out');
+
+  // Contraseña (US17)
+  String get cambiarContrasena => _('Cambiar contraseña', 'Change password');
+  String get cambiarContrasenaNota => _(
+      'Elige una contraseña que solo tú conozcas.',
+      'Choose a password only you know.');
+  String get contrasenaObligatoriaTitulo =>
+      _('Elige tu contraseña', 'Choose your password');
+  String get contrasenaObligatoriaNota => _(
+      'Tu veterinaria te entregó una contraseña temporal. Para continuar, reemplázala por una que solo tú conozcas.',
+      'Your clinic gave you a temporary password. To continue, replace it with one only you know.');
+  String get contrasenaActual => _('Contraseña actual', 'Current password');
+  String get contrasenaTemporal => _('Contraseña temporal', 'Temporary password');
+  String get contrasenaNueva => _('Contraseña nueva', 'New password');
+  String get contrasenaConfirmar =>
+      _('Repite la contraseña nueva', 'Repeat the new password');
+  String get contrasenaPolitica => _(
+      'Al menos 8 caracteres, con letras y números.',
+      'At least 8 characters, with letters and digits.');
+  String get contrasenasNoCoinciden =>
+      _('Las contraseñas no coinciden.', 'The passwords do not match.');
+  String get contrasenaActualIncorrecta =>
+      _('La contraseña actual no es correcta.', 'The current password is not correct.');
+  String get contrasenaDebil => _(
+      'La contraseña nueva debe tener al menos 8 caracteres, con letras y números.',
+      'The new password must have at least 8 characters, with letters and digits.');
+  String get contrasenaIgual => _(
+      'La contraseña nueva debe ser distinta de la actual.',
+      'The new password must be different from the current one.');
+  String get guardarContrasena => _('Guardar contraseña', 'Save password');
+  String get contrasenaActualizada =>
+      _('Tu contraseña quedó actualizada.', 'Your password was updated.');
+  String get mostrar => _('Mostrar', 'Show');
   String get soloConsulta => _(
       'Esta aplicación es de consulta: la información clínica la registra tu veterinaria.',
       'This application is read-only: clinical information is recorded by your clinic.');

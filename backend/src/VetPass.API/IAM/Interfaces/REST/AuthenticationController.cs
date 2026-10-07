@@ -115,4 +115,38 @@ public class AuthenticationController(
         return StatusCode(StatusCodes.Status201Created,
             CreatedAccountResourceFromEntityAssembler.ToResource(account));
     }
+
+    /// <summary>
+    /// Replaces the password of the user holding the session with one of their
+    /// own (US17). Answers 400, not 401, when the current password does not
+    /// match, so that the applications do not take it for an expired session.
+    /// </summary>
+    [HttpPost("password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordResource resource,
+        CancellationToken cancellationToken)
+    {
+        await commandService.ChangePasswordAsync(currentUser.Id, resource.CurrentPassword,
+            resource.NewPassword, cancellationToken);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Issues a new temporary password for the owner of a pet who forgot theirs
+    /// (US18). It travels only in this answer, as when the account was created.
+    /// </summary>
+    [HttpPost("owner-accounts/{clientId:guid}/password-reset")]
+    [Authorize(Policy = AuthorizationPolicies.ClinicStaff)]
+    [ProducesResponseType(typeof(CreatedAccountResource), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ResetOwnerPassword(Guid clientId, CancellationToken cancellationToken)
+    {
+        var clinicId = currentUser.ClinicId
+                       ?? throw new ForbiddenOperationException("El usuario no está asociado a ninguna clínica.");
+
+        var account = await commandService.ResetOwnerPasswordAsync(clientId, clinicId, cancellationToken);
+        return Ok(CreatedAccountResourceFromEntityAssembler.ToResource(account));
+    }
 }

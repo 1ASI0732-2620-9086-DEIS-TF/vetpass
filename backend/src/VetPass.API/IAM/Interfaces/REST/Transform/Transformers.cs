@@ -14,7 +14,8 @@ public static class UserResourceFromEntityAssembler
         profile.Role.ToClaimValue(),
         profile.ClinicId,
         profile.ClientId,
-        clinicName);
+        clinicName,
+        profile.RequiresPasswordChange);
 }
 
 public static class AuthenticatedSessionResourceFromEntityAssembler

@@ -19,7 +19,9 @@ public record DoseResource(
     string? BatchCode,
     Guid? VeterinarianId,
     string Status,
-    bool IsOverdue);
+    bool IsOverdue,
+    bool IsNextInSequence,
+    DateOnly? EarliestAdmissibleDate);
 
 public record VaccinationCardResource(
     Guid Id,

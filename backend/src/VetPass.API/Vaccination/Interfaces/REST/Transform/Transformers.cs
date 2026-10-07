@@ -54,7 +54,9 @@ public static class VaccinationCardResourceFromEntityAssembler
             dose.BatchCode?.Value,
             dose.VeterinarianId,
             dose.Status.ToString(),
-            dose.IsOverdue(view.Today));
+            dose.IsOverdue(view.Today),
+            view.Card.IsNextInSequence(dose),
+            view.Card.EarliestAdmissibleDate(dose));
     }
 
     private static string LabelFor(Dose dose) => dose.MinimumAgeInWeeks >= BoosterMinimumAgeInWeeks

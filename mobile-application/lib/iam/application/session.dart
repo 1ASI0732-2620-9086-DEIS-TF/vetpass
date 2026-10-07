@@ -12,6 +12,7 @@ class Usuario {
     required this.role,
     this.clientId,
     this.clinicName,
+    this.requiresPasswordChange = false,
   });
 
   final String id;
@@ -21,6 +22,19 @@ class Usuario {
   final String? clientId;
   final String? clinicName;
 
+  /// La cuenta tiene una contraseña temporal que conoce la recepción: el dueño
+  /// debe elegir una propia antes de usar la aplicación (US17).
+  final bool requiresPasswordChange;
+
+  Usuario conContrasenaPropia() => Usuario(
+        id: id,
+        email: email,
+        fullName: fullName,
+        role: role,
+        clientId: clientId,
+        clinicName: clinicName,
+      );
+
   factory Usuario.desdeJson(Map<String, dynamic> json) => Usuario(
         id: json['id'] as String,
         email: json['email'] as String,
@@ -28,6 +42,7 @@ class Usuario {
         role: json['role'] as String,
         clientId: json['clientId'] as String?,
         clinicName: json['clinicName'] as String?,
+        requiresPasswordChange: json['requiresPasswordChange'] as bool? ?? false,
       );
 
   Map<String, dynamic> aJson() => {
@@ -37,6 +52,7 @@ class Usuario {
         'role': role,
         'clientId': clientId,
         'clinicName': clinicName,
+        'requiresPasswordChange': requiresPasswordChange,
       };
 }
 
@@ -55,6 +71,7 @@ class Session extends ChangeNotifier {
   ApiClient get api => _api;
   Usuario? get usuario => _usuario;
   bool get autenticado => _token != null;
+  bool get debeCambiarContrasena => _usuario?.requiresPasswordChange ?? false;
   bool get cargando => _cargando;
 
   Future<void> restaurar() async {
@@ -84,13 +101,28 @@ class Session extends ChangeNotifier {
       _usuario = Usuario.desdeJson(datos['user'] as Map<String, dynamic>);
       _api.token = _token;
 
-      final preferencias = await SharedPreferences.getInstance();
-      await preferencias.setString(
-          _clave, jsonEncode({'token': _token, 'usuario': _usuario!.aJson()}));
+      await _guardar();
     } finally {
       _cargando = false;
       notifyListeners();
     }
+  }
+
+  /// Reemplaza la contraseña por una propia. La API verifica la actual y aplica
+  /// la política; aquí solo se registra que la cuenta ya no tiene una temporal.
+  Future<void> cambiarContrasena(String actual, String nueva) async {
+    await _api.post('/authentication/password',
+        {'currentPassword': actual, 'newPassword': nueva});
+
+    _usuario = _usuario?.conContrasenaPropia();
+    await _guardar();
+    notifyListeners();
+  }
+
+  Future<void> _guardar() async {
+    final preferencias = await SharedPreferences.getInstance();
+    await preferencias.setString(
+        _clave, jsonEncode({'token': _token, 'usuario': _usuario!.aJson()}));
   }
 
   Future<void> cerrarSesion() async {

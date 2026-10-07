@@ -45,6 +45,22 @@ public class VaccinationSchedule
     /// Verifies that the pet reaches the minimum age of the vaccine on the date
     /// of application (US10-E2).
     /// </summary>
+    /// <summary>
+    /// First day on which the dose may be applied: the minimum age of the
+    /// vaccine and, from the second dose on, the minimum interval since the
+    /// previous application. It is not the expected date, which never falls
+    /// before the day the plan is made; a dose given years ago is admissible
+    /// on its real date even though the plan would place it today.
+    /// </summary>
+    public static DateOnly EarliestAdmissibleDate(Dose dose, Dose? previous, DateOnly birthDate)
+    {
+        var byAge = birthDate.AddDays(dose.MinimumAgeInWeeks * 7);
+        if (previous?.ApplicationDate is null) return byAge;
+
+        var byInterval = previous.ApplicationDate.Value.AddDays(dose.MinimumIntervalInWeeks * 7);
+        return byInterval > byAge ? byInterval : byAge;
+    }
+
     public static void EnsureMinimumAge(Dose dose, DateOnly birthDate, DateOnly applicationDate)
     {
         var earliestAdmissibleDate = birthDate.AddDays(dose.MinimumAgeInWeeks * 7);

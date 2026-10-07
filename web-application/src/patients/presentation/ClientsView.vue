@@ -5,6 +5,10 @@
  * El dueño no se registra por su cuenta: la clínica le crea el acceso y le
  * entrega una contraseña temporal en recepción (US05). Esta pantalla es el
  * lugar donde eso ocurre, y por eso distingue a quién ya se le entregó.
+ *
+ * Si el dueño olvida su contraseña, la clínica no puede verla —no se guarda
+ * en ningún sitio legible—: la reemplaza por una temporal nueva, que el
+ * dueño cambia por una propia al ingresar (US18).
  */
 import { computed, ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -19,7 +23,7 @@ import Tag from 'primevue/tag';
 import { patientsApi } from '../infrastructure/patients.api';
 import { authenticationApi } from '../../iam/infrastructure/authentication.api';
 import { problemOf } from '../../shared/infrastructure/http';
-import { formatearTelefono } from '../../shared/i18n';
+import { formatearTelefono, formatearDocumento } from '../../shared/i18n';
 
 const { t } = useI18n();
 const toast = useToast();
@@ -28,6 +32,8 @@ const clientes = ref([]);
 const cargando = ref(true);
 
 const dialogoAbierto = ref(false);
+// «crear»: dar acceso a quien no lo tiene. «restablecer»: contraseña olvidada.
+const modo = ref('crear');
 const clienteElegido = ref(null);
 const correo = ref('');
 const enviando = ref(false);
@@ -35,9 +41,11 @@ const error = ref('');
 const contrasena = ref('');
 const copiada = ref(false);
 
-const nota = computed(() => t('clientes.dialogoNota', {
+const nota = computed(() => t(modo.value === 'crear' ? 'clientes.dialogoNota' : 'clientes.restablecerNota', {
   nombre: clienteElegido.value?.fullName ?? ''
 }));
+
+const titulo = computed(() => t(modo.value === 'crear' ? 'clientes.dialogoTitulo' : 'clientes.restablecerTitulo'));
 
 async function cargar() {
   cargando.value = true;
@@ -51,7 +59,8 @@ async function cargar() {
 
 onMounted(cargar);
 
-function abrirDialogo(cliente) {
+function abrirDialogo(cliente, enModo = 'crear') {
+  modo.value = enModo;
   clienteElegido.value = cliente;
   correo.value = cliente.email ?? '';
   contrasena.value = '';
@@ -83,6 +92,27 @@ async function crearAcceso() {
   }
 }
 
+async function restablecer() {
+  error.value = '';
+  enviando.value = true;
+  try {
+    const { data } = await authenticationApi.restablecerContrasenaDeDueno(clienteElegido.value.id);
+
+    // Como al crear el acceso: se muestra una vez y no se guarda.
+    contrasena.value = data.temporaryPassword;
+    correo.value = data.user.email;
+    toast.add({
+      severity: 'success',
+      summary: t('clientes.restablecida', { nombre: clienteElegido.value.fullName }),
+      life: 4000
+    });
+  } catch (fallo) {
+    error.value = problemOf(fallo).detail ?? t('comun.errorInesperado');
+  } finally {
+    enviando.value = false;
+  }
+}
+
 async function copiar() {
   try {
     await navigator.clipboard.writeText(contrasena.value);
@@ -103,6 +133,12 @@ async function copiar() {
       <DataTable :value="clientes" data-key="id" :loading="cargando">
         <Column field="fullName" :header="t('clientes.nombre')">
           <template #body="{ data }"><span class="nombre">{{ data.fullName }}</span></template>
+        </Column>
+
+        <Column field="documentNumber" :header="t('clientes.documento')">
+          <template #body="{ data }">
+            <span class="documento">{{ formatearDocumento(data, t) }}</span>
+          </template>
         </Column>
 
         <Column field="phoneNumber" :header="t('clientes.telefono')">
@@ -136,13 +172,27 @@ async function copiar() {
             />
           </template>
         </Column>
+
+        <Column :header="t('clientes.contrasena')">
+          <template #body="{ data }">
+            <Button
+              v-if="data.hasAccount"
+              :label="t('clientes.restablecer')"
+              icon="pi pi-key"
+              size="small"
+              text
+              @click="abrirDialogo(data, 'restablecer')"
+            />
+            <span v-else class="vp-muted">—</span>
+          </template>
+        </Column>
       </DataTable>
     </div>
 
     <Dialog
       v-model:visible="dialogoAbierto"
       modal
-      :header="t('clientes.dialogoTitulo')"
+      :header="titulo"
       :style="{ width: '30rem' }"
       :breakpoints="{ '640px': '95vw' }"
     >
@@ -150,7 +200,11 @@ async function copiar() {
       <template v-if="!contrasena">
         <p class="vp-small vp-muted nota">{{ nota }}</p>
 
-        <div class="vp-field">
+        <p v-if="modo === 'restablecer'" class="vp-caption vp-muted privacidad">
+          <i class="pi pi-lock" aria-hidden="true" /> {{ t('clientes.privacidad') }}
+        </p>
+
+        <div v-if="modo === 'crear'" class="vp-field">
           <label for="acceso-correo">{{ t('clientes.correo') }}</label>
           <InputText id="acceso-correo" v-model="correo" type="email" autofocus />
           <small v-if="!clienteElegido?.email" class="vp-muted">
@@ -184,10 +238,19 @@ async function copiar() {
         <template v-if="!contrasena">
           <Button :label="t('comun.cancelar')" text @click="dialogoAbierto = false" />
           <Button
+            v-if="modo === 'crear'"
             :label="t('clientes.crear')"
             :disabled="!correo.trim()"
             :loading="enviando"
             @click="crearAcceso"
+          />
+          <Button
+            v-else
+            :label="t('clientes.restablecerConfirmar')"
+            icon="pi pi-key"
+            severity="warn"
+            :loading="enviando"
+            @click="restablecer"
           />
         </template>
         <Button v-else :label="t('comun.cerrar')" @click="dialogoAbierto = false" />
@@ -198,7 +261,8 @@ async function copiar() {
 
 <style scoped>
 .nombre { font-weight: 600; }
-.telefono { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.telefono, .documento { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.privacidad { display: flex; gap: var(--vp-space-2); align-items: baseline; margin-bottom: var(--vp-space-2); }
 .nota { margin-bottom: var(--vp-space-3); }
 .aviso { margin-top: var(--vp-space-3); }
 .contrasena {

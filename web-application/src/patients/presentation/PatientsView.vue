@@ -16,7 +16,7 @@ import Select from 'primevue/select';
 import ProgressSpinner from 'primevue/progressspinner';
 import StatusTag from '../../shared/presentation/StatusTag.vue';
 import { patientsApi } from '../infrastructure/patients.api';
-import { formatearFecha } from '../../shared/i18n';
+import { formatearFecha, formatearEdad } from '../../shared/i18n';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -151,6 +151,11 @@ function abrir(paciente) {
         <Column field="birthDate" :header="t('registro.fechaNacimiento')">
           <template #body="{ data }">{{ formatearFecha(data.birthDate) }}</template>
         </Column>
+
+        <!-- Ordenar por edad es ordenar por nacimiento, al revés. -->
+        <Column :header="t('pacientes.edad')">
+          <template #body="{ data }"><span class="edad">{{ formatearEdad(data.birthDate, t) }}</span></template>
+        </Column>
       </DataTable>
     </div>
   </div>
@@ -161,6 +166,7 @@ function abrir(paciente) {
 .filtros .vp-field { min-width: 180px; }
 .cargando { display: grid; place-items: center; padding: var(--vp-space-6); }
 .nombre { font-weight: 600; }
+.edad { white-space: nowrap; }
 .vacio { padding: var(--vp-space-5); text-align: center; display: grid; gap: var(--vp-space-2); }
 .vacio__accion { justify-self: center; margin-top: var(--vp-space-2); }
 :deep(.p-datatable-tbody > tr) { cursor: pointer; }

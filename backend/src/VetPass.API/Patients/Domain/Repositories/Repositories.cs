@@ -11,6 +11,10 @@ public interface IClientRepository
 {
     Task<Client?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Client>> ListByClinicAsync(Guid clinicId, CancellationToken cancellationToken = default);
+
+    /// <summary>The client of the clinic that holds the document, if any.</summary>
+    Task<Client?> FindByDocumentAsync(Guid clinicId, IdentityDocument document,
+        CancellationToken cancellationToken = default);
     Task AddAsync(Client client, CancellationToken cancellationToken = default);
 }
 

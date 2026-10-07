@@ -52,7 +52,10 @@ export function problemOf(error) {
     earliestAdmissibleDate: datos.earliestAdmissibleDate,
     ageInYears: datos.ageInYears,
     maximumAgeInYears: datos.maximumAgeInYears,
-    species: datos.species
+    species: datos.species,
+    existingClientId: datos.existingClientId,
+    existingClientName: datos.existingClientName,
+    pendingSequenceNumber: datos.pendingSequenceNumber
   };
 }
 

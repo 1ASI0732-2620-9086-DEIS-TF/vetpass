@@ -35,6 +35,7 @@ public class ClientsController(
     {
         var client = await commandService.CreateClientAsync(
             new CreateClientCommand(ClinicOfCurrentUser(), resource.FullName,
+                IdentityDocument.Parse(resource.DocumentType, resource.DocumentNumber),
                 PhoneNumber.Parse(resource.PhoneNumber), resource.Email),
             cancellationToken);
 

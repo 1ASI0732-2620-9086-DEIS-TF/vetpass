@@ -98,6 +98,28 @@ public class SupabaseAuthGateway(HttpClient http, IOptions<SupabaseAuthOptions> 
         return new IdentityAccount(Guid.Parse(id!), email);
     }
 
+    public async Task SetPasswordAsync(Guid accountId, string password,
+        CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Put, $"{_options.AuthUrl}/admin/users/{accountId}")
+        {
+            Content = JsonContent.Create(new { password })
+        };
+        request.Headers.Add("apikey", _options.ServiceRoleKey);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ServiceRoleKey);
+
+        using var response = await http.SendAsync(request, cancellationToken);
+        if (response.IsSuccessStatusCode) return;
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+        logger.LogError("El proveedor de identidad rechazó el cambio de contraseña de {Account}: {Status} {Body}",
+            accountId, (int)response.StatusCode, body);
+
+        // El proveedor tiene su propia política, que puede ser más estricta que
+        // la del dominio: su rechazo se informa como contraseña no admitida.
+        throw new WeakPasswordException();
+    }
+
     private static async Task<AccessToken> ReadTokenAsync(HttpResponseMessage response,
         CancellationToken cancellationToken)
     {

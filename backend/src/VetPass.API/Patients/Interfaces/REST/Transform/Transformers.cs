@@ -8,7 +8,8 @@ namespace VetPass.API.Patients.Interfaces.REST.Transform;
 public static class ClientResourceFromEntityAssembler
 {
     public static ClientResource ToResource(Client client, bool hasAccount = false) =>
-        new(client.Id, client.FullName, client.PhoneNumber, client.Email, hasAccount);
+        new(client.Id, client.FullName, client.DocumentType.ToString(), client.DocumentNumber,
+            client.PhoneNumber, client.Email, hasAccount);
 }
 
 public static class PetResourceFromEntityAssembler

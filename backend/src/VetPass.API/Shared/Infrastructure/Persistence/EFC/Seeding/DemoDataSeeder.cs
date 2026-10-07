@@ -59,10 +59,13 @@ public class DemoDataSeeder(
         // Los clientes de la clínica. Valeria Campos es la User Persona de la
         // sección 2.3.1 y la dueña que aparece en los mock-ups de la aplicación
         // móvil, con sus dos mascotas.
-        var valeria = await AddClientAsync("Valeria Campos", "987 654 321", OwnerEmail, cancellationToken);
-        var jorge = await AddClientAsync("Jorge Aliaga", "941 220 118", "jorge.aliaga@correo.com", cancellationToken);
-        var melissa = await AddClientAsync("Melissa Rojas", "915 883 204", "melissa.rojas@correo.com", cancellationToken);
-        var carlos = await AddClientAsync("Carlos Ramos", "998 471 663", null, cancellationToken);
+        // Los documentos son ficticios. Carlos Ramos tiene carné de extranjería,
+        // para que el caso muestre los dos tipos que la plataforma admite.
+        var valeria = await AddClientAsync("Valeria Campos", Dni("45879123"), "987 654 321", OwnerEmail, cancellationToken);
+        var jorge = await AddClientAsync("Jorge Aliaga", Dni("40112358"), "941 220 118", "jorge.aliaga@correo.com", cancellationToken);
+        var melissa = await AddClientAsync("Melissa Rojas", Dni("47263519"), "915 883 204", "melissa.rojas@correo.com", cancellationToken);
+        var carlos = await AddClientAsync("Carlos Ramos",
+            IdentityDocument.Of(IdentityDocumentType.ForeignerCard, "001827364"), "998 471 663", null, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
         await CreateAccountAsync(OwnerEmail, "Valeria Campos", Role.PetOwner,
@@ -73,40 +76,40 @@ public class DemoDataSeeder(
         // antirrábica será rechazada por edad mínima.
         var rocky = await AddPetAsync(jorge.Id, "Rocky", Species.Canine, "Beagle", Sex.Male,
             today.AddDays(-9 * 7), cancellationToken);
-        var rockyCard = await GenerateCardAsync(rocky, cancellationToken);
+        var rockyCard = await GenerateCardAsync(rocky, FirstVisit(rocky), cancellationToken);
         Apply(rockyCard, VaccinationCatalogSeeder.CanineMultivalentId, 1, today.AddDays(-3 * 7), "A-4471",
-            veterinarian.Id, today);
+            veterinarian.Id);
 
         // Kiara: cartilla al día, con el refuerzo anual esperado más adelante.
         var kiara = await AddPetAsync(valeria.Id, "Kiara", Species.Canine, "Shih tzu", Sex.Female,
             today.AddDays(-50 * 7), cancellationToken);
-        var kiaraCard = await GenerateCardAsync(kiara, cancellationToken);
-        ApplyInitialCanineSeries(kiaraCard, kiara.BirthDate, veterinarian.Id, today, "A-4471", "A-4520", "R-1180");
+        var kiaraCard = await GenerateCardAsync(kiara, FirstVisit(kiara), cancellationToken);
+        ApplyInitialCanineSeries(kiaraCard, kiara.BirthDate, veterinarian.Id, "A-4471", "A-4520", "R-1180");
 
         // Simón: cartilla vencida por el refuerzo de leucemia felina.
         var simon = await AddPetAsync(valeria.Id, "Simón", Species.Feline, "Mestizo", Sex.Male,
             today.AddDays(-62 * 7), cancellationToken);
-        var simonCard = await GenerateCardAsync(simon, cancellationToken);
-        ApplyInitialFelineSeries(simonCard, simon.BirthDate, veterinarian.Id, today);
+        var simonCard = await GenerateCardAsync(simon, FirstVisit(simon), cancellationToken);
+        ApplyInitialFelineSeries(simonCard, simon.BirthDate, veterinarian.Id);
         Apply(simonCard, VaccinationCatalogSeeder.FelineMultivalentId, 4, simon.BirthDate.AddDays(52 * 7),
-            "F-2214", veterinarian.Id, today);
+            "F-2214", veterinarian.Id);
 
         var luna = await AddPetAsync(jorge.Id, "Luna", Species.Canine, "Labrador", Sex.Female,
             today.AddDays(-50 * 7), cancellationToken);
-        var lunaCard = await GenerateCardAsync(luna, cancellationToken);
-        ApplyInitialCanineSeries(lunaCard, luna.BirthDate, veterinarian.Id, today, "A-4502", "A-4610", "R-1204");
+        var lunaCard = await GenerateCardAsync(luna, FirstVisit(luna), cancellationToken);
+        ApplyInitialCanineSeries(lunaCard, luna.BirthDate, veterinarian.Id, "A-4502", "A-4610", "R-1204");
 
         var michi = await AddPetAsync(melissa.Id, "Michi", Species.Feline, "Mestizo", Sex.Female,
             today.AddDays(-50 * 7), cancellationToken);
-        var michiCard = await GenerateCardAsync(michi, cancellationToken);
-        ApplyInitialFelineSeries(michiCard, michi.BirthDate, veterinarian.Id, today);
+        var michiCard = await GenerateCardAsync(michi, FirstVisit(michi), cancellationToken);
+        ApplyInitialFelineSeries(michiCard, michi.BirthDate, veterinarian.Id);
 
         // Toby: solo recibió la primera dosis, de modo que su cartilla está vencida.
         var toby = await AddPetAsync(carlos.Id, "Toby", Species.Canine, "Mestizo", Sex.Male,
             today.AddDays(-20 * 7), cancellationToken);
-        var tobyCard = await GenerateCardAsync(toby, cancellationToken);
+        var tobyCard = await GenerateCardAsync(toby, FirstVisit(toby), cancellationToken);
         Apply(tobyCard, VaccinationCatalogSeeder.CanineMultivalentId, 1, toby.BirthDate.AddDays(6 * 7),
-            "A-4388", veterinarian.Id, today);
+            "A-4388", veterinarian.Id);
 
         await SeedVisitsAsync(rocky, kiara, veterinarian.Id, today, cancellationToken);
 
@@ -134,10 +137,15 @@ public class DemoDataSeeder(
         return profile;
     }
 
-    private async Task<Client> AddClientAsync(string fullName, string phone, string? email,
-        CancellationToken cancellationToken)
+    private static IdentityDocument Dni(string number) => IdentityDocument.Of(IdentityDocumentType.Dni, number);
+
+    /// <summary>Day of the first visit, when the clinic registered the pet: its first dose.</summary>
+    private static DateOnly FirstVisit(Pet pet) => pet.BirthDate.AddDays(6 * 7);
+
+    private async Task<Client> AddClientAsync(string fullName, IdentityDocument document, string phone,
+        string? email, CancellationToken cancellationToken)
     {
-        var client = new Client(ClinicId, fullName, PhoneNumber.Parse(phone), email);
+        var client = new Client(ClinicId, fullName, document, PhoneNumber.Parse(phone), email);
         await context.Clients.AddAsync(client, cancellationToken);
         return client;
     }
@@ -151,10 +159,11 @@ public class DemoDataSeeder(
         return pet;
     }
 
-    private async Task<VaccinationCard> GenerateCardAsync(Pet pet, CancellationToken cancellationToken)
+    private async Task<VaccinationCard> GenerateCardAsync(Pet pet, DateOnly registeredOn,
+        CancellationToken cancellationToken)
     {
         var schedule = await scheduleProvider.GetForAsync(pet.Species, cancellationToken);
-        var card = VaccinationCard.GenerateFrom(pet.Id, schedule, pet.BirthDate);
+        var card = VaccinationCard.GenerateFrom(pet.Id, schedule, pet.BirthDate, registeredOn);
 
         await context.VaccinationCards.AddAsync(card, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
@@ -166,38 +175,44 @@ public class DemoDataSeeder(
     /// Records an applied dose through the aggregate, never by writing the row
     /// directly: the demonstration data are therefore data the domain itself
     /// admits, and seeding an impossible card is not even possible.
+    ///
+    /// The dose is recorded as the clinic recorded it, on the day it was
+    /// applied. That is the "today" the aggregate plans the rest of the series
+    /// from, so the history comes out as it happened and not compressed into
+    /// the day the seed runs.
     /// </summary>
     private static void Apply(VaccinationCard card, Guid vaccineId, int sequenceNumber,
-        DateOnly applicationDate, string batchCode, Guid veterinarianId, DateOnly today)
+        DateOnly applicationDate, string batchCode, Guid veterinarianId)
     {
         var dose = card.Doses.First(d => d.VaccineId == vaccineId && d.SequenceNumber == sequenceNumber);
-        card.RegisterDose(dose.Id, applicationDate, new BatchCode(batchCode), veterinarianId, today);
+        card.RegisterDose(dose.Id, applicationDate, new BatchCode(batchCode), veterinarianId,
+            today: applicationDate);
     }
 
     private static void ApplyInitialCanineSeries(VaccinationCard card, DateOnly birthDate,
-        Guid veterinarianId, DateOnly today, string firstBatch, string secondBatch, string rabiesBatch)
+        Guid veterinarianId, string firstBatch, string secondBatch, string rabiesBatch)
     {
         var multivalent = VaccinationCatalogSeeder.CanineMultivalentId;
-        Apply(card, multivalent, 1, birthDate.AddDays(6 * 7), firstBatch, veterinarianId, today);
-        Apply(card, multivalent, 2, birthDate.AddDays(9 * 7), secondBatch, veterinarianId, today);
-        Apply(card, multivalent, 3, birthDate.AddDays(12 * 7), secondBatch, veterinarianId, today);
+        Apply(card, multivalent, 1, birthDate.AddDays(6 * 7), firstBatch, veterinarianId);
+        Apply(card, multivalent, 2, birthDate.AddDays(9 * 7), secondBatch, veterinarianId);
+        Apply(card, multivalent, 3, birthDate.AddDays(12 * 7), secondBatch, veterinarianId);
         Apply(card, VaccinationCatalogSeeder.CanineRabiesId, 1, birthDate.AddDays(12 * 7), rabiesBatch,
-            veterinarianId, today);
+            veterinarianId);
     }
 
     private static void ApplyInitialFelineSeries(VaccinationCard card, DateOnly birthDate,
-        Guid veterinarianId, DateOnly today)
+        Guid veterinarianId)
     {
         var multivalent = VaccinationCatalogSeeder.FelineMultivalentId;
         var leukemia = VaccinationCatalogSeeder.FelineLeukemiaId;
 
-        Apply(card, multivalent, 1, birthDate.AddDays(6 * 7), "F-1120", veterinarianId, today);
-        Apply(card, multivalent, 2, birthDate.AddDays(9 * 7), "F-1188", veterinarianId, today);
-        Apply(card, multivalent, 3, birthDate.AddDays(12 * 7), "F-1240", veterinarianId, today);
-        Apply(card, leukemia, 1, birthDate.AddDays(8 * 7), "L-0455", veterinarianId, today);
-        Apply(card, leukemia, 2, birthDate.AddDays(11 * 7), "L-0472", veterinarianId, today);
+        Apply(card, multivalent, 1, birthDate.AddDays(6 * 7), "F-1120", veterinarianId);
+        Apply(card, multivalent, 2, birthDate.AddDays(9 * 7), "F-1188", veterinarianId);
+        Apply(card, multivalent, 3, birthDate.AddDays(12 * 7), "F-1240", veterinarianId);
+        Apply(card, leukemia, 1, birthDate.AddDays(8 * 7), "L-0455", veterinarianId);
+        Apply(card, leukemia, 2, birthDate.AddDays(11 * 7), "L-0472", veterinarianId);
         Apply(card, VaccinationCatalogSeeder.FelineRabiesId, 1, birthDate.AddDays(12 * 7), "R-1180",
-            veterinarianId, today);
+            veterinarianId);
     }
 
     private async Task SeedVisitsAsync(Pet rocky, Pet kiara, Guid veterinarianId, DateOnly today,

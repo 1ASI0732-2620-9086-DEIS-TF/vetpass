@@ -4,6 +4,8 @@ namespace VetPass.API.Patients.Interfaces.REST.Resources;
 
 public record CreateClientResource(
     [Required] string FullName,
+    [Required] string DocumentType,
+    [Required] string DocumentNumber,
     [Required] string PhoneNumber,
     [EmailAddress] string? Email);
 
@@ -15,7 +17,8 @@ public record CreatePetResource(
     [Required] string Sex,
     [Required] DateOnly BirthDate);
 
-public record ClientResource(Guid Id, string FullName, string PhoneNumber, string? Email, bool HasAccount);
+public record ClientResource(Guid Id, string FullName, string DocumentType, string DocumentNumber,
+    string PhoneNumber, string? Email, bool HasAccount);
 
 public record PetResource(
     Guid Id,

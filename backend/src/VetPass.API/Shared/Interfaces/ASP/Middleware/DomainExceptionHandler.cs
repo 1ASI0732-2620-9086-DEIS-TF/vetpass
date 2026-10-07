@@ -27,6 +27,7 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
             InvalidCredentialsException => StatusCodes.Status401Unauthorized,
             ForbiddenOperationException => StatusCodes.Status403Forbidden,
             ResourceNotFoundException => StatusCodes.Status404NotFound,
+            DomainConflictException => StatusCodes.Status409Conflict,
             DomainRuleViolationException => StatusCodes.Status422UnprocessableEntity,
             InvalidDomainDataException => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status400BadRequest
@@ -57,6 +58,7 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
         StatusCodes.Status401Unauthorized => "Credenciales inválidas",
         StatusCodes.Status403Forbidden => "Operación no permitida",
         StatusCodes.Status404NotFound => "Recurso no encontrado",
+        StatusCodes.Status409Conflict => "Registro duplicado",
         StatusCodes.Status422UnprocessableEntity => "Regla del esquema incumplida",
         _ => "Datos inválidos"
     };
@@ -75,10 +77,18 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
                 problem.Extensions["requiredWeeks"] = age.RequiredWeeks;
                 problem.Extensions["earliestAdmissibleDate"] = age.EarliestAdmissibleDate.ToString("yyyy-MM-dd");
                 break;
+            case Patients.Application.Internal.CommandServices.DuplicateClientException duplicate:
+                problem.Extensions["existingClientId"] = duplicate.ExistingClientId;
+                problem.Extensions["existingClientName"] = duplicate.ExistingClientName;
+                break;
             case Patients.Domain.Model.Aggregates.ImplausibleBirthDateException birth:
                 problem.Extensions["ageInYears"] = birth.AgeInYears;
                 problem.Extensions["maximumAgeInYears"] = birth.MaximumAgeInYears;
                 problem.Extensions["species"] = birth.Species.ToString();
+                break;
+            case Vaccination.Domain.Model.Aggregates.DoseOutOfOrderException order:
+                problem.Extensions["pendingDoseId"] = order.PendingDoseId;
+                problem.Extensions["pendingSequenceNumber"] = order.PendingSequenceNumber;
                 break;
             case MinimumIntervalNotMetException interval:
                 problem.Extensions["elapsedWeeks"] = interval.ElapsedWeeks;

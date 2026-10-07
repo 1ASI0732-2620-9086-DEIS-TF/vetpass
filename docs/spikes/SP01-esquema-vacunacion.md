@@ -74,20 +74,37 @@ exterior.
 Estas son las reglas que el dominio implementa y que la suite de pruebas
 verificará:
 
-1. **Fecha esperada al generar la cartilla.**
-   `fecha esperada = fecha de nacimiento + edad mínima`.
-2. **Recálculo al registrar una dosis.** Al aplicarse una dosis, la siguiente
-   dosis pendiente de la misma vacuna recalcula su fecha esperada como
-   `máx(fecha de nacimiento + edad mínima, fecha de aplicación + intervalo mínimo)`.
-   Así, si una dosis se aplica con retraso, el esquema se desplaza en lugar de
-   arrastrar una fecha imposible de cumplir.
-3. **Edad mínima (US10-E2).** Se rechaza la dosis si
+1. **Fecha esperada (US09-E2, US09-E3).** Cada vacuna es una serie ordenada.
+   La fecha esperada de cada dosis pendiente es
+   `máx(fecha de nacimiento + edad mínima, dosis anterior de la serie + intervalo mínimo, hoy)`,
+   donde la dosis anterior cuenta con su fecha de aplicación si ya se aplicó y
+   con su fecha esperada si no. El último término es el que permite registrar
+   a una mascota adulta o sin historial conocido: su esquema comienza el día
+   del registro y no muestra dosis que se esperaban años atrás.
+2. **Replanificación al registrar una dosis.** Al aplicarse una dosis, las
+   pendientes **de esa misma vacuna** vuelven a calcularse con la regla 1. Así,
+   si una dosis se aplica con retraso, o se registra una aplicada antes del
+   ingreso de la mascota, el resto de la serie se desplaza a partir de hoy en
+   lugar de arrastrar fechas imposibles de cumplir. Las demás vacunas no se
+   replanifican: una dosis que nadie aplicó debe seguir figurando como vencida
+   (US11-E3).
+3. **Orden de la serie (US10-E5).** Se rechaza una dosis mientras quede
+   pendiente una anterior de la misma vacuna. El orden rige dentro de cada
+   vacuna y no entre vacunas: la 3.ª quíntuple y la 1.ª antirrábica pueden
+   registrarse el mismo día, igual que la triple felina, la leucemia y la
+   antirrábica en un gato, siempre que cada una cumpla su edad mínima.
+4. **Edad mínima (US10-E2).** Se rechaza la dosis si
    `fecha de aplicación < fecha de nacimiento + edad mínima`.
-4. **Intervalo mínimo (US10-E3).** Se rechaza la dosis si
+5. **Intervalo mínimo (US10-E3).** Se rechaza la dosis si
    `fecha de aplicación < fecha de la dosis anterior aplicada de la misma vacuna + intervalo mínimo`.
-5. **Fecha futura (US10-E4).** Se rechaza toda fecha de aplicación posterior a
+6. **Fecha futura (US10-E4).** Se rechaza toda fecha de aplicación posterior a
    la fecha actual.
-6. **Estado de la cartilla (US11).**
+7. **Dosis aplicada antes del registro (US10-E6).** La fecha esperada no es la
+   fecha mínima admisible. Una dosis aplicada antes de que la mascota llegara
+   a la plataforma se acepta con su fecha real si cumple las reglas 4 y 5; la
+   fecha más temprana admisible es
+   `máx(fecha de nacimiento + edad mínima, dosis anterior aplicada + intervalo mínimo)`.
+8. **Estado de la cartilla (US11).**
    - *Al día*: no existe ninguna dosis pendiente con fecha esperada anterior a hoy.
    - *Pendiente*: existen dosis sin aplicar, todas con fecha esperada igual o posterior a hoy.
    - *Vencida*: existe al menos una dosis sin aplicar cuya fecha esperada ya transcurrió.
@@ -118,6 +135,15 @@ corregir cada edad mínima e intervalo.
 
 La corrección, de ser necesaria, **no requiere cambios de código**: los valores
 residen en la tabla `schedule_items` y se cargan desde el seed del proyecto.
+
+Queda también pendiente la **serie reducida de recuperación** para adultos. Las
+guías admiten que un perro o un gato adulto sin historial reciba una serie
+inicial más corta que la de un cachorro —por ejemplo, dos dosis de quíntuple
+separadas por tres o cuatro semanas en lugar de tres—. La plataforma aplica por
+ahora la misma serie del cachorro, reprogramada desde el día del registro
+(regla 1): es la opción conservadora, porque nunca omite una dosis. Reducir la
+serie para adultos exige que un médico veterinario fije el criterio de edad y
+el número de dosis, y entonces sí requiere cambios en el dominio.
 
 ## 9. Fuentes
 

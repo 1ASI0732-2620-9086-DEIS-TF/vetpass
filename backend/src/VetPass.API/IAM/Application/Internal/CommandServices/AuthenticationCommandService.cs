@@ -4,6 +4,7 @@ using VetPass.API.IAM.Domain.Model.Commands;
 using VetPass.API.IAM.Domain.Model.ValueObjects;
 using VetPass.API.IAM.Domain.Repositories;
 using VetPass.API.IAM.Domain.Services;
+using VetPass.API.Shared.Domain.Exceptions;
 using VetPass.API.Shared.Domain.Services;
 
 namespace VetPass.API.IAM.Application.Internal.CommandServices;
@@ -65,8 +66,61 @@ public class AuthenticationCommandService(
 
         var profile = new UserProfile(account.Id, command.Email, command.FullName,
             command.Role, command.ClinicId, command.ClientId);
+        profile.MarkTemporaryPasswordIssued();
 
         await userProfiles.AddAsync(profile, cancellationToken);
+        await unitOfWork.CompleteAsync(cancellationToken);
+
+        return new CreatedAccount(profile, temporaryPassword);
+    }
+
+    /// <summary>
+    /// The user replaces their password with one of their own (US17). The current
+    /// one is verified against the identity provider first: knowing the session
+    /// is not enough to change the password of an account.
+    /// </summary>
+    public async Task ChangePasswordAsync(Guid userId, string currentPassword, string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await userProfiles.FindByIdAsync(userId, cancellationToken)
+                      ?? throw new ResourceNotFoundException("un perfil de usuario", userId);
+
+        try
+        {
+            await identityProvider.SignInAsync(profile.Email, currentPassword, cancellationToken);
+        }
+        catch (InvalidCredentialsException)
+        {
+            throw new IncorrectCurrentPasswordException();
+        }
+
+        PasswordPolicy.Ensure(newPassword, currentPassword);
+
+        await identityProvider.SetPasswordAsync(profile.Id, newPassword, cancellationToken);
+
+        profile.MarkPasswordChanged();
+        await unitOfWork.CompleteAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// The clinic issues a new temporary password for the owner of a pet who
+    /// forgot theirs (US18). The password is returned once and stored nowhere;
+    /// the owner is asked to replace it the next time they sign in, so that the
+    /// password they end up using is known to nobody else.
+    /// </summary>
+    public async Task<CreatedAccount> ResetOwnerPasswordAsync(Guid clientId, Guid clinicId,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await userProfiles.FindByClientIdAsync(clientId, cancellationToken)
+                      ?? throw new ClientWithoutAccountException(clientId);
+
+        if (profile.ClinicId != clinicId)
+            throw new ForbiddenOperationException("El cliente pertenece a otra clínica.");
+
+        var temporaryPassword = GenerateTemporaryPassword();
+        await identityProvider.SetPasswordAsync(profile.Id, temporaryPassword, cancellationToken);
+
+        profile.MarkTemporaryPasswordIssued();
         await unitOfWork.CompleteAsync(cancellationToken);
 
         return new CreatedAccount(profile, temporaryPassword);
@@ -90,4 +144,10 @@ public class EmailAlreadyRegisteredException(string email)
         $"El correo {email} ya está registrado en la plataforma.")
 {
     public override string Code => "email-already-registered";
+}
+
+public class ClientWithoutAccountException(Guid clientId)
+    : ResourceNotFoundException("una cuenta móvil para el cliente", clientId)
+{
+    public override string Code => "client-without-account";
 }

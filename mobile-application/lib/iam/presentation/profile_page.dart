@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../shared/i18n/app_strings.dart';
 import '../../shared/presentation/theme.dart';
 import '../application/session.dart';
+import 'change_password_page.dart';
 
 /// Perfil y cierre de sesión. Recoge también el idioma, que es la decisión
 /// que la sección 4.2.2 del informe exige ofrecer en ambas aplicaciones.
@@ -92,6 +93,18 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.lock_outline, color: VetPassColors.primary),
+              title: Text(textos.cambiarContrasena,
+                  style: Theme.of(context).textTheme.titleMedium),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => ChangePasswordPage(session: session, idioma: idioma),
+              )),
             ),
           ),
           const SizedBox(height: 24),

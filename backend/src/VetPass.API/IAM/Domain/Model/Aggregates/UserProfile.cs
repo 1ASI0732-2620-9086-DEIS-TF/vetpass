@@ -23,6 +23,13 @@ public class UserProfile
     public Guid? ClientId { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
+    /// <summary>
+    /// The account holds a temporary password that someone other than its owner
+    /// knows —the reception desk that dictated it—, so the owner must choose a
+    /// password of their own before using the application (US17-E4).
+    /// </summary>
+    public bool RequiresPasswordChange { get; private set; }
+
     // Required by Entity Framework Core.
     private UserProfile() { }
 
@@ -48,6 +55,12 @@ public class UserProfile
     /// the pet consults it (US05-E1).
     /// </summary>
     public bool CanRegisterClinicalData() => Role == Role.ClinicStaff;
+
+    /// <summary>A temporary password was issued: at account creation or at a reset.</summary>
+    public void MarkTemporaryPasswordIssued() => RequiresPasswordChange = true;
+
+    /// <summary>The owner chose a password of their own.</summary>
+    public void MarkPasswordChanged() => RequiresPasswordChange = false;
 }
 
 public class IncompleteUserProfileException(string message) : InvalidDomainDataException(message)

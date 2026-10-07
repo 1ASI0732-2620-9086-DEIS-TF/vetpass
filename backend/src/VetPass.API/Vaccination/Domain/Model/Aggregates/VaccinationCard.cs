@@ -46,14 +46,24 @@ public class VaccinationCard
     /// <summary>
     /// Generates the card of a pet from the template of its species (US09-E1).
     /// Every item of the schedule becomes a pending dose whose expected date is
-    /// already calculated from the birth date of the pet (US09-E2).
+    /// already calculated (US09-E2).
+    ///
+    /// The plan starts on the day the pet is registered: a dose whose minimum
+    /// age has long passed is expected today, not on the date it would have
+    /// been due years ago, and the following doses of the series keep their
+    /// intervals from there (US09-E3). That is what "catching up" means for an
+    /// adult pet or one with an unknown history.
     /// </summary>
-    public static VaccinationCard GenerateFrom(Guid petId, VaccinationSchedule schedule, DateOnly birthDate)
+    public static VaccinationCard GenerateFrom(Guid petId, VaccinationSchedule schedule, DateOnly birthDate,
+        DateOnly today)
     {
         var card = new VaccinationCard(petId, schedule.Species, birthDate);
 
         foreach (var item in schedule.Items)
             card._doses.Add(new Dose(card.Id, item, schedule.ExpectedDateFor(item, birthDate)));
+
+        foreach (var vaccineId in card._doses.Select(dose => dose.VaccineId).Distinct().ToList())
+            card.Replan(vaccineId, today);
 
         return card;
     }
@@ -61,8 +71,12 @@ public class VaccinationCard
     /// <summary>
     /// Records the application of a dose (US10). The order of the checks is the
     /// order of the acceptance criteria: a dose already applied, a date in the
-    /// future, the minimum age of the vaccine and the interval since the
-    /// previous dose of the same vaccine.
+    /// future, the previous doses of the same vaccine, the minimum age of the
+    /// vaccine and the interval since the previous dose.
+    ///
+    /// Recording a dose replans the rest of its own series from today. Other
+    /// vaccines are left as they are, so a dose nobody applied keeps showing
+    /// as overdue while the days go by (US11-E3).
     /// </summary>
     public void RegisterDose(Guid doseId, DateOnly applicationDate, BatchCode batchCode,
         Guid veterinarianId, DateOnly today)
@@ -76,13 +90,38 @@ public class VaccinationCard
         if (applicationDate > today)
             throw new FutureApplicationDateException(applicationDate, today);
 
+        // Each series is applied in order: the second dose of a vaccine cannot
+        // be recorded before the first one (US10-E5). Different vaccines are
+        // independent, so the third multivalent dose and the first rabies dose
+        // can still be recorded on the same day.
+        var missing = FirstMissingPreviousDose(dose);
+        if (missing is not null)
+            throw new DoseOutOfOrderException(missing.Id, missing.SequenceNumber);
+
         VaccinationSchedule.EnsureMinimumAge(dose, PetBirthDate, applicationDate);
         VaccinationSchedule.EnsureMinimumInterval(dose, PreviousAppliedDose(dose), applicationDate);
 
         dose.MarkAsApplied(applicationDate, batchCode, veterinarianId);
 
-        RescheduleFollowingDose(dose);
+        Replan(dose.VaccineId, today);
     }
+
+    /// <summary>
+    /// Whether the dose is the one its series is waiting for: pending, with
+    /// every previous dose of the same vaccine already applied. The interfaces
+    /// ask this instead of repeating the rule.
+    /// </summary>
+    public bool IsNextInSequence(Dose dose) =>
+        !dose.IsApplied() && FirstMissingPreviousDose(dose) is null;
+
+    /// <summary>
+    /// First day on which the dose could be recorded, for the dose its series
+    /// is waiting for; none for the others. The interfaces check the date the
+    /// user enters against it before sending, without repeating the rule.
+    /// </summary>
+    public DateOnly? EarliestAdmissibleDate(Dose dose) => IsNextInSequence(dose)
+        ? VaccinationSchedule.EarliestAdmissibleDate(dose, PreviousAppliedDose(dose), PetBirthDate)
+        : null;
 
     /// <summary>
     /// Status of the card at a given date (US11).
@@ -123,27 +162,46 @@ public class VaccinationCard
         .OrderByDescending(d => d.SequenceNumber)
         .FirstOrDefault();
 
+    /// <summary>The first earlier dose of the same vaccine still awaiting application.</summary>
+    private Dose? FirstMissingPreviousDose(Dose dose) => _doses
+        .Where(d => d.VaccineId == dose.VaccineId
+                    && d.SequenceNumber < dose.SequenceNumber
+                    && !d.IsApplied())
+        .OrderBy(d => d.SequenceNumber)
+        .FirstOrDefault();
+
     /// <summary>
-    /// Moves the next pending dose of the same vaccine when the one just
-    /// applied shifts it: its expected date becomes the later of the minimum
-    /// age and the minimum interval since this application (rule 2 of SP01).
+    /// Plans the pending doses of one series, in order (rules 1 and 2 of SP01).
+    /// Each one is expected on the latest of three dates: the minimum age of
+    /// the vaccine, the minimum interval since the previous dose of the series
+    /// —applied or planned— and today. The last one is what keeps the plan
+    /// from pointing to dates that already went by.
     /// </summary>
-    private void RescheduleFollowingDose(Dose applied)
+    private void Replan(Guid vaccineId, DateOnly today)
     {
-        var following = _doses
-            .Where(d => d.VaccineId == applied.VaccineId
-                        && d.SequenceNumber > applied.SequenceNumber
-                        && !d.IsApplied())
-            .OrderBy(d => d.SequenceNumber)
-            .FirstOrDefault();
+        DateOnly? previous = null;
 
-        if (following is null) return;
+        foreach (var dose in _doses.Where(d => d.VaccineId == vaccineId).OrderBy(d => d.SequenceNumber))
+        {
+            if (dose.IsApplied())
+            {
+                previous = dose.ApplicationDate;
+                continue;
+            }
 
-        var byMinimumAge = PetBirthDate.AddDays(following.MinimumAgeInWeeks * 7);
-        var byMinimumInterval = applied.ApplicationDate!.Value.AddDays(following.MinimumIntervalInWeeks * 7);
+            var expected = PetBirthDate.AddDays(dose.MinimumAgeInWeeks * 7);
 
-        following.Reschedule(byMinimumAge > byMinimumInterval ? byMinimumAge : byMinimumInterval);
+            if (previous is not null)
+                expected = Later(expected, previous.Value.AddDays(dose.MinimumIntervalInWeeks * 7));
+
+            expected = Later(expected, today);
+
+            dose.Reschedule(expected);
+            previous = expected;
+        }
     }
+
+    private static DateOnly Later(DateOnly first, DateOnly second) => first > second ? first : second;
 }
 
 public class FutureApplicationDateException(DateOnly applicationDate, DateOnly today)
@@ -151,4 +209,14 @@ public class FutureApplicationDateException(DateOnly applicationDate, DateOnly t
         $"La fecha de aplicación {applicationDate:dd/MM/yyyy} es posterior a la fecha actual {today:dd/MM/yyyy}.")
 {
     public override string Code => "future-application-date";
+}
+
+public class DoseOutOfOrderException(Guid pendingDoseId, int pendingSequenceNumber)
+    : DomainRuleViolationException(
+        $"Antes de esta dosis debe registrarse la dosis {pendingSequenceNumber} de la misma vacuna: " +
+        "cada serie se aplica en orden.")
+{
+    public override string Code => "dose-out-of-order";
+    public Guid PendingDoseId { get; } = pendingDoseId;
+    public int PendingSequenceNumber { get; } = pendingSequenceNumber;
 }

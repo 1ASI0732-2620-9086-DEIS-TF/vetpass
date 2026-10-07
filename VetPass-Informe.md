@@ -1383,7 +1383,7 @@ La fase 2 desaparece como carga: la tarea de custodiar y localizar la cartilla f
 ## 3.2. User Stories
 
 A partir de los To-Be Scenario Maps se identificaron los requisitos del
-producto, organizados en cinco epics. El conjunto se compone de dieciséis
+producto, organizados en cinco epics. El conjunto se compone de dieciocho
 User Stories orientadas a los usuarios finales, cuatro Technical Stories
 correspondientes a la RESTful API, y dos Spike Stories de investigación
 previa. El alcance se definió de forma deliberadamente acotada, de modo
@@ -1408,17 +1408,19 @@ que cada historia resulte verificable mediante pruebas automatizadas.
 | US03 | Visitante | Alta | EP01 | Acceso a la aplicación web desde la landing page | Como visitante registrado, deseo ingresar a la aplicación web desde la landing page, para iniciar mi sesión de trabajo. | **E1: Redirección a la aplicación**<br>Dado que el visitante se encuentra en la landing page<br>Cuando selecciona la acción de ingreso<br>Entonces el sistema lo dirige a la aplicación web de la clínica. |
 | US04 | Personal de clínica | Media | EP02 | Autenticación del personal de la clínica | Como personal de la clínica, deseo iniciar sesión en la aplicación web, para acceder a la información de mis pacientes. | **E1: Credenciales válidas**<br>Dado que el usuario está registrado en el sistema<br>Cuando envía sus credenciales correctas<br>Entonces el sistema le concede acceso con permisos de registro y consulta.<br><br>**E2: Credenciales inválidas**<br>Dado que el usuario no está registrado o sus credenciales no coinciden<br>Cuando envía sus credenciales<br>Entonces el sistema deniega el acceso y no expone información de pacientes. |
 | US05 | Dueño de mascota | Media | EP02 | Autenticación del dueño en la aplicación móvil | Como dueño de mascota, deseo iniciar sesión en la aplicación móvil, para consultar la información de mis mascotas. | **E1: Acceso concedido**<br>Dado que el dueño fue registrado por una clínica<br>Cuando envía sus credenciales correctas<br>Entonces el sistema le concede acceso con permisos de consulta únicamente.<br><br>**E2: Aislamiento de información**<br>Dado que el dueño tiene una sesión activa<br>Cuando solicita información de una mascota que no le pertenece<br>Entonces el sistema deniega la solicitud. |
-| US06 | Personal de clínica | Alta | EP03 | Registro de cliente | Como personal de la clínica, deseo registrar a un cliente con sus datos de contacto, para vincularlo posteriormente con sus mascotas. | **E1: Registro exitoso**<br>Dado que el personal de la clínica ingresa los datos obligatorios del cliente<br>Cuando confirma el registro<br>Entonces el sistema crea el cliente y lo asocia a la clínica.<br><br>**E2: Datos incompletos**<br>Dado que el personal omite un dato obligatorio<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e informa el dato faltante.<br><br>**E3: Teléfono no peruano**<br>Dado que el personal ingresa un teléfono que no corresponde a un número peruano válido<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e indica el formato admitido. |
+| US06 | Personal de clínica | Alta | EP03 | Registro de cliente | Como personal de la clínica, deseo registrar a un cliente con sus datos de contacto, para vincularlo posteriormente con sus mascotas. | **E1: Registro exitoso**<br>Dado que el personal de la clínica ingresa los datos obligatorios del cliente, incluido su DNI o carné de extranjería<br>Cuando confirma el registro<br>Entonces el sistema crea el cliente y lo asocia a la clínica.<br><br>**E2: Datos incompletos**<br>Dado que el personal omite un dato obligatorio<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e informa el dato faltante.<br><br>**E3: Teléfono no peruano**<br>Dado que el personal ingresa un teléfono que no corresponde a un número peruano válido<br>Cuando intenta confirmar el registro<br>Entonces el sistema rechaza la operación e indica el formato admitido.<br><br>**E4: Documento ya registrado**<br>Dado que el documento de identidad ingresado pertenece a un cliente de la clínica<br>Cuando el personal intenta confirmar el registro<br>Entonces el sistema rechaza la operación, identifica al cliente existente y permite continuar con él. |
 | US07 | Personal de clínica | Alta | EP03 | Registro de mascota | Como personal de la clínica, deseo registrar una mascota asociada a un cliente, indicando su especie y fecha de nacimiento, para incorporarla como paciente. | **E1: Registro exitoso**<br>Dado que existe un cliente registrado<br>Cuando se registra una mascota con especie canina o felina y fecha de nacimiento válida<br>Entonces el sistema crea la mascota y la asocia al cliente.<br><br>**E2: Especie no soportada**<br>Dado que se intenta registrar una mascota de una especie distinta de canina o felina<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación.<br><br>**E3: Fecha de nacimiento futura**<br>Dado que se ingresa una fecha de nacimiento posterior a la fecha actual<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación.<br><br>**E4: Fecha de nacimiento no plausible**<br>Dado que se ingresa una fecha de nacimiento que supone una edad superior a la máxima admitida para la especie<br>Cuando se confirma el registro<br>Entonces el sistema rechaza la operación e indica la edad resultante y la máxima admitida. |
 | US08 | Personal de clínica | Alta | EP03 | Búsqueda de paciente | Como personal de la clínica, deseo localizar a una mascota por su nombre o por el de su dueño, para acceder a su expediente al iniciar la atención. | **E1: Coincidencias encontradas**<br>Dado que existen mascotas registradas en la clínica<br>Cuando se realiza una búsqueda por nombre de mascota o de dueño<br>Entonces el sistema devuelve las coincidencias con su especie y su dueño asociado.<br><br>**E2: Sin coincidencias**<br>Dado que no existe ninguna mascota que coincida con el criterio<br>Cuando se realiza la búsqueda<br>Entonces el sistema informa que no se hallaron resultados. |
-| US09 | Personal de clínica | Alta | EP04 | Generación automática de la cartilla de vacunación | Como personal de la clínica, deseo que la cartilla de vacunación se genere automáticamente al registrar una mascota, para no tener que definir manualmente las dosis que le corresponden. | **E1: Generación según especie**<br>Dado que se registra una mascota de una especie soportada<br>Cuando el registro se completa<br>Entonces el sistema genera su cartilla con todas las dosis del esquema de su especie en estado pendiente.<br><br>**E2: Cálculo de fechas esperadas**<br>Dado que la cartilla ha sido generada<br>Cuando se consultan sus dosis pendientes<br>Entonces cada dosis presenta una fecha esperada calculada a partir de la fecha de nacimiento y la edad mínima de la vacuna. |
-| US10 | Personal de clínica | Alta | EP04 | Registro de dosis aplicada | Como personal de la clínica, deseo registrar la aplicación de una dosis indicando fecha, lote y responsable, para dejar constancia verificable en la cartilla. | **E1: Registro válido**<br>Dado que una dosis se encuentra pendiente y se cumplen las reglas del esquema<br>Cuando se registra su aplicación con fecha, lote y veterinario responsable<br>Entonces el sistema marca la dosis como aplicada y conserva esos datos.<br><br>**E2: Edad mínima no alcanzada**<br>Dado que la mascota no alcanza la edad mínima de la vacuna en la fecha indicada<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la restricción incumplida.<br><br>**E3: Intervalo mínimo no cumplido**<br>Dado que no ha transcurrido el intervalo mínimo desde la dosis anterior<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la restricción incumplida.<br><br>**E4: Fecha de aplicación futura**<br>Dado que la fecha de aplicación es posterior a la fecha actual<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro. |
+| US09 | Personal de clínica | Alta | EP04 | Generación automática de la cartilla de vacunación | Como personal de la clínica, deseo que la cartilla de vacunación se genere automáticamente al registrar una mascota, para no tener que definir manualmente las dosis que le corresponden. | **E1: Generación según especie**<br>Dado que se registra una mascota de una especie soportada<br>Cuando el registro se completa<br>Entonces el sistema genera su cartilla con todas las dosis del esquema de su especie en estado pendiente.<br><br>**E2: Cálculo de fechas esperadas**<br>Dado que la cartilla ha sido generada<br>Cuando se consultan sus dosis pendientes<br>Entonces cada dosis presenta una fecha esperada calculada a partir de la fecha de nacimiento, la edad mínima de la vacuna y el intervalo desde la dosis anterior de la misma vacuna, nunca anterior a la fecha de registro.<br><br>**E3: Mascota que ya superó la edad de las primeras dosis**<br>Dado que se registra una mascota adulta o cuyo historial de vacunación se desconoce<br>Cuando se genera su cartilla<br>Entonces la primera dosis de cada vacuna se espera en la fecha de registro y las siguientes conservan sus intervalos a partir de ella. |
+| US10 | Personal de clínica | Alta | EP04 | Registro de dosis aplicada | Como personal de la clínica, deseo registrar la aplicación de una dosis indicando fecha, lote y responsable, para dejar constancia verificable en la cartilla. | **E1: Registro válido**<br>Dado que una dosis se encuentra pendiente y se cumplen las reglas del esquema<br>Cuando se registra su aplicación con fecha, lote y veterinario responsable<br>Entonces el sistema marca la dosis como aplicada y conserva esos datos.<br><br>**E2: Edad mínima no alcanzada**<br>Dado que la mascota no alcanza la edad mínima de la vacuna en la fecha indicada<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la restricción incumplida.<br><br>**E3: Intervalo mínimo no cumplido**<br>Dado que no ha transcurrido el intervalo mínimo desde la dosis anterior<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la restricción incumplida.<br><br>**E4: Fecha de aplicación futura**<br>Dado que la fecha de aplicación es posterior a la fecha actual<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro.<br><br>**E5: Dosis fuera de orden**<br>Dado que una dosis anterior de la misma vacuna aún no ha sido aplicada<br>Cuando se intenta registrar la dosis<br>Entonces el sistema rechaza el registro e indica la dosis que debe registrarse primero. Dosis de vacunas distintas pueden registrarse el mismo día.<br><br>**E6: Dosis aplicada antes del registro**<br>Dado que la dosis se aplicó antes de que la mascota fuera registrada en la plataforma<br>Cuando se registra con su fecha real y esta cumple la edad mínima y el intervalo<br>Entonces el sistema la acepta y programa las siguientes dosis de esa vacuna a partir de la fecha actual. |
 | US11 | Personal de clínica | Alta | EP04 | Consulta del estado de la cartilla | Como personal de la clínica, deseo conocer el estado de la cartilla de un paciente, para determinar qué le corresponde antes de atenderlo. | **E1: Cartilla al día**<br>Dado que todas las dosis exigibles a la fecha están aplicadas<br>Cuando se consulta la cartilla<br>Entonces el sistema reporta el estado como al día.<br><br>**E2: Cartilla pendiente**<br>Dado que existen dosis no aplicadas cuya fecha esperada aún no ha vencido<br>Cuando se consulta la cartilla<br>Entonces el sistema reporta el estado como pendiente e indica la próxima dosis.<br><br>**E3: Cartilla vencida**<br>Dado que existe al menos una dosis no aplicada cuya fecha esperada ya transcurrió<br>Cuando se consulta la cartilla<br>Entonces el sistema reporta el estado como vencida. |
 | US12 | Dueño de mascota | Alta | EP04 | Consulta de la cartilla desde la aplicación móvil | Como dueño de mascota, deseo consultar la cartilla de vacunación de cada una de mis mascotas desde mi celular, para saber qué le toca a cada una sin depender del documento físico. | **E1: Consulta de la cartilla**<br>Dado que el dueño tiene una sesión activa y mascotas asociadas<br>Cuando selecciona una de sus mascotas<br>Entonces el sistema presenta su cartilla con las dosis aplicadas, las pendientes y el estado general.<br><br>**E2: Diferenciación entre mascotas**<br>Dado que el dueño tiene más de una mascota asociada<br>Cuando consulta el listado de sus mascotas<br>Entonces el sistema presenta el estado de cartilla de cada una de forma individual. |
 | US13 | Personal de clínica | Alta | EP05 | Registro de atención veterinaria | Como personal de la clínica, deseo registrar una atención con motivo, hallazgos, diagnóstico y tratamiento, para conservar el historial del paciente. | **E1: Registro exitoso**<br>Dado que existe una mascota registrada<br>Cuando se registra una atención con los campos obligatorios completos<br>Entonces el sistema la incorpora al historial de la mascota con su fecha y el veterinario responsable.<br><br>**E2: Campos obligatorios incompletos**<br>Dado que se omite el motivo de consulta o el diagnóstico<br>Cuando se intenta registrar la atención<br>Entonces el sistema rechaza la operación. |
 | US14 | Personal de clínica | Alta | EP05 | Consulta del historial del paciente | Como personal de la clínica, deseo consultar las atenciones previas de un paciente ordenadas cronológicamente, para decidir con información completa. | **E1: Historial con registros**<br>Dado que la mascota tiene atenciones registradas<br>Cuando se consulta su historial<br>Entonces el sistema presenta las atenciones en orden cronológico descendente.<br><br>**E2: Historial vacío**<br>Dado que la mascota no tiene atenciones registradas<br>Cuando se consulta su historial<br>Entonces el sistema informa que no existen atenciones previas. |
 | US15 | Personal de clínica | Media | EP05 | Emisión de receta médica | Como personal de la clínica, deseo emitir una receta asociada a una atención, para que el dueño disponga de la indicación por escrito. | **E1: Emisión exitosa**<br>Dado que existe una atención registrada<br>Cuando se emite una receta con al menos un medicamento, su dosificación y su duración<br>Entonces el sistema la asocia a esa atención y la hace visible para el dueño de la mascota.<br><br>**E2: Receta sin medicamentos**<br>Dado que se intenta emitir una receta sin ningún medicamento<br>Cuando se confirma la emisión<br>Entonces el sistema rechaza la operación. |
 | US16 | Dueño de mascota | Media | EP05 | Consulta del historial y recetas desde la aplicación móvil | Como dueño de mascota, deseo revisar las atenciones y recetas de mis mascotas desde mi celular, para recordar qué le indicaron y cuándo. | **E1: Consulta del historial**<br>Dado que el dueño tiene una sesión activa<br>Cuando accede al historial de una de sus mascotas<br>Entonces el sistema presenta sus atenciones en orden cronológico descendente.<br><br>**E2: Consulta de una receta**<br>Dado que una atención tiene una receta asociada<br>Cuando el dueño accede a esa atención<br>Entonces el sistema presenta la receta con sus medicamentos, dosificación y duración. |
+| US17 | Dueño de mascota | Media | EP02 | Cambio de contraseña del dueño | Como dueño de mascota, deseo cambiar mi contraseña desde la aplicación móvil, para que solo yo conozca la clave de acceso a la información de mis mascotas. | **E1: Cambio exitoso**<br>Dado que el dueño tiene una sesión activa<br>Cuando ingresa su contraseña actual y una nueva que cumple la política de contraseñas<br>Entonces el sistema reemplaza la contraseña y la anterior deja de ser válida.<br><br>**E2: Contraseña actual incorrecta**<br>Dado que el dueño ingresa una contraseña actual que no coincide<br>Cuando solicita el cambio<br>Entonces el sistema rechaza la operación sin cerrar su sesión.<br><br>**E3: Contraseña débil**<br>Dado que la contraseña nueva tiene menos de ocho caracteres, no combina letras y números o es igual a la actual<br>Cuando el dueño solicita el cambio<br>Entonces el sistema rechaza la operación e indica la política incumplida.<br><br>**E4: Contraseña temporal**<br>Dado que el dueño ingresa con una contraseña temporal entregada por la clínica<br>Cuando inicia sesión<br>Entonces la aplicación le exige elegir una contraseña propia antes de mostrar sus mascotas. |
+| US18 | Personal de clínica | Media | EP02 | Restablecimiento de contraseña por la clínica | Como personal de la clínica, deseo restablecer la contraseña de un cliente que la olvidó, para que recupere el acceso a la aplicación móvil sin que la clínica llegue a conocer la contraseña que elija. | **E1: Restablecimiento exitoso**<br>Dado que el cliente tiene acceso a la aplicación móvil<br>Cuando el personal solicita restablecer su contraseña<br>Entonces el sistema genera una contraseña temporal, la muestra una sola vez y la anterior deja de ser válida.<br><br>**E2: Contraseña no visible**<br>Dado que el personal consulta la lista de clientes<br>Cuando revisa el acceso de un cliente<br>Entonces el sistema no muestra su contraseña, porque no la conserva de forma legible.<br><br>**E3: Cliente sin acceso**<br>Dado que el cliente no tiene acceso a la aplicación móvil<br>Cuando se solicita restablecer su contraseña<br>Entonces el sistema rechaza la operación e indica que el cliente no tiene acceso.<br><br>**E4: Cliente de otra clínica**<br>Dado que el cliente pertenece a otra clínica<br>Cuando el personal solicita restablecer su contraseña<br>Entonces el sistema deniega la operación. |
 | TS01 | Developer | Media | EP02 | Endpoints de autenticación y autorización | Como desarrollador, deseo exponer los endpoints de autenticación y autorización de la API, para que las aplicaciones web y móvil validen la identidad y el rol del usuario. | **E1: Autenticación válida**<br>Dado que se envía una solicitud POST al endpoint de autenticación con credenciales válidas<br>Cuando la API procesa la solicitud<br>Entonces responde con código 200 y un token de acceso con el rol del usuario.<br><br>**E2: Credenciales inválidas**<br>Dado que se envía una solicitud con credenciales incorrectas<br>Cuando la API procesa la solicitud<br>Entonces responde con código 401.<br><br>**E3: Acceso no autorizado**<br>Dado que se solicita un recurso que excede los permisos del rol<br>Cuando la API procesa la solicitud<br>Entonces responde con código 403. |
 | TS02 | Developer | Alta | EP03 | Endpoints de clientes y mascotas | Como desarrollador, deseo exponer los endpoints de gestión de clientes y mascotas, para que la aplicación web registre y consulte esta información. | **E1: Creación exitosa**<br>Dado que se envía una solicitud POST con los datos válidos de una mascota<br>Cuando la API procesa la solicitud<br>Entonces responde con código 201 y el recurso creado.<br><br>**E2: Datos inválidos**<br>Dado que se envía una solicitud con una especie no soportada<br>Cuando la API procesa la solicitud<br>Entonces responde con código 400 y el detalle de la validación incumplida.<br><br>**E3: Recurso inexistente**<br>Dado que se solicita una mascota que no existe<br>Cuando la API procesa la solicitud<br>Entonces responde con código 404. |
 | TS03 | Developer | Alta | EP04 | Endpoints de cartilla de vacunación | Como desarrollador, deseo exponer los endpoints de consulta de la cartilla y de registro de dosis, para que ambas aplicaciones operen sobre el esquema de vacunación. | **E1: Consulta de cartilla**<br>Dado que se envía una solicitud GET de la cartilla de una mascota existente<br>Cuando la API procesa la solicitud<br>Entonces responde con código 200, las dosis y el estado de la cartilla.<br><br>**E2: Registro de dosis válido**<br>Dado que se envía una solicitud POST de aplicación de dosis que cumple las reglas del esquema<br>Cuando la API procesa la solicitud<br>Entonces responde con código 201.<br><br>**E3: Regla del esquema incumplida**<br>Dado que la solicitud incumple la edad mínima o el intervalo entre dosis<br>Cuando la API procesa la solicitud<br>Entonces responde con código 422 y la regla incumplida. |
@@ -1444,7 +1446,7 @@ después del core, dado que habilitan el acceso al producto pero no
 constituyen por sí mismas valor para el usuario. Finalmente se situaron
 las historias de la aplicación móvil y las de recetas médicas.
 
-El backlog totaliza 80 Story Points distribuidos en veintidós historias.
+El backlog totaliza 86 Story Points distribuidos en veinticuatro historias.
 
 | # Orden | User Story ID | Título | Descripción | Story Points |
 |---|---|---|---|---|
@@ -1467,9 +1469,11 @@ El backlog totaliza 80 Story Points distribuidos en veintidós historias.
 | 17 | US04 | Autenticación del personal de la clínica | Como personal de la clínica, deseo iniciar sesión en la aplicación web, para acceder a la información de mis pacientes. | 3 |
 | 18 | TS01 | Endpoints de autenticación y autorización | Como desarrollador, deseo exponer los endpoints de autenticación y autorización de la API, para que las aplicaciones web y móvil validen la identidad y el rol del usuario. | 5 |
 | 19 | US05 | Autenticación del dueño en la aplicación móvil | Como dueño de mascota, deseo iniciar sesión en la aplicación móvil, para consultar la información de mis mascotas. | 3 |
-| 20 | US12 | Consulta de la cartilla desde la aplicación móvil | Como dueño de mascota, deseo consultar la cartilla de vacunación de cada una de mis mascotas desde mi celular, para saber qué le toca a cada una sin depender del documento físico. | 5 |
-| 21 | US15 | Emisión de receta médica | Como personal de la clínica, deseo emitir una receta asociada a una atención, para que el dueño disponga de la indicación por escrito. | 3 |
-| 22 | US16 | Consulta del historial y recetas desde la aplicación móvil | Como dueño de mascota, deseo revisar las atenciones y recetas de mis mascotas desde mi celular, para recordar qué le indicaron y cuándo. | 3 |
+| 20 | US17 | Cambio de contraseña del dueño | Como dueño de mascota, deseo cambiar mi contraseña desde la aplicación móvil, para que solo yo conozca la clave de acceso a la información de mis mascotas. | 3 |
+| 21 | US18 | Restablecimiento de contraseña por la clínica | Como personal de la clínica, deseo restablecer la contraseña de un cliente que la olvidó, para que recupere el acceso a la aplicación móvil sin que la clínica llegue a conocer la contraseña que elija. | 3 |
+| 22 | US12 | Consulta de la cartilla desde la aplicación móvil | Como dueño de mascota, deseo consultar la cartilla de vacunación de cada una de mis mascotas desde mi celular, para saber qué le toca a cada una sin depender del documento físico. | 5 |
+| 23 | US15 | Emisión de receta médica | Como personal de la clínica, deseo emitir una receta asociada a una atención, para que el dueño disponga de la indicación por escrito. | 3 |
+| 24 | US16 | Consulta del historial y recetas desde la aplicación móvil | Como dueño de mascota, deseo revisar las atenciones y recetas de mis mascotas desde mi celular, para recordar qué le indicaron y cuándo. | 3 |
 
 **Product Backlog en la herramienta de gestión**
 
@@ -1990,7 +1994,7 @@ Las pantallas se derivan de las user stories de la sección 3.2:
 | 3 | Cartilla de vacunación | US12 |
 | 4 | Historial de atenciones | US16 |
 | 5 | Detalle de atención con receta | US16 |
-| 6 | Perfil y cierre de sesión | US05 |
+| 6 | Perfil, cambio de contraseña y cierre de sesión | US05, US17 |
 
 **Enlace al diseño:** https://claude.ai/artifact/WjanYDJMPz4B7BvK4PLpuW
 
@@ -2492,9 +2496,28 @@ afirmación de la sección 4.10: una cartilla emitida conserva el esquema
 vigente al momento de su creación, y una modificación posterior de la
 plantilla no la altera.
 
+La cartilla planifica cada vacuna como una serie ordenada. La fecha esperada
+de cada dosis pendiente es la más tardía entre la edad mínima de la vacuna, el
+intervalo mínimo desde la dosis anterior de la serie —aplicada o planificada— y
+la fecha actual. Esta última condición es la que permite registrar a una
+mascota adulta o sin historial conocido: su esquema comienza el día de su
+registro, en lugar de mostrar dosis que se esperaban años atrás. El método
+privado `Replan` aplica este cálculo al generarse la cartilla y, después de cada
+registro, solo a la serie de la vacuna registrada; las demás no se tocan, de
+modo que una dosis que nadie aplicó sigue figurando como vencida.
+
+La misma noción de serie fija el orden de registro: `RegisterDose` rechaza una
+dosis mientras quede pendiente una anterior de la misma vacuna. El orden rige
+dentro de cada vacuna y no entre vacunas distintas, de modo que la tercera
+quíntuple y la primera antirrábica pueden registrarse el mismo día. La fecha
+esperada no es la fecha mínima admisible: una dosis aplicada antes del registro
+de la mascota se acepta con su fecha real si cumple la edad mínima y el
+intervalo, y `EarliestAdmissibleDate` expone ese mínimo para que las interfaces
+lo verifiquen antes del envío sin repetir la regla.
+
 Una decisión de diseño transversal atraviesa todo el modelo: los métodos
-`RegisterDose` y `GetStatus` reciben la fecha actual como parámetro en lugar de
-leerla del reloj del sistema. Esto permite que las pruebas unitarias del capítulo
+`GenerateFrom`, `RegisterDose` y `GetStatus` reciben la fecha actual como
+parámetro en lugar de leerla del reloj del sistema. Esto permite que las pruebas unitarias del capítulo
 VI verifiquen las reglas del esquema de forma determinista, sin depender del
 momento en que se ejecutan.
 
@@ -2513,12 +2536,15 @@ package "Vaccination" {
     - species : Species
     - petBirthDate : DateOnly
     - doses : List<Dose>
-    + {static} GenerateFrom(petId : Guid, schedule : VaccinationSchedule, birthDate : DateOnly) : VaccinationCard
+    + {static} GenerateFrom(petId : Guid, schedule : VaccinationSchedule, birthDate : DateOnly, today : DateOnly) : VaccinationCard
     + RegisterDose(doseId : Guid, applicationDate : DateOnly, batchCode : BatchCode, veterinarianId : Guid, today : DateOnly) : void
     + GetStatus(today : DateOnly) : CardStatus
     + NextExpectedDose() : Dose
+    + IsNextInSequence(dose : Dose) : bool
+    + EarliestAdmissibleDate(dose : Dose) : DateOnly?
     - PreviousAppliedDose(dose : Dose) : Dose
-    - RescheduleFollowingDose(applied : Dose) : void
+    - FirstMissingPreviousDose(dose : Dose) : Dose
+    - Replan(vaccineId : Guid, today : DateOnly) : void
   }
 
   class Dose <<Entity>> {
@@ -2543,6 +2569,7 @@ package "Vaccination" {
     - items : List<ScheduleItem>
     + ItemsFor(species : Species) : List<ScheduleItem>
     + ExpectedDateFor(item : ScheduleItem, birthDate : DateOnly) : DateOnly
+    + EarliestAdmissibleDate(dose : Dose, previous : Dose, birthDate : DateOnly) : DateOnly
     + EnsureMinimumAge(dose : Dose, birthDate : DateOnly, applicationDate : DateOnly) : void
     + EnsureMinimumInterval(dose : Dose, previous : Dose, applicationDate : DateOnly) : void
   }
@@ -2597,10 +2624,23 @@ package "Patients" {
   class Client <<Aggregate Root>> {
     - id : Guid
     - fullName : string
+    - documentType : IdentityDocumentType
+    - documentNumber : string
     - phoneNumber : string
     - email : string
     - clinicId : Guid
     + UpdateContactInfo(phone : PhoneNumber, email : string) : void
+  }
+
+  class IdentityDocument <<Value Object>> {
+    + type : IdentityDocumentType
+    + number : string
+    + {static} Of(type : IdentityDocumentType, number : string) : IdentityDocument
+  }
+
+  enum IdentityDocumentType {
+    Dni
+    ForeignerCard
   }
 
   class PhoneNumber <<Value Object>> {
@@ -2671,12 +2711,20 @@ package "IdentityAndAccess" {
     - role : Role
     - clinicId : Guid?
     - clientId : Guid?
+    - requiresPasswordChange : bool
     + CanRegisterClinicalData() : bool
+    + MarkTemporaryPasswordIssued() : void
+    + MarkPasswordChanged() : void
+  }
+
+  class PasswordPolicy <<Domain Service>> {
+    + {static} Ensure(password : string, current : string) : void
   }
 
   interface IIdentityProvider <<Port>> {
     + SignIn(email : string, password : string) : AccessToken
     + CreateAccount(email : string, password : string, role : Role) : Guid
+    + SetPassword(accountId : Guid, password : string) : void
   }
 
   note right of IIdentityProvider
@@ -2701,6 +2749,8 @@ package "IdentityAndAccess" {
 
 Client "1" o-- "0..*" Pet : posee
 Client ..> PhoneNumber : valida con
+Client ..> IdentityDocument : se identifica con
+IdentityDocument --> IdentityDocumentType
 Pet --> Species
 Pet --> Sex
 Visit "1" *-- "0..1" Prescription : emite
@@ -2708,6 +2758,7 @@ Prescription "1" *-- "1..*" PrescriptionItem : contiene
 Visit ..> Pet : referencia
 UserProfile --> Role
 UserProfile ..> IIdentityProvider : se autentica mediante
+UserProfile ..> PasswordPolicy : cambia su contraseña según
 Clinic "1" o-- "0..*" UserProfile : emplea
 Clinic "1" o-- "0..*" Client : atiende
 
@@ -2720,9 +2771,9 @@ Clinic "1" o-- "0..*" Client : atiende
 
 | Clase | Tipo | Descripción |
 |---|---|---|
-| `VaccinationCard` | Aggregate Root | Cartilla de vacunación de una mascota. Contiene todas las dosis de su esquema y calcula su estado global. Atributos: `Id`, `PetId`, `Species`, `PetBirthDate`, `Doses`. Métodos: `GenerateFrom(petId, schedule, birthDate)`, `RegisterDose(doseId, applicationDate, batchCode, veterinarianId, today)`, `GetStatus(today)`, `NextExpectedDose()`. |
+| `VaccinationCard` | Aggregate Root | Cartilla de vacunación de una mascota. Contiene todas las dosis de su esquema y calcula su estado global. Atributos: `Id`, `PetId`, `Species`, `PetBirthDate`, `Doses`. Planifica cada vacuna como una serie ordenada cuyas fechas esperadas nunca son anteriores a la fecha actual, y exige que cada serie se registre en orden. Métodos: `GenerateFrom(petId, schedule, birthDate, today)`, `RegisterDose(doseId, applicationDate, batchCode, veterinarianId, today)`, `GetStatus(today)`, `NextExpectedDose()`, `IsNextInSequence(dose)`, `EarliestAdmissibleDate(dose)`. |
 | `Dose` | Entity | Cada dosis del esquema. Conserva la edad mínima y el intervalo copiados de su `ScheduleItem` al generarse la cartilla. Atributos: `Id`, `VaccineId`, `SequenceNumber`, `ExpectedDate`, `ApplicationDate`, `BatchCode`, `VeterinarianId`, `Status`, `MinimumAgeInWeeks`, `MinimumIntervalInWeeks`. Métodos: `MarkAsApplied(date, batchCode, veterinarianId)`, `IsApplied()`, `IsOverdue(today)`, `Reschedule(expectedDate)`. |
-| `VaccinationSchedule` | Domain Service | Plantilla del esquema de una especie y política que la valida. Atributos: `Species`, `Items`. Métodos: `ItemsFor(species)`, `ExpectedDateFor(item, birthDate)`, `EnsureMinimumAge(dose, birthDate, applicationDate)`, `EnsureMinimumInterval(dose, previous, applicationDate)`. |
+| `VaccinationSchedule` | Domain Service | Plantilla del esquema de una especie y política que la valida. Atributos: `Species`, `Items`. Métodos: `ItemsFor(species)`, `ExpectedDateFor(item, birthDate)`, `EarliestAdmissibleDate(dose, previous, birthDate)`, `EnsureMinimumAge(dose, birthDate, applicationDate)`, `EnsureMinimumInterval(dose, previous, applicationDate)`. |
 | `ScheduleItem` | Value Object | Definición de una dosis dentro del esquema. Atributos: `VaccineId`, `SequenceNumber`, `MinimumAgeInWeeks`, `MinimumIntervalInWeeks`. |
 | `Vaccine` | Entity | Vacuna disponible. Atributos: `Id`, `Name`, `Species`, `IsCore`. |
 | `BatchCode` | Value Object | Código de lote del frasco aplicado. Atributo: `Value`. Valida formato no vacío. |
@@ -2732,12 +2783,15 @@ Clinic "1" o-- "0..*" Client : atiende
 | `MinimumIntervalNotMetException` | Domain Exception | No transcurrió el intervalo mínimo desde la dosis anterior. |
 | `FutureApplicationDateException` | Domain Exception | La fecha de aplicación es posterior a la fecha actual. |
 | `DoseAlreadyAppliedException` | Domain Exception | La dosis ya fue registrada como aplicada. |
+| `DoseOutOfOrderException` | Domain Exception | Una dosis anterior de la misma vacuna aún no fue aplicada. Informa cuál debe registrarse primero. |
 
 **Bounded Context: Patients**
 
 | Clase | Tipo | Descripción |
 |---|---|---|
-| `Client` | Aggregate Root | Cliente de la clínica. Recibe el teléfono ya validado como `PhoneNumber`, de modo que no puede existir un cliente con un número fuera del Perú. Atributos: `Id`, `FullName`, `PhoneNumber`, `Email`, `ClinicId`. Métodos: `UpdateContactInfo(phone, email)`. |
+| `Client` | Aggregate Root | Cliente de la clínica. Recibe el documento ya validado como `IdentityDocument` y el teléfono como `PhoneNumber`, de modo que no puede existir un cliente sin documento válido ni con un número fuera del Perú. Atributos: `Id`, `FullName`, `DocumentType`, `DocumentNumber`, `PhoneNumber`, `Email`, `ClinicId`. Métodos: `UpdateContactInfo(phone, email)`. |
+| `IdentityDocument` | Value Object | Documento que identifica al cliente: DNI de ocho dígitos o carné de extranjería de nueve a doce letras o dígitos. Descarta espacios y guiones y conserva las letras en mayúscula, de modo que dos maneras de escribir el mismo documento son el mismo valor. Dentro de una clínica no hay dos clientes con el mismo tipo y número. Métodos: `Of(type, number)`, `Parse(type, number)`. |
+| `IdentityDocumentType` | Enumeration | `Dni`, `ForeignerCard`. Se admite el carné de extranjería porque una parte relevante de la población de Lima no tiene DNI. |
 | `PhoneNumber` | Value Object | Teléfono peruano según el plan de numeración: celular de nueve dígitos que empieza con 9, fijo de Lima con código 1 y siete dígitos, o fijo de provincia con código de área de dos dígitos y seis dígitos. Acepta el número con o sin +51, con separadores y con el prefijo 0 de larga distancia, y lo conserva en forma E.164 (+51 seguido del número nacional), de modo que dos maneras de escribir el mismo número son el mismo valor. Métodos: `Parse(input)`, `IsMobile()`. |
 | `Pet` | Aggregate Root | Mascota registrada como paciente. Rechaza una fecha de nacimiento futura o que suponga una edad superior a la máxima plausible de su especie. Atributos: `Id`, `ClientId`, `Name`, `Species`, `Breed`, `Sex`, `BirthDate`. Métodos: `AgeInWeeks(today)`. |
 | `Species` | Enumeration | `Canine`, `Feline`. Cualquier otro valor es rechazado al registrar. Define la edad máxima plausible con que una mascota puede registrarse: 25 años para la especie canina y 30 para la felina. No pretende ser el récord de longevidad, sino el límite a partir del cual una fecha es mucho más probablemente un error de digitación del año que un animal real. |
@@ -2746,6 +2800,8 @@ Clinic "1" o-- "0..*" Client : atiende
 | `FutureBirthDateException` | Domain Exception | La fecha de nacimiento es posterior a la fecha actual. |
 | `ImplausibleBirthDateException` | Domain Exception | La fecha de nacimiento supone una edad superior a la máxima plausible de la especie. Informa la edad resultante y la máxima admitida. |
 | `InvalidPhoneNumberException` | Domain Exception | El teléfono no corresponde a un número peruano válido. |
+| `InvalidIdentityDocumentException` | Domain Exception | El número no corresponde al formato del tipo de documento indicado. |
+| `DuplicateClientException` | Domain Exception | El documento ya pertenece a un cliente de la clínica. Informa el cliente existente y se traduce a una respuesta 409. La comprueba el servicio de aplicación, porque la unicidad abarca a todos los clientes de la clínica y no a uno solo; un índice único la respalda en la base de datos. |
 
 **Bounded Context: Medical Records**
 
@@ -2761,12 +2817,17 @@ Clinic "1" o-- "0..*" Client : atiende
 
 | Clase | Tipo | Descripción |
 |---|---|---|
-| `UserProfile` | Aggregate Root | Perfil del usuario dentro del dominio: el rol que ostenta y el vínculo con su clínica o su cliente. No custodia credenciales; su `Id` es el mismo identificador de la cuenta en el proveedor de identidad. Atributos: `Id`, `Email`, `FullName`, `Role`, `ClinicId`, `ClientId`. Métodos: `CanRegisterClinicalData()`. |
-| `IIdentityProvider` | Port | Puerto hacia el proveedor de identidad, implementado por el componente Supabase Auth Gateway. Métodos: `SignIn(email, password)`, `CreateAccount(email, password, role)`. |
+| `UserProfile` | Aggregate Root | Perfil del usuario dentro del dominio: el rol que ostenta y el vínculo con su clínica o su cliente. No custodia credenciales; su `Id` es el mismo identificador de la cuenta en el proveedor de identidad. Atributos: `Id`, `Email`, `FullName`, `Role`, `ClinicId`, `ClientId`, `RequiresPasswordChange`. Métodos: `CanRegisterClinicalData()`, `MarkTemporaryPasswordIssued()`, `MarkPasswordChanged()`. La marca de cambio de contraseña se enciende cuando la clínica entrega una contraseña temporal y se apaga cuando el dueño elige la suya. |
+| `IIdentityProvider` | Port | Puerto hacia el proveedor de identidad, implementado por el componente Supabase Auth Gateway. Métodos: `SignIn(email, password)`, `CreateAccount(email, password, role)`, `SetPassword(accountId, password)`. |
+| `PasswordPolicy` | Domain Service | Política de las contraseñas que elige un usuario: al menos ocho caracteres, con letras y números, y distinta de la que reemplaza. Método: `Ensure(password, current)`. |
 | `Role` | Enumeration | `ClinicStaff`, `PetOwner`. |
 | `Clinic` | Aggregate Root | Establecimiento veterinario. Atributos: `Id`, `Name`, `Address`. |
 | `InvalidCredentialsException` | Domain Exception | Las credenciales no corresponden a ningún usuario. Se origina en la respuesta del proveedor de identidad y se traduce a una respuesta 401. |
 | `ForbiddenOperationException` | Domain Exception | El rol del usuario no permite la operación solicitada. |
+| `WeakPasswordException` | Domain Exception | La contraseña nueva no cumple la política. |
+| `PasswordNotChangedException` | Domain Exception | La contraseña nueva es igual a la actual. |
+| `IncorrectCurrentPasswordException` | Domain Exception | La contraseña actual indicada para autorizar el cambio no coincide. Se traduce a una respuesta 400 y no 401, para que las aplicaciones no la confundan con una sesión vencida. |
+| `ClientWithoutAccountException` | Domain Exception | Se solicitó restablecer la contraseña de un cliente que no tiene acceso a la aplicación móvil. |
 
 ---
 
@@ -2799,8 +2860,8 @@ la RESTful API.
 | Tabla | Descripción | Campos principales |
 |---|---|---|
 | `clinics` | Establecimientos veterinarios. | `id` (PK), `name`, `address` |
-| `user_profiles` | Perfil de los usuarios de la plataforma. Su `id` es el de la cuenta en el esquema `auth`. | `id` (PK, FK a `auth.users`), `email` (UQ), `full_name`, `role`, `clinic_id` (FK), `client_id` (FK) |
-| `clients` | Clientes de una clínica. | `id` (PK), `clinic_id` (FK), `full_name`, `phone_number`, `email` |
+| `user_profiles` | Perfil de los usuarios de la plataforma. Su `id` es el de la cuenta en el esquema `auth`. | `id` (PK, FK a `auth.users`), `email` (UQ), `full_name`, `role`, `clinic_id` (FK), `client_id` (FK), `requires_password_change` |
+| `clients` | Clientes de una clínica. | `id` (PK), `clinic_id` (FK), `full_name`, `document_type`, `document_number`, `phone_number`, `email`; UQ (`clinic_id`, `document_type`, `document_number`) |
 | `pets` | Mascotas registradas como pacientes. | `id` (PK), `client_id` (FK), `name`, `species`, `breed`, `sex`, `birth_date` |
 | `vaccines` | Vacunas disponibles por especie. | `id` (PK), `name`, `species`, `is_core` |
 | `schedule_items` | Plantilla del esquema por especie. | `id` (PK), `vaccine_id` (FK), `species`, `sequence_number`, `minimum_age_weeks`, `minimum_interval_weeks` |
@@ -2848,6 +2909,19 @@ El campo `phone_number` de `clients` almacena el teléfono en forma E.164
 escrito al registrarlo. Una sola forma por número evita que el mismo cliente
 aparezca con teléfonos distintos y deja el dato listo para canales que exigen
 ese formato, como la mensajería.
+
+La combinación de `clinic_id`, `document_type` y `document_number` de
+`clients` es única. El dominio comprueba antes de guardar que el documento no
+pertenezca ya a otro cliente de la clínica, y el índice único sostiene la regla
+cuando dos registros simultáneos superan esa comprobación a la vez. La unicidad
+es por clínica y no global, porque cada clínica administra su propia cartera de
+clientes.
+
+El campo `requires_password_change` de `user_profiles` es la única huella de
+las contraseñas en este modelo: registra que la cuenta tiene una contraseña
+temporal, entregada por la clínica, que el dueño debe reemplazar por una
+propia. La contraseña misma nunca se almacena en el esquema `vetpass`; por eso
+la clínica puede restablecerla, pero no consultarla.
 
 El campo `status` de `doses` es derivable de `application_date`, pero se
 almacena de forma explícita para hacer legibles las consultas y permitir
@@ -2909,11 +2983,14 @@ erDiagram
         varchar role
         uuid clinic_id FK
         uuid client_id FK
+        boolean requires_password_change
     }
     CLIENTS {
         uuid id PK
-        uuid clinic_id FK
+        uuid clinic_id FK "UQ con document_type y document_number"
         varchar full_name
+        varchar document_type
+        varchar document_number
         varchar phone_number
         varchar email
     }

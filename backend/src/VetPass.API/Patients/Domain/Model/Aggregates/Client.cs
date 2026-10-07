@@ -14,6 +14,15 @@ public class Client
     public string FullName { get; private set; } = null!;
 
     /// <summary>
+    /// Identity document of the client. Within a clinic no two clients share
+    /// the same type and number, which is what keeps a person from being
+    /// registered twice.
+    /// </summary>
+    public IdentityDocumentType DocumentType { get; private set; }
+
+    public string DocumentNumber { get; private set; } = null!;
+
+    /// <summary>
     /// Contact number in E.164 form. The client receives it already validated,
     /// as a <see cref="ValueObjects.PhoneNumber"/>, so that no client can exist
     /// with a number outside Peru; it is kept as text so that rows recorded
@@ -26,7 +35,8 @@ public class Client
     // Required by Entity Framework Core.
     private Client() { }
 
-    public Client(Guid clinicId, string fullName, PhoneNumber phoneNumber, string? email)
+    public Client(Guid clinicId, string fullName, IdentityDocument document, PhoneNumber phoneNumber,
+        string? email)
     {
         if (string.IsNullOrWhiteSpace(fullName))
             throw new RequiredClientFieldException("nombres y apellidos");
@@ -34,6 +44,8 @@ public class Client
         Id = Guid.NewGuid();
         ClinicId = clinicId;
         FullName = fullName.Trim();
+        DocumentType = document.Type;
+        DocumentNumber = document.Number;
         PhoneNumber = phoneNumber.Value;
         Email = string.IsNullOrWhiteSpace(email) ? null : email.Trim().ToLowerInvariant();
         CreatedAt = DateTime.UtcNow;

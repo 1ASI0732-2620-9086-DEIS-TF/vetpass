@@ -30,7 +30,7 @@ public class VaccinationCommandService(
             throw new CardAlreadyExistsException(command.PetId);
 
         var schedule = await scheduleProvider.GetForAsync(command.Species, cancellationToken);
-        var card = VaccinationCard.GenerateFrom(command.PetId, schedule, command.BirthDate);
+        var card = VaccinationCard.GenerateFrom(command.PetId, schedule, command.BirthDate, clock.Today);
 
         await cards.AddAsync(card, cancellationToken);
         return card;

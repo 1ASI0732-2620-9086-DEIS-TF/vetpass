@@ -40,7 +40,8 @@ export default {
     ultimaAtencion: 'Última atención',
     sinResultados: 'No se hallaron pacientes con ese criterio.',
     sinResultadosAccion: 'Si es un paciente nuevo, regístralo.',
-    sinAtenciones: 'Sin atenciones'
+    sinAtenciones: 'Sin atenciones',
+    edad: 'Edad'
   },
 
   registro: {
@@ -66,7 +67,13 @@ export default {
     telefonoInvalido: 'Ingresa un número peruano: un celular de 9 dígitos que empieza con 9, o un fijo con su código de área (01 para Lima).',
     nacimientoFuturo: 'La fecha de nacimiento no puede ser posterior a hoy.',
     nacimientoImplausible: 'Con esa fecha tendría {edad} años, por encima de los {maximo} que se admiten para la especie {especie}. Revisa el año.',
-    clienteYaCreado: 'El cliente quedó registrado. Corrige los datos de la mascota y vuelve a guardar: se asociará al mismo cliente.'
+    clienteYaCreado: 'El cliente quedó registrado. Corrige los datos de la mascota y vuelve a guardar: se asociará al mismo cliente.',
+    tipoDocumento: 'Documento',
+    numeroDocumento: 'Número de documento',
+    documentoAyuda: { Dni: 'DNI de 8 dígitos.', ForeignerCard: 'Entre 9 y 12 letras o dígitos.' },
+    documentoInvalido: { Dni: 'El DNI debe tener exactamente 8 dígitos.', ForeignerCard: 'El carné de extranjería debe tener entre 9 y 12 letras o dígitos.' },
+    clienteDuplicado: 'Este documento ya pertenece a {nombre}, registrado en la clínica.',
+    usarCliente: 'Usar este cliente'
   },
 
   ficha: {
@@ -76,6 +83,20 @@ export default {
     semanas: '{n} semanas',
     meses: '{n} meses',
     anos: '{n} años | {n} año | {n} años'
+  },
+
+  // Edad de calendario: «2 meses, 9 días», «3 años, 1 mes».
+  edad: {
+    dias: '{n} días | {n} día | {n} días',
+    meses: '{n} meses | {n} mes | {n} meses',
+    anos: '{n} años | {n} año | {n} años',
+    union: '{a}, {b}',
+    recienNacido: 'Recién nacido'
+  },
+
+  documento: {
+    corto: { Dni: 'DNI', ForeignerCard: 'CE' },
+    largo: { Dni: 'DNI', ForeignerCard: 'Carné de extranjería' }
   },
 
   cartilla: {
@@ -90,7 +111,8 @@ export default {
     estado: 'Estado',
     esperada: 'Esperada: {fecha}',
     registrarDosis: 'Registrar dosis',
-    nota: 'Las dosis se ordenan según la secuencia del esquema. La fila destacada es la que corresponde aplicar hoy.'
+    nota: 'Las dosis se ordenan según la secuencia del esquema. La fila destacada es la que corresponde aplicar hoy. Cada vacuna se registra en orden; vacunas distintas pueden aplicarse el mismo día.',
+    antesLaDosis: 'Primero, la {dosis}'
   },
 
   dosis: {
@@ -100,11 +122,13 @@ export default {
     lote: 'Lote',
     veterinario: 'Veterinario responsable',
     valida: 'Cumple la edad mínima y el intervalo desde la dosis anterior.',
-    aun_no: 'El esquema espera esta dosis el {fecha}. Antes de esa fecha no puede registrarse.',
+    aun_no: 'Antes del {fecha} no puede registrarse: aún no se cumple la edad mínima o el intervalo desde la dosis anterior.',
     futura: 'La fecha de aplicación no puede ser posterior a hoy, {fecha}.',
     registrar: 'Registrar dosis',
     otra: 'Registrar otra dosis del esquema',
-    registrada: 'Dosis registrada en la cartilla de {nombre}.'
+    registrada: 'Dosis registrada en la cartilla de {nombre}.',
+    fueraDeOrden: 'Antes de esta dosis debe registrarse la {dosis}: cada vacuna se aplica en orden.',
+    historica: 'Si la dosis se aplicó en otra fecha, ingrésala: las siguientes de la serie se programarán desde hoy.'
   },
 
   historial: {
@@ -159,7 +183,16 @@ export default {
     contrasenaTemporal: 'Contraseña temporal',
     entregar: 'Anótala o cópiala ahora: no volverá a mostrarse.',
     copiar: 'Copiar',
-    copiada: 'Copiada'
+    copiada: 'Copiada',
+    documento: 'Documento',
+    contrasena: 'Contraseña',
+    sinAcceso: 'Sin acceso',
+    restablecer: 'Restablecer',
+    restablecerTitulo: 'Restablecer contraseña',
+    restablecerNota: 'Se generará una contraseña temporal nueva para {nombre} y la actual dejará de funcionar. Al ingresar, la aplicación le pedirá elegir una propia.',
+    restablecerConfirmar: 'Restablecer contraseña',
+    restablecida: 'Contraseña restablecida para {nombre}',
+    privacidad: 'VetPass no guarda ni muestra la contraseña de los clientes: solo puede reemplazarse por una temporal.'
   },
 
   estado: {

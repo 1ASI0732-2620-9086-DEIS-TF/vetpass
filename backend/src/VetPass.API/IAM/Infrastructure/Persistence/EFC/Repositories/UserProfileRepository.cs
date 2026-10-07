@@ -16,6 +16,10 @@ public class UserProfileRepository(VetPassDbContext context)
         await Context.UserProfiles
             .FirstOrDefaultAsync(profile => profile.Email == email.Trim().ToLower(), cancellationToken);
 
+    public async Task<UserProfile?> FindByClientIdAsync(Guid clientId,
+        CancellationToken cancellationToken = default) =>
+        await Context.UserProfiles.FirstOrDefaultAsync(profile => profile.ClientId == clientId, cancellationToken);
+
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default) =>
         await Context.UserProfiles.AnyAsync(profile => profile.Email == email.Trim().ToLower(), cancellationToken);
 

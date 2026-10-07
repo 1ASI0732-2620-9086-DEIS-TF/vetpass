@@ -26,4 +26,7 @@ public interface IIdentityProvider
     /// </summary>
     Task<IdentityAccount> CreateAccountAsync(string email, string password, Role role,
         Guid? clinicId, Guid? clientId, CancellationToken cancellationToken = default);
+
+    /// <summary>Replaces the password of an account.</summary>
+    Task SetPasswordAsync(Guid accountId, string password, CancellationToken cancellationToken = default);
 }

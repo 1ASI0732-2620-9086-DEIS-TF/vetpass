@@ -21,6 +21,23 @@ public abstract class InvalidDomainDataException(string message) : DomainExcepti
 /// </summary>
 public abstract class DomainRuleViolationException(string message) : DomainException(message);
 
+/// <summary>
+/// The operation would duplicate something that must be unique, such as a
+/// client already registered with the same identity document. Answered with 409.
+/// </summary>
+public abstract class DomainConflictException(string message) : DomainException(message);
+
+/// <summary>
+/// A unique constraint of the database rejected the write. It is the safety net
+/// behind the checks of the domain, for two requests that arrive at the same
+/// time and both pass the check before either is saved.
+/// </summary>
+public class UniqueConstraintViolationException()
+    : DomainConflictException("El registro ya existe: otra operación lo guardó primero.")
+{
+    public override string Code => "already-exists";
+}
+
 /// <summary>The requested resource does not exist. Answered with 404.</summary>
 public class ResourceNotFoundException(string resource, Guid id)
     : DomainException($"No existe {resource} con identificador {id}.")

@@ -3,6 +3,9 @@
  * Cartilla de vacunación de un paciente (US09, US11). Reproduce la estructura
  * tabular de la cartilla física, para que el usuario no tenga que reaprender
  * un formato que ya conoce (sección 4.2.1).
+ *
+ * Solo la dosis que su serie espera admite registro (US10-E5). Si es o no la
+ * siguiente lo decide la API; aquí solo se nombra la que va primero.
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -34,6 +37,14 @@ const proxima = computed(() => {
 
   return t('cartilla.proximaDosis', { fecha });
 });
+
+/** La dosis pendiente más temprana de la misma vacuna: la que va primero. */
+function anteriorPendiente(dosis) {
+  return props.cartilla.doses
+    .filter((d) => d.vaccineId === dosis.vaccineId && d.sequenceNumber < dosis.sequenceNumber
+      && d.status !== 'Applied')
+    .sort((a, b) => a.sequenceNumber - b.sequenceNumber)[0];
+}
 
 const claseFila = (dosis) => (esHoy(dosis.expectedDate) && dosis.status === 'Pending'
   ? 'vp-row-today' : null);
@@ -78,12 +89,16 @@ const claseFila = (dosis) => (esHoy(dosis.expectedDate) && dosis.status === 'Pen
       <Column class="columna-accion">
         <template #body="{ data }">
           <Button
-            v-if="data.status === 'Pending'"
+            v-if="data.status === 'Pending' && data.isNextInSequence"
             :label="t('cartilla.registrarDosis')"
             size="small"
             outlined
             @click="emit('registrar-dosis', data)"
           />
+          <span v-else-if="data.status === 'Pending' && anteriorPendiente(data)" class="vp-caption vp-muted en-espera">
+            <i class="pi pi-lock" aria-hidden="true" />
+            {{ t('cartilla.antesLaDosis', { dosis: etiquetaDosis(anteriorPendiente(data), t) }) }}
+          </span>
         </template>
       </Column>
     </DataTable>
@@ -100,4 +115,5 @@ const claseFila = (dosis) => (esHoy(dosis.expectedDate) && dosis.status === 'Pen
 .vacuna { font-weight: 600; }
 .pie { padding: var(--vp-space-3) var(--vp-space-4); border-top: 1px solid var(--vp-neutral-200); }
 :deep(.columna-accion) { text-align: right; }
+.en-espera { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
 </style>

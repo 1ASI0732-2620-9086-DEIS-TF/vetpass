@@ -24,7 +24,12 @@ public record UserResource(
     string Role,
     Guid? ClinicId,
     Guid? ClientId,
-    string? ClinicName);
+    string? ClinicName,
+    bool RequiresPasswordChange);
+
+public record ChangePasswordResource(
+    [Required] string CurrentPassword,
+    [Required] string NewPassword);
 
 public record AuthenticatedSessionResource(
     string AccessToken,

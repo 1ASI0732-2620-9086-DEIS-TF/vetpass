@@ -4,10 +4,14 @@
  *
  * La validación corre al ingresar la fecha y no al confirmar, conforme al
  * criterio de la sección 4.1.2: el usuario no descubre el error al final. La
- * comprobación que hace la interfaz se apoya en la fecha esperada que la API
- * ya calculó para esa dosis, de modo que no duplica la regla del dominio; la
- * autoridad sigue siendo la API, que responde 422 con la regla incumplida, su
- * valor exigido y la fecha más temprana admisible.
+ * comprobación que hace la interfaz se apoya en la fecha más temprana
+ * admisible que la API ya calculó para esa dosis, de modo que no duplica la
+ * regla del dominio; la autoridad sigue siendo la API, que responde 422 con
+ * la regla incumplida, su valor exigido y la fecha más temprana admisible.
+ *
+ * Esa fecha no es la esperada: la esperada nunca cae antes de hoy, mientras
+ * que una dosis aplicada hace años —el historial de una mascota adulta— se
+ * registra con su fecha real.
  */
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -51,11 +55,7 @@ const fechaISO = computed(() => {
 
 const hoyISO = new Date().toLocaleDateString('sv-SE');
 
-/**
- * Aviso previo al envío. La fecha esperada de la dosis es la más temprana en
- * que el esquema la admite, porque la API la recalcula cuando se aplica la
- * dosis anterior.
- */
+/** Aviso previo al envío, contra la fecha más temprana que la API admite. */
 const avisoLocal = computed(() => {
   if (!props.dosis || !fechaISO.value) return null;
 
@@ -63,10 +63,11 @@ const avisoLocal = computed(() => {
     return { severidad: 'error', texto: t('dosis.futura', { fecha: formatearFecha(hoyISO) }) };
   }
 
-  if (fechaISO.value < props.dosis.expectedDate) {
+  const minima = props.dosis.earliestAdmissibleDate;
+  if (minima && fechaISO.value < minima) {
     return {
       severidad: 'warn',
-      texto: t('dosis.aun_no', { fecha: formatearFecha(props.dosis.expectedDate) })
+      texto: t('dosis.aun_no', { fecha: formatearFecha(minima) })
     };
   }
 
@@ -92,6 +93,19 @@ async function registrar() {
     enviando.value = false;
   }
 }
+
+/**
+ * El rechazo en el idioma de la interfaz cuando el código lo permite; si no,
+ * el detalle que redactó la API.
+ */
+const textoRechazo = computed(() => {
+  const r = rechazo.value;
+  if (r?.code === 'dose-out-of-order' && props.dosis) {
+    const faltante = { ...props.dosis, sequenceNumber: r.pendingSequenceNumber, isBooster: false };
+    return t('dosis.fueraDeOrden', { dosis: etiquetaDosis(faltante, t) });
+  }
+  return r?.detail;
+});
 
 function cerrar() { emit('update:visible', false); }
 
@@ -127,6 +141,7 @@ function otraDosis() { emit('otra-dosis'); cerrar(); }
           :max-date="new Date()"
           show-icon
         />
+        <span class="vp-caption vp-muted">{{ t('dosis.historica') }}</span>
       </div>
 
       <!-- Resultado de la validación: el mensaje nombra la regla y su valor
@@ -138,7 +153,7 @@ function otraDosis() { emit('otra-dosis'); cerrar(); }
         class="resultado"
       >
         <strong>{{ rechazo.title }}</strong>
-        <span class="vp-small">{{ rechazo.detail }}</span>
+        <span class="vp-small">{{ textoRechazo }}</span>
       </Message>
 
       <Message

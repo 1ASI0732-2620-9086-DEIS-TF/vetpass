@@ -69,6 +69,7 @@ public class VetPassDbContext(DbContextOptions<VetPassDbContext> options) : DbCo
             profile.Property(p => p.ClinicId).HasColumnName("clinic_id");
             profile.Property(p => p.ClientId).HasColumnName("client_id");
             profile.Property(p => p.CreatedAt).HasColumnName("created_at");
+            profile.Property(p => p.RequiresPasswordChange).HasColumnName("requires_password_change").IsRequired();
             profile.HasIndex(p => p.Email).IsUnique();
             profile.HasOne<Clinic>().WithMany().HasForeignKey(p => p.ClinicId).OnDelete(DeleteBehavior.Restrict);
             profile.HasOne<Client>().WithMany().HasForeignKey(p => p.ClientId).OnDelete(DeleteBehavior.Restrict);
@@ -84,6 +85,12 @@ public class VetPassDbContext(DbContextOptions<VetPassDbContext> options) : DbCo
             client.Property(c => c.Id).HasColumnName("id");
             client.Property(c => c.ClinicId).HasColumnName("clinic_id").IsRequired();
             client.Property(c => c.FullName).HasColumnName("full_name").HasMaxLength(160).IsRequired();
+            client.Property(c => c.DocumentType).HasColumnName("document_type")
+                .HasConversion<string>().HasMaxLength(20).IsRequired();
+            client.Property(c => c.DocumentNumber).HasColumnName("document_number").HasMaxLength(12).IsRequired();
+            // Una persona, un cliente por clínica: la regla vive en el dominio y
+            // el índice la sostiene ante dos altas simultáneas (US06-E4).
+            client.HasIndex(c => new { c.ClinicId, c.DocumentType, c.DocumentNumber }).IsUnique();
             client.Property(c => c.PhoneNumber).HasColumnName("phone_number").HasMaxLength(30).IsRequired();
             client.Property(c => c.Email).HasColumnName("email").HasMaxLength(160);
             client.Property(c => c.CreatedAt).HasColumnName("created_at");

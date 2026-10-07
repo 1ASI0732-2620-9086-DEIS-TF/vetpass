@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VetPass.API.Shared.Infrastructure.Persistence.EFC.Configuration;
@@ -11,9 +12,11 @@ using VetPass.API.Shared.Infrastructure.Persistence.EFC.Configuration;
 namespace VetPass.API.Shared.Infrastructure.Persistence.EFC.Migrations
 {
     [DbContext(typeof(VetPassDbContext))]
-    partial class VetPassDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261007172326_AddClientDocumentAndPasswordChange")]
+    partial class AddClientDocumentAndPasswordChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

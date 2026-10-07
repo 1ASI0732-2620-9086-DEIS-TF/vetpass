@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'iam/application/session.dart';
+import 'iam/presentation/change_password_page.dart';
 import 'iam/presentation/sign_in_page.dart';
 import 'shared/i18n/app_strings.dart';
 import 'shared/infrastructure/api_client.dart';
@@ -39,9 +40,12 @@ class VetPassApp extends StatelessWidget {
         title: 'VetPass',
         debugShowCheckedModeBanner: false,
         theme: buildVetPassTheme(),
-        home: session.autenticado
-            ? HomeShell(session: session, idioma: idioma)
-            : SignInPage(session: session, idioma: idioma),
+        // Con una contraseña temporal, el dueño elige la suya antes de entrar.
+        home: !session.autenticado
+            ? SignInPage(session: session, idioma: idioma)
+            : session.debeCambiarContrasena
+                ? ChangePasswordPage(session: session, idioma: idioma, obligatorio: true)
+                : HomeShell(session: session, idioma: idioma),
       ),
     );
   }

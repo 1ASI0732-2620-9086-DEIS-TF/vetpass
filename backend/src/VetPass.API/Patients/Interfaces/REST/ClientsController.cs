@@ -29,6 +29,7 @@ public class ClientsController(
     /// <summary>Registers a client of the clinic (US06).</summary>
     [HttpPost]
     [ProducesResponseType(typeof(ClientResource), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateClientResource resource,
         CancellationToken cancellationToken)

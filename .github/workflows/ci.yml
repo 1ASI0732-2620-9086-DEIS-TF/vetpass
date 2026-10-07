@@ -1,0 +1,128 @@
+# Integración continua de VetPass: compila y prueba cada producto en cada push
+# y en cada pull request. El job final `ci` resume el resultado.
+name: CI
+
+on:
+  push:
+    branches: ['feature/**', develop, main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  backend:
+    name: Backend (build, unit, integration, BDD)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ hashFiles('backend/**/*.csproj') }}
+      - name: Restore
+        run: dotnet restore VetPass.slnx
+      - name: Build
+        run: dotnet build VetPass.slnx --no-restore -c Release
+      - name: Test
+        run: >
+          dotnet test --solution VetPass.slnx --no-build -c Release
+          --results-directory TestResults --report-trx
+          --coverage --coverage-output-format cobertura
+      - name: Test report
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v2
+        with:
+          name: Backend tests
+          path: backend/TestResults/*.trx
+          reporter: dotnet-trx
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        uses: danielpalme/ReportGenerator-GitHub-Action@v5
+        with:
+          reports: backend/TestResults/**/*.cobertura.xml
+          targetdir: backend/CoverageReport
+          reporttypes: MarkdownSummaryGithub;HtmlInline
+          assemblyfilters: +VetPass.API
+          classfilters: -VetPass.API.Shared.Infrastructure.Persistence.EFC.Migrations.*
+      - name: Publish coverage in the job summary
+        if: ${{ !cancelled() }}
+        run: cat CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: backend-test-results
+          path: |
+            backend/TestResults
+            backend/CoverageReport
+
+  web:
+    name: Web (unit tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-application
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web-application/package-lock.json
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Build
+        run: npm run build
+
+  mobile:
+    name: Mobile (analyze, tests, APK)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-application
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.5
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Unit and widget tests
+        run: flutter test
+      - name: Build APK
+        run: flutter build apk --release --dart-define=VETPASS_API=https://vetpass-api.vercel.app/api/v1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vetpass-apk
+          path: mobile-application/build/app/outputs/flutter-apk/app-release.apk
+
+  ci:
+    name: CI
+    if: ${{ always() }}
+    needs: [backend, web, mobile]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Result
+        run: |
+          echo "backend: ${{ needs.backend.result }} · web: ${{ needs.web.result }} · mobile: ${{ needs.mobile.result }}"
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then exit 1; fi

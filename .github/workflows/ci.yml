@@ -150,8 +150,9 @@ jobs:
 
   system-mobile:
     name: System tests (mobile)
-    # El emulador tarda; se ejecuta a pedido (Run workflow).
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    # El emulador tarda: se ejecuta a pedido, con «Run workflow» o con
+    # [mobile-e2e] en el mensaje del commit.
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[mobile-e2e]') }}
     needs: [backend, mobile]
     runs-on: ubuntu-latest
     env:

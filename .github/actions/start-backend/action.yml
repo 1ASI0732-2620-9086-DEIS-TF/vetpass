@@ -27,7 +27,9 @@ runs:
         export ASPNETCORE_ENVIRONMENT=Development
         export ConnectionStrings__VetPassDb="Host=127.0.0.1;Port=54322;Database=postgres;Username=postgres;Password=postgres"
         export Supabase__Url="$API_URL" Supabase__AnonKey="$ANON_KEY"
-        export Supabase__ServiceRoleKey="$SERVICE_ROLE_KEY" Supabase__JwtSecret="$JWT_SECRET"
+        # Sin JwtSecret: Supabase local firma con ES256 y la API valida con sus
+        # claves públicas (JWKS), igual que en producción.
+        export Supabase__ServiceRoleKey="$SERVICE_ROLE_KEY"
         export Seed__Demo=true Seed__Password="$DEMO_PASSWORD"
         nohup dotnet run --project backend/src/VetPass.API -c Release --no-launch-profile \
           --urls http://127.0.0.1:5199 > "$RUNNER_TEMP/api.log" 2>&1 &

@@ -24,7 +24,7 @@ export async function signIn(page) {
   await page.locator('#correo').fill(STAFF.email);
   await page.locator('#contrasena').fill(STAFF.password);
   await page.getByRole('button', { name: 'Ingresar' }).click();
-  await expect(page).toHaveURL(/\/pacientes/);
+  await expect(page.getByRole('heading', { name: 'Pacientes' })).toBeVisible();
 }
 
 /** Prepara datos por la API: un cliente nuevo y, si se pide, su mascota. */

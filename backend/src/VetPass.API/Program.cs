@@ -88,7 +88,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             options.Authority = supabase.AuthUrl;
             options.MetadataAddress = $"{supabase.AuthUrl}/.well-known/openid-configuration";
-            options.RequireHttpsMetadata = true;
+            // Supabase local (pruebas de sistema) publica sus claves por HTTP;
+            // fuera de desarrollo se exige HTTPS.
+            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         }
         else if (!builder.Environment.IsDevelopment())
         {

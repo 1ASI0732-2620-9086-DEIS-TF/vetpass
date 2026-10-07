@@ -1,6 +1,7 @@
 # Despliegue de VetPass
 
-VetPass se despliega en **Vercel** desde este repositorio de **GitHub**. Cada
+VetPass se despliega en **Vercel** desde este repositorio público de la
+organización del curso en **GitHub**. Cada
 `git push` a `main` publica en producción, y cada rama obtiene su propia URL
 de vista previa. La base de datos y la autenticación siguen en **Supabase**.
 
@@ -78,6 +79,19 @@ flutter build apk --release --dart-define=VETPASS_API=https://vetpass-api.vercel
 
 Hoy se firma con la clave de depuración: sirve para instalarlo a mano, no
 para publicarlo en Google Play.
+
+## Cuentas de demostración
+
+El repositorio es público, así que la contraseña de las cuentas de
+demostración no está en él. El valor de `Seed:Password` en
+`appsettings.Development.json` solo sirve para sembrar una base local nueva.
+Las cuentas de la base compartida usan otra contraseña, guardada en
+`dotnet user-secrets` como `Seed:Password`:
+
+```bash
+cd backend/src/VetPass.API
+dotnet user-secrets list | grep Seed:Password
+```
 
 ## Supabase
 

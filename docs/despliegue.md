@@ -22,6 +22,26 @@ git diff --quiet "${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}" HEAD -- .
 | Base de datos y Auth | Supabase, proyecto VetPass | — | — |
 | Aplicación móvil | APK de release | `mobile-application/` | — |
 
+## Del commit a producción
+
+| Etapa | Qué ocurre | Dónde |
+|---|---|---|
+| Integración | Cada push y PR compila y prueba los productos | `.github/workflows/ci.yml` |
+| Stage | Los jobs de sistema levantan Supabase local, la API, la web, la landing y el emulador, y ejecutan las pruebas de sistema | Runner de GitHub Actions, desechable |
+| Vista previa | Vercel publica cada rama en una URL propia, protegida con la autenticación de Vercel. Sus variables apuntan a la base de producción: no se usa para probar datos | Vercel, entorno Preview |
+| Release candidate | La etiqueta `vX.Y.Z-rc.N` publica el APK como pre-release | `.github/workflows/release.yml` |
+| Producción | Fusionar un PR en `main` despliega la carpeta que cambió | Vercel, entorno Production |
+| Comprobación | Tras cada despliegue, se verifica el producto publicado | `.github/workflows/post-deploy.yml` |
+| Versión final | La etiqueta `vX.Y.Z` publica el APK como la última versión | `.github/workflows/release.yml` |
+
+`main` solo acepta pull requests con el check `CI` en verde, así que a producción
+llega únicamente lo que pasó las pruebas. Los PR hacia `main` también ejecutan
+las pruebas en el emulador.
+
+Para volver atrás: en el proyecto de Vercel, **Deployments → Instant Rollback**
+sobre el último despliegue correcto; después se revierte el commit con un
+`hotfix/` para que `main` coincida con lo publicado.
+
 ## RESTful API
 
 La API corre como contenedor en Vercel Functions (`runtime: container`, en

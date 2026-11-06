@@ -16,13 +16,9 @@ public interface ICurrentUser
     Guid? ClientId { get; }
 
     /// <summary>
-
     /// The user may reach the information of a client: the staff, only within their
-
     /// own clinic; the owner, only their own.
-
     /// </summary>
-
     void EnsureCanAccess(Guid clinicId, Guid clientId);
 }
 

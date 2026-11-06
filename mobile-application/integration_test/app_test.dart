@@ -8,6 +8,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:vetpass_mobile/main.dart' as app;
+import 'package:vetpass_mobile/medical_records/presentation/visit_detail_page.dart';
 
 /// System tests of the mobile application (section 6.1.4): the real app on an
 /// Android emulator, against the API and local Supabase. Never production.
@@ -50,7 +51,15 @@ void main() {
     final visit = find.textContaining('Enrojecimiento');
     await tester.ensureVisible(visit);
     await tester.tap(visit);
-    await waitFor(tester, find.text('Cefalexina 250 mg'));
+    await waitFor(tester, find.byType(VisitDetailPage));
+    await settle(tester);
+
+    // The prescription closes a long list that only builds what is on screen.
+    await tester.scrollUntilVisible(
+      find.text('Cefalexina 250 mg'),
+      200,
+      scrollable: find.descendant(of: find.byType(VisitDetailPage), matching: find.byType(Scrollable)),
+    );
   });
 
   testWidgets('a temporary password must be replaced before entering', (tester) async {

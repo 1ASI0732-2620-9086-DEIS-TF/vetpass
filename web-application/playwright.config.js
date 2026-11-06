@@ -20,13 +20,21 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'mobile', use: { ...devices['Pixel 7'] }, grep: /@mobile/ },
+    { name: 'desktop', testMatch: 'clinic.spec.js', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    { name: 'mobile', testMatch: 'clinic.spec.js', use: { ...devices['Pixel 7'] }, grep: /@mobile/ },
+    { name: 'landing', testMatch: 'landing.spec.js', use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4174' } },
   ],
-  webServer: {
-    command: 'npm run build && npm run preview -- --host 127.0.0.1',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
-  },
+  webServer: [
+    {
+      command: 'npm run build && npm run preview -- --host 127.0.0.1',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+    },
+    {
+      command: 'npx vite preview --outDir ../landing-page --host 127.0.0.1 --port 4174',
+      url: 'http://127.0.0.1:4174',
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });

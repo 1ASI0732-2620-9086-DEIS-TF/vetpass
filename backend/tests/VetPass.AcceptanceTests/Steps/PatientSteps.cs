@@ -3,6 +3,51 @@ namespace VetPass.AcceptanceTests.Steps;
 [Binding]
 public sealed class PatientSteps(ScenarioState state)
 {
+    [When("the staff searches for patients with {string}")]
+    public async Task WhenTheStaffSearches(string criterion) =>
+        await state.KeepAsync(await state.Client!.GetAsync($"/api/v1/pets?search={Uri.EscapeDataString(criterion)}"));
+
+    [When("the owner lists their pets")]
+    public async Task WhenTheOwnerListsTheirPets() =>
+        await state.KeepAsync(await state.Client!.GetAsync("/api/v1/me/pets"));
+
+    [Then("the patients found are {string}")]
+    public void ThenThePatientsFoundAre(string names)
+    {
+        state.Response!.StatusCode.ShouldBe(HttpStatusCode.OK);
+        state.Body.EnumerateArray().Select(p => p.GetProperty("name").GetString())
+            .ShouldBe(names.Split(", "), ignoreOrder: true);
+    }
+
+    [Then("every patient found shows its species and the owner {string}")]
+    public void ThenEveryPatientFoundShows(string owner)
+    {
+        foreach (var patient in state.Body.EnumerateArray())
+        {
+            patient.GetProperty("species").GetString().ShouldNotBeNullOrWhiteSpace();
+            patient.GetProperty("owner").GetProperty("fullName").GetString().ShouldBe(owner);
+        }
+    }
+
+    [Then("no patient is found")]
+    public void ThenNoPatientIsFound()
+    {
+        state.Response!.StatusCode.ShouldBe(HttpStatusCode.OK);
+        state.Body.GetArrayLength().ShouldBe(0);
+    }
+
+    [Then("the status of each pet is")]
+    public void ThenTheStatusOfEachPetIs(DataTable expected)
+    {
+        state.Response!.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var statuses = state.Body.EnumerateArray().ToDictionary(
+            p => p.GetProperty("name").GetString()!,
+            p => p.GetProperty("cardStatus").GetString());
+
+        foreach (var row in expected.Rows)
+            statuses[row["pet"]].ShouldBe(row["status"], row["pet"]);
+    }
+
     [When("the staff registers the client {string} with DNI {string} and phone {string}")]
     public async Task WhenTheStaffRegistersTheClient(string name, string dni, string phone) =>
         await state.KeepAsync(await state.Client!.PostAsJsonAsync("/api/v1/clients",

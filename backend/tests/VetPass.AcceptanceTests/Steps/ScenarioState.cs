@@ -9,6 +9,7 @@ public sealed class ScenarioState
     public string CurrentPassword { get; set; } = VetPassApiFactory.DemoPassword;
     public string? TemporaryPassword { get; set; }
     public (Guid Pet, string Vaccine, int Dose)? LastDose { get; set; }
+    public Guid? LastVisit { get; set; }
 
     public async Task KeepAsync(HttpResponseMessage response)
     {

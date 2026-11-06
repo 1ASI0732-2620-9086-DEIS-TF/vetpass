@@ -38,6 +38,15 @@ public sealed class AccessSteps(ScenarioState state)
         await state.KeepAsync(await Api.CreateClient().PostAsJsonAsync("/api/v1/authentication/sign-in",
             new { email, password = VetPassApiFactory.DemoPassword }));
 
+    [When("the user {string} signs in with the demonstration password")]
+    public async Task WhenTheUserSignsIn(string email) =>
+        await WhenTheUserSignsInWith(email, VetPassApiFactory.DemoPassword);
+
+    [When("the user {string} signs in with the password {string}")]
+    public async Task WhenTheUserSignsInWith(string email, string password) =>
+        await state.KeepAsync(await Api.CreateClient().PostAsJsonAsync("/api/v1/authentication/sign-in",
+            new { email, password }));
+
     [When("the user requests the vaccination card of {string}")]
     public async Task WhenTheUserRequestsTheCardOf(string pet) =>
         await state.KeepAsync(await state.Client!.GetAsync($"/api/v1/pets/{await Hooks.PetIdAsync(pet)}/vaccination-card"));
@@ -48,6 +57,9 @@ public sealed class AccessSteps(ScenarioState state)
         state.Response!.StatusCode.ShouldBe(HttpStatusCode.OK);
         state.Body.GetProperty("user").GetProperty("role").GetString().ShouldBe(role);
     }
+
+    [Then("the answer opens no session")]
+    public void ThenTheAnswerOpensNoSession() => state.Body.TryGetProperty("accessToken", out _).ShouldBeFalse();
 
     [Then("the owner sees the pets {string}")]
     public async Task ThenTheOwnerSeesThePets(string names)

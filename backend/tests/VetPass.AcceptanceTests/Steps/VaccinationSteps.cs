@@ -67,6 +67,16 @@ public sealed class VaccinationSteps(ScenarioState state)
     [Then("the status of the card is {string}")]
     public void ThenTheStatusOfTheCardIs(string status) => state.Body.GetProperty("status").GetString().ShouldBe(status);
 
+    [Then("the card shows applied doses and pending doses")]
+    public void ThenTheCardShowsAppliedAndPendingDoses()
+    {
+        var statuses = state.Body.GetProperty("doses").EnumerateArray()
+            .Select(d => d.GetProperty("status").GetString()).ToList();
+
+        statuses.ShouldContain("Applied");
+        statuses.ShouldContain("Pending");
+    }
+
     [Then("the next dose is dose {int} of {string}")]
     public void ThenTheNextDoseIs(int dose, string vaccine)
     {

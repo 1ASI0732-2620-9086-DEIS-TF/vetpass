@@ -3,7 +3,7 @@ description: >-
   Aplicación móvil de VetPass para el dueño de la mascota. Interfaz de consulta:
   no permite registrar información clínica.
 publish_to: none
-version: 1.0.1+2
+version: 1.1.0+3
 
 environment:
   sdk: ^3.6.0

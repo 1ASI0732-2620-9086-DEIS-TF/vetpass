@@ -88,7 +88,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             options.Authority = supabase.AuthUrl;
             options.MetadataAddress = $"{supabase.AuthUrl}/.well-known/openid-configuration";
-            options.RequireHttpsMetadata = true;
+            // Supabase local (pruebas de sistema) publica sus claves por HTTP;
+            // fuera de desarrollo se exige HTTPS.
+            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
         }
         else if (!builder.Environment.IsDevelopment())
         {
@@ -231,3 +233,6 @@ app.MapGet("/api/v1/health", (IClinicClock clock) =>
     .ExcludeFromDescription();
 
 app.Run();
+
+// Visible para WebApplicationFactory en las pruebas de integración y de aceptación.
+public partial class Program;

@@ -1,0 +1,39 @@
+# Despliegue continuo: Vercel publica cada push a main. Este workflow comprueba
+# cada producto apenas su despliegue de producción termina.
+name: Post-deploy
+
+on: deployment_status
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke test in production
+    if: ${{ github.event.deployment_status.state == 'success' && startsWith(github.event.deployment.environment, 'Production') }}
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: ${{ github.event.deployment.environment }}
+    steps:
+      - name: Check the deployed product
+        run: |
+          # --retry: la API puede estar en arranque en frío.
+          fetch() { curl -s --retry 5 --retry-delay 5 --retry-all-errors "$@"; }
+          status() { fetch -o /dev/null -w '%{http_code}' "$1"; }
+
+          case "$ENVIRONMENT" in
+            *vetpass-api)
+              health=$(fetch https://vetpass-api.vercel.app/api/v1/health)
+              echo "$health"
+              grep -q '"status":"ok"' <<< "$health"
+              grep -q '"timeZone":"America/Lima"' <<< "$health"
+              # Una ruta protegida debe seguir pidiendo un token.
+              [ "$(status https://vetpass-api.vercel.app/api/v1/clients)" = 401 ]
+              ;;
+            *vetpass-web)
+              [ "$(status https://vetpass-web.vercel.app)" = 200 ]
+              ;;
+            *vetpass-landing)
+              [ "$(status https://vetpass-landing.vercel.app)" = 200 ]
+              ;;
+          esac

@@ -49,8 +49,8 @@ public class VisitsController(
     public async Task<IActionResult> Register(Guid petId, [FromBody] RegisterVisitResource resource,
         CancellationToken cancellationToken)
     {
-        // The pet must exist before writing anything in its history.
-        _ = await patientsQueryService.GetPatientAsync(petId, cancellationToken);
+        // The pet must exist, and belong to the clinic, before writing in its history.
+        await EnsureAccessToPetAsync(petId, cancellationToken);
 
         var visit = await commandService.RegisterVisitAsync(
             new RegisterVisitCommand(petId, resource.VeterinarianId ?? currentUser.Id, resource.VisitDate,
@@ -92,6 +92,9 @@ public class VisitsController(
     public async Task<IActionResult> IssuePrescription(Guid id,
         [FromBody] IssuePrescriptionResource resource, CancellationToken cancellationToken)
     {
+        var existing = await queryService.GetByIdAsync(id, cancellationToken);
+        await EnsureAccessToPetAsync(existing.PetId, cancellationToken);
+
         var visit = await commandService.IssuePrescriptionAsync(
             new IssuePrescriptionCommand(id, resource.Items
                 .Select(item => new PrescriptionItemCommand(item.Medication, item.Dosage, item.Duration))
@@ -104,6 +107,6 @@ public class VisitsController(
     private async Task EnsureAccessToPetAsync(Guid petId, CancellationToken cancellationToken)
     {
         var patient = await patientsQueryService.GetPatientAsync(petId, cancellationToken);
-        currentUser.EnsureCanReadClient(patient.Owner.Id);
+        currentUser.EnsureCanAccess(patient.Owner.ClinicId, patient.Owner.Id);
     }
 }

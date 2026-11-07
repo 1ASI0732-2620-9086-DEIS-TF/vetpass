@@ -40,6 +40,10 @@ public class PetsController(
     public async Task<IActionResult> Create([FromBody] CreatePetResource resource,
         CancellationToken cancellationToken)
     {
+        // El cliente debe ser de la clínica de quien registra la mascota.
+        var owner = await queryService.GetClientAsync(resource.ClientId, cancellationToken);
+        currentUser.EnsureCanAccess(owner.ClinicId, owner.Id);
+
         var pet = await commandService.CreatePetAsync(
             new CreatePetCommand(resource.ClientId, resource.Name, resource.Species.ToSpecies(),
                 resource.Breed, resource.Sex.ToSex(), resource.BirthDate),
@@ -100,7 +104,7 @@ public class PetsController(
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var patient = await queryService.GetPatientAsync(id, cancellationToken);
-        currentUser.EnsureCanReadClient(patient.Owner.Id);
+        currentUser.EnsureCanAccess(patient.Owner.ClinicId, patient.Owner.Id);
 
         return Ok(PetResourceFromEntityAssembler.ToResource(patient, clock.Today));
     }

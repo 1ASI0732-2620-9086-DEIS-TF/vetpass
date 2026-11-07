@@ -8,6 +8,7 @@ using VetPass.API.IAM.Domain.Model.Commands;
 using VetPass.API.IAM.Domain.Model.ValueObjects;
 using VetPass.API.IAM.Interfaces.REST.Resources;
 using VetPass.API.IAM.Interfaces.REST.Transform;
+using VetPass.API.Patients.Application.Internal.QueryServices;
 using VetPass.API.Shared.Domain.Exceptions;
 using VetPass.API.Shared.Interfaces.ASP.Security;
 
@@ -27,6 +28,7 @@ namespace VetPass.API.IAM.Interfaces.REST;
 public class AuthenticationController(
     AuthenticationCommandService commandService,
     UserProfileQueryService queryService,
+    PatientsQueryService patientsQueryService,
     ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>Opens a session with e-mail and password (TS01-E1, TS01-E2).</summary>
@@ -107,6 +109,10 @@ public class AuthenticationController(
     {
         var clinicId = currentUser.ClinicId
                        ?? throw new ForbiddenOperationException("El usuario no está asociado a ninguna clínica.");
+
+        // Solo se da acceso a clientes de la propia clínica.
+        var client = await patientsQueryService.GetClientAsync(resource.ClientId, cancellationToken);
+        currentUser.EnsureCanAccess(client.ClinicId, client.Id);
 
         var account = await commandService.CreateAccountAsync(
             new CreateAccountCommand(resource.Email, resource.FullName, Role.PetOwner, clinicId, resource.ClientId),

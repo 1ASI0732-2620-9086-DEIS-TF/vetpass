@@ -8,28 +8,28 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps({
-  estado: { type: String, required: true },
-  cartilla: { type: Boolean, default: false }
+  status: { type: String, required: true },
+  card: { type: Boolean, default: false }
 });
 
 const { t } = useI18n();
 
-const iconos = {
+const icons = {
   UpToDate: 'pi pi-check-circle',
   Applied: 'pi pi-check-circle',
   Pending: 'pi pi-clock',
   Overdue: 'pi pi-exclamation-triangle'
 };
 
-const icono = computed(() => iconos[props.estado] ?? 'pi pi-circle');
-const texto = computed(() => (props.cartilla
-  ? t(`estado.cartilla.${props.estado}`)
-  : t(`estado.${props.estado}`)));
+const icon = computed(() => icons[props.status] ?? 'pi pi-circle');
+const text = computed(() => (props.card
+  ? t(`status.card.${props.status}`)
+  : t(`status.${props.status}`)));
 </script>
 
 <template>
-  <span class="vp-status" :class="`vp-status--${estado}`">
-    <i :class="icono" aria-hidden="true" style="font-size: 12px" />
-    {{ texto }}
+  <span class="vp-status" :class="`vp-status--${status}`">
+    <i :class="icon" aria-hidden="true" style="font-size: 12px" />
+    {{ text }}
   </span>
 </template>

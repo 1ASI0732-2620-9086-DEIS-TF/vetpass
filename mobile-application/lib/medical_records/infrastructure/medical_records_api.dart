@@ -6,8 +6,8 @@ class MedicalRecordsApi {
 
   final ApiClient _api;
 
-  Future<List<Visit>> historialDe(String petId) async {
-    final datos = await _api.get('/pets/$petId/visits') as List;
-    return datos.map((v) => Visit.desdeJson(v as Map<String, dynamic>)).toList();
+  Future<List<Visit>> historyOf(String petId) async {
+    final details = await _api.get('/pets/$petId/visits') as List;
+    return details.map((v) => Visit.fromJson(v as Map<String, dynamic>)).toList();
   }
 }

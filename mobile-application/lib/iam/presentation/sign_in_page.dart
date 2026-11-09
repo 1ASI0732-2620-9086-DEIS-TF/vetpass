@@ -7,42 +7,42 @@ import '../application/session.dart';
 /// Inicio de sesión del dueño (US05). No hay registro: las credenciales las
 /// entrega la clínica, de modo que la pantalla no ofrece crear una cuenta.
 class SignInPage extends StatefulWidget {
-  const SignInPage({super.key, required this.session, required this.idioma});
+  const SignInPage({super.key, required this.session, required this.language});
 
   final Session session;
-  final IdiomaController idioma;
+  final LanguageController language;
 
   @override
   State<SignInPage> createState() => _SignInPageState();
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _correo = TextEditingController();
-  final _contrasena = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
   String? _error;
-  bool _oculta = true;
+  bool _hidden = true;
 
   @override
   void dispose() {
-    _correo.dispose();
-    _contrasena.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _ingresar(AppStrings textos) async {
+  Future<void> _signIn(AppStrings texts) async {
     setState(() => _error = null);
     try {
-      await widget.session.iniciarSesion(_correo.text.trim(), _contrasena.text);
-    } on ApiException catch (fallo) {
-      setState(() => _error = fallo.sinRed
-          ? textos.sinConexion
-          : (fallo.noAutorizado ? textos.credencialesInvalidas : fallo.toString()));
+      await widget.session.signIn(_email.text.trim(), _password.text);
+    } on ApiException catch (failure) {
+      setState(() => _error = failure.noNetwork
+          ? texts.offline
+          : (failure.unauthorized ? texts.invalidCredentials : failure.toString()));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final textos = widget.idioma.textos;
+    final texts = widget.language.texts;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -57,7 +57,7 @@ class _SignInPageState extends State<SignInPage> {
                 children: [
                   Align(
                     alignment: Alignment.centerRight,
-                    child: _SelectorIdioma(idioma: widget.idioma),
+                    child: _LanguageSelector(language: widget.language),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -73,22 +73,22 @@ class _SignInPageState extends State<SignInPage> {
                         child: const Icon(Icons.pets, color: Colors.white, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      Text(textos.marca,
+                      Text(texts.brand,
                           style: Theme.of(context).textTheme.headlineSmall),
                     ],
                   ),
                   const SizedBox(height: 40),
-                  Text(textos.accesoTitulo,
+                  Text(texts.signInTitle,
                       style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text(textos.accesoNota,
+                  Text(texts.signInNote,
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium
                           ?.copyWith(color: VetPassColors.neutral600)),
                   const SizedBox(height: 24),
-                  if (_error == null && widget.session.expirada) ...[
-                    Text(textos.sesionExpirada,
+                  if (_error == null && widget.session.expired) ...[
+                    Text(texts.sessionExpired,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
@@ -119,23 +119,23 @@ class _SignInPageState extends State<SignInPage> {
                     const SizedBox(height: 16),
                   ],
                   TextField(
-                    controller: _correo,
+                    controller: _email,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.username],
-                    decoration: InputDecoration(labelText: textos.correo),
+                    decoration: InputDecoration(labelText: texts.email),
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    controller: _contrasena,
-                    obscureText: _oculta,
+                    controller: _password,
+                    obscureText: _hidden,
                     autofillHints: const [AutofillHints.password],
-                    onSubmitted: (_) => _ingresar(textos),
+                    onSubmitted: (_) => _signIn(texts),
                     decoration: InputDecoration(
-                      labelText: textos.contrasena,
+                      labelText: texts.password,
                       suffixIcon: IconButton(
-                        icon: Icon(_oculta ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () => setState(() => _oculta = !_oculta),
-                        tooltip: textos.contrasena,
+                        icon: Icon(_hidden ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setState(() => _hidden = !_hidden),
+                        tooltip: texts.password,
                       ),
                     ),
                   ),
@@ -143,17 +143,17 @@ class _SignInPageState extends State<SignInPage> {
                   ListenableBuilder(
                     listenable: widget.session,
                     builder: (context, _) => FilledButton(
-                      onPressed: widget.session.cargando ? null : () => _ingresar(textos),
-                      child: widget.session.cargando
+                      onPressed: widget.session.loading ? null : () => _signIn(texts),
+                      child: widget.session.loading
                           ? const SizedBox(
                               width: 20, height: 20,
                               child: CircularProgressIndicator(
                                   strokeWidth: 2, color: Colors.white))
-                          : Text(textos.ingresar),
+                          : Text(texts.signIn),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(textos.accesoAyuda,
+                  Text(texts.signInHelp,
                       textAlign: TextAlign.center,
                       style: Theme.of(context)
                           .textTheme
@@ -169,22 +169,22 @@ class _SignInPageState extends State<SignInPage> {
   }
 }
 
-class _SelectorIdioma extends StatelessWidget {
-  const _SelectorIdioma({required this.idioma});
+class _LanguageSelector extends StatelessWidget {
+  const _LanguageSelector({required this.language});
 
-  final IdiomaController idioma;
+  final LanguageController language;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: idioma,
+      listenable: language,
       builder: (context, _) => SegmentedButton<String>(
         segments: const [
           ButtonSegment(value: 'es', label: Text('ES')),
           ButtonSegment(value: 'en', label: Text('EN')),
         ],
-        selected: {idioma.value},
-        onSelectionChanged: (seleccion) => idioma.value = seleccion.first,
+        selected: {language.value},
+        onSelectionChanged: (selection) => language.value = selection.first,
         showSelectedIcon: false,
         style: const ButtonStyle(visualDensity: VisualDensity.compact),
       ),

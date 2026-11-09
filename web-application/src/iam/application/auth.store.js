@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { authenticationApi } from '../infrastructure/authentication.api';
 
-const ALMACEN = 'vetpass.sesion';
+const STORAGE_KEY = 'vetpass.sesion';
 
 /**
  * Sesión del personal de la clínica. Guarda el token que emitió la API y el
@@ -13,58 +13,58 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: null,
     refreshToken: null,
-    usuario: null,
-    cargando: false
+    user: null,
+    loading: false
   }),
 
   getters: {
-    autenticado: (estado) => Boolean(estado.token),
-    esPersonalDeClinica: (estado) => estado.usuario?.role === 'ClinicStaff',
-    iniciales: (estado) => (estado.usuario?.fullName ?? '')
+    authenticated: (status) => Boolean(status.token),
+    isClinicStaff: (status) => status.user?.role === 'ClinicStaff',
+    initials: (status) => (status.user?.fullName ?? '')
       .split(' ')
       .filter(Boolean)
       .slice(0, 2)
-      .map((palabra) => palabra[0]?.toUpperCase())
+      .map((word) => word[0]?.toUpperCase())
       .join('')
   },
 
   actions: {
-    restaurar() {
+    restore() {
       try {
-        const guardado = localStorage.getItem(ALMACEN);
-        if (!guardado) return;
-        const sesion = JSON.parse(guardado);
-        this.token = sesion.token;
-        this.refreshToken = sesion.refreshToken;
-        this.usuario = sesion.usuario;
-      } catch { this.cerrarSesion(); }
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return;
+        const session = JSON.parse(saved);
+        this.token = session.token;
+        this.refreshToken = session.refreshToken;
+        this.user = session.user;
+      } catch { this.signOut(); }
     },
 
-    async iniciarSesion(email, password) {
-      this.cargando = true;
+    async signIn(email, password) {
+      this.loading = true;
       try {
         const { data } = await authenticationApi.signIn(email, password);
         this.token = data.accessToken;
         this.refreshToken = data.refreshToken;
-        this.usuario = data.user;
-        this.persistir();
+        this.user = data.user;
+        this.persist();
         return data.user;
       } finally {
-        this.cargando = false;
+        this.loading = false;
       }
     },
 
-    cerrarSesion() {
+    signOut() {
       this.token = null;
       this.refreshToken = null;
-      this.usuario = null;
-      try { localStorage.removeItem(ALMACEN); } catch { /* sin almacenamiento */ }
+      this.user = null;
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* sin almacenamiento */ }
     },
 
-    persistir() {
+    persist() {
       try {
-        localStorage.setItem(ALMACEN, JSON.stringify({
-          token: this.token, refreshToken: this.refreshToken, usuario: this.usuario
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          token: this.token, refreshToken: this.refreshToken, user: this.user
         }));
       } catch { /* sin almacenamiento */ }
     }

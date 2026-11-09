@@ -7,43 +7,43 @@ import '../i18n/app_strings.dart';
 /// Navegación inferior con dos destinos, conforme a la sección 4.2.5:
 /// Mis mascotas y Perfil.
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key, required this.session, required this.idioma});
+  const HomeShell({super.key, required this.session, required this.language});
 
   final Session session;
-  final IdiomaController idioma;
+  final LanguageController language;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _destino = 0;
+  int _destination = 0;
 
   @override
   Widget build(BuildContext context) {
-    final textos = widget.idioma.textos;
+    final texts = widget.language.texts;
 
     return Scaffold(
       body: IndexedStack(
-        index: _destino,
+        index: _destination,
         children: [
-          MyPetsPage(session: widget.session, idioma: widget.idioma),
-          ProfilePage(session: widget.session, idioma: widget.idioma),
+          MyPetsPage(session: widget.session, language: widget.language),
+          ProfilePage(session: widget.session, language: widget.language),
         ],
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _destino,
-        onDestinationSelected: (indice) => setState(() => _destino = indice),
+        selectedIndex: _destination,
+        onDestinationSelected: (index) => setState(() => _destination = index),
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.pets_outlined),
             selectedIcon: const Icon(Icons.pets),
-            label: textos.misMascotas,
+            label: texts.myPets,
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),
             selectedIcon: const Icon(Icons.person),
-            label: textos.perfil,
+            label: texts.profile,
           ),
         ],
       ),

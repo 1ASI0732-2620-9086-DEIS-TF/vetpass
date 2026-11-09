@@ -23,100 +23,100 @@ import Tag from 'primevue/tag';
 import { patientsApi } from '../infrastructure/patients.api';
 import { authenticationApi } from '../../iam/infrastructure/authentication.api';
 import { problemOf } from '../../shared/infrastructure/http';
-import { formatearTelefono, formatearDocumento } from '../../shared/i18n';
+import { formatPhone, formatDocument } from '../../shared/i18n';
 
 const { t } = useI18n();
 const toast = useToast();
 
-const clientes = ref([]);
-const cargando = ref(true);
+const clients = ref([]);
+const loading = ref(true);
 
-const dialogoAbierto = ref(false);
+const dialogOpen = ref(false);
 // «crear»: dar acceso a quien no lo tiene. «restablecer»: contraseña olvidada.
-const modo = ref('crear');
-const clienteElegido = ref(null);
-const correo = ref('');
-const enviando = ref(false);
+const mode = ref('create');
+const selectedClient = ref(null);
+const email = ref('');
+const sending = ref(false);
 const error = ref('');
-const contrasena = ref('');
-const copiada = ref(false);
+const password = ref('');
+const copied = ref(false);
 
-const nota = computed(() => t(modo.value === 'crear' ? 'clientes.dialogoNota' : 'clientes.restablecerNota', {
-  nombre: clienteElegido.value?.fullName ?? ''
+const note = computed(() => t(mode.value === 'create' ? 'clients.dialogNote' : 'clients.resetNote', {
+  name: selectedClient.value?.fullName ?? ''
 }));
 
-const titulo = computed(() => t(modo.value === 'crear' ? 'clientes.dialogoTitulo' : 'clientes.restablecerTitulo'));
+const title = computed(() => t(mode.value === 'create' ? 'clients.dialogTitle' : 'clients.resetTitle'));
 
-async function cargar() {
-  cargando.value = true;
+async function load() {
+  loading.value = true;
   try {
-    const { data } = await patientsApi.listarClientes();
-    clientes.value = data;
+    const { data } = await patientsApi.listClients();
+    clients.value = data;
   } finally {
-    cargando.value = false;
+    loading.value = false;
   }
 }
 
-onMounted(cargar);
+onMounted(load);
 
-function abrirDialogo(cliente, enModo = 'crear') {
-  modo.value = enModo;
-  clienteElegido.value = cliente;
-  correo.value = cliente.email ?? '';
-  contrasena.value = '';
+function openDialog(client, inMode = 'create') {
+  mode.value = inMode;
+  selectedClient.value = client;
+  email.value = client.email ?? '';
+  password.value = '';
   error.value = '';
-  copiada.value = false;
-  dialogoAbierto.value = true;
+  copied.value = false;
+  dialogOpen.value = true;
 }
 
-async function crearAcceso() {
+async function createAccess() {
   error.value = '';
-  enviando.value = true;
+  sending.value = true;
   try {
-    const { data } = await authenticationApi.crearAccesoDeDueno(
-      correo.value.trim(), clienteElegido.value.fullName, clienteElegido.value.id);
+    const { data } = await authenticationApi.createOwnerAccess(
+      email.value.trim(), selectedClient.value.fullName, selectedClient.value.id);
 
     // La contraseña se muestra aquí y no se guarda en ningún sitio: es lo que
     // recepción dicta al dueño.
-    contrasena.value = data.temporaryPassword;
+    password.value = data.temporaryPassword;
     toast.add({
       severity: 'success',
-      summary: t('clientes.creada', { nombre: clienteElegido.value.fullName }),
+      summary: t('clients.created', { name: selectedClient.value.fullName }),
       life: 4000
     });
-    await cargar();
-  } catch (fallo) {
-    error.value = problemOf(fallo).detail ?? t('comun.errorInesperado');
+    await load();
+  } catch (failure) {
+    error.value = problemOf(failure).detail ?? t('common.unexpectedError');
   } finally {
-    enviando.value = false;
+    sending.value = false;
   }
 }
 
-async function restablecer() {
+async function reset() {
   error.value = '';
-  enviando.value = true;
+  sending.value = true;
   try {
-    const { data } = await authenticationApi.restablecerContrasenaDeDueno(clienteElegido.value.id);
+    const { data } = await authenticationApi.resetOwnerPassword(selectedClient.value.id);
 
     // Como al crear el acceso: se muestra una vez y no se guarda.
-    contrasena.value = data.temporaryPassword;
-    correo.value = data.user.email;
+    password.value = data.temporaryPassword;
+    email.value = data.user.email;
     toast.add({
       severity: 'success',
-      summary: t('clientes.restablecida', { nombre: clienteElegido.value.fullName }),
+      summary: t('clients.resetDone', { name: selectedClient.value.fullName }),
       life: 4000
     });
-  } catch (fallo) {
-    error.value = problemOf(fallo).detail ?? t('comun.errorInesperado');
+  } catch (failure) {
+    error.value = problemOf(failure).detail ?? t('common.unexpectedError');
   } finally {
-    enviando.value = false;
+    sending.value = false;
   }
 }
 
-async function copiar() {
+async function copy() {
   try {
-    await navigator.clipboard.writeText(contrasena.value);
-    copiada.value = true;
+    await navigator.clipboard.writeText(password.value);
+    copied.value = true;
   } catch {
     // Sin permiso de portapapeles queda a la vista para anotarla.
   }
@@ -126,62 +126,62 @@ async function copiar() {
 <template>
   <div class="vp-page">
     <header class="vp-head">
-      <h1>{{ t('clientes.titulo') }}</h1>
+      <h1>{{ t('clients.title') }}</h1>
     </header>
 
     <div class="vp-card">
-      <DataTable :value="clientes" data-key="id" :loading="cargando">
-        <Column field="fullName" :header="t('clientes.nombre')">
-          <template #body="{ data }"><span class="nombre">{{ data.fullName }}</span></template>
+      <DataTable :value="clients" data-key="id" :loading="loading">
+        <Column field="fullName" :header="t('clients.name')">
+          <template #body="{ data }"><span class="name">{{ data.fullName }}</span></template>
         </Column>
 
-        <Column field="documentNumber" :header="t('clientes.documento')">
+        <Column field="documentNumber" :header="t('clients.document')">
           <template #body="{ data }">
-            <span class="documento">{{ formatearDocumento(data, t) }}</span>
+            <span class="document">{{ formatDocument(data, t) }}</span>
           </template>
         </Column>
 
-        <Column field="phoneNumber" :header="t('clientes.telefono')">
+        <Column field="phoneNumber" :header="t('clients.phone')">
           <template #body="{ data }">
-            <span class="telefono">{{ formatearTelefono(data.phoneNumber) }}</span>
+            <span class="phone">{{ formatPhone(data.phoneNumber) }}</span>
           </template>
         </Column>
 
-        <Column field="email" :header="t('clientes.correo')">
+        <Column field="email" :header="t('clients.email')">
           <template #body="{ data }">
             <span v-if="data.email">{{ data.email }}</span>
-            <span v-else class="vp-muted">{{ t('clientes.sinCorreo') }}</span>
+            <span v-else class="vp-muted">{{ t('clients.noEmail') }}</span>
           </template>
         </Column>
 
-        <Column :header="t('clientes.acceso')">
+        <Column :header="t('clients.access')">
           <template #body="{ data }">
             <Tag
               v-if="data.hasAccount"
-              :value="t('clientes.conAcceso')"
+              :value="t('clients.withAccess')"
               icon="pi pi-check"
               severity="success"
             />
             <Button
               v-else
-              :label="t('clientes.darAcceso')"
+              :label="t('clients.grantAccess')"
               icon="pi pi-mobile"
               size="small"
               outlined
-              @click="abrirDialogo(data)"
+              @click="openDialog(data)"
             />
           </template>
         </Column>
 
-        <Column :header="t('clientes.contrasena')">
+        <Column :header="t('clients.password')">
           <template #body="{ data }">
             <Button
               v-if="data.hasAccount"
-              :label="t('clientes.restablecer')"
+              :label="t('clients.reset')"
               icon="pi pi-key"
               size="small"
               text
-              @click="abrirDialogo(data, 'restablecer')"
+              @click="openDialog(data, 'reset')"
             />
             <span v-else class="vp-muted">—</span>
           </template>
@@ -190,90 +190,90 @@ async function copiar() {
     </div>
 
     <Dialog
-      v-model:visible="dialogoAbierto"
+      v-model:visible="dialogOpen"
       modal
-      :header="titulo"
+      :header="title"
       :style="{ width: '30rem' }"
       :breakpoints="{ '640px': '95vw' }"
     >
       <!-- Antes de crear la cuenta -->
-      <template v-if="!contrasena">
-        <p class="vp-small vp-muted nota">{{ nota }}</p>
+      <template v-if="!password">
+        <p class="vp-small vp-muted note">{{ note }}</p>
 
-        <p v-if="modo === 'restablecer'" class="vp-caption vp-muted privacidad">
-          <i class="pi pi-lock" aria-hidden="true" /> {{ t('clientes.privacidad') }}
+        <p v-if="mode === 'reset'" class="vp-caption vp-muted privacy">
+          <i class="pi pi-lock" aria-hidden="true" /> {{ t('clients.privacy') }}
         </p>
 
-        <div v-if="modo === 'crear'" class="vp-field">
-          <label for="acceso-correo">{{ t('clientes.correo') }}</label>
-          <InputText id="acceso-correo" v-model="correo" type="email" autofocus />
-          <small v-if="!clienteElegido?.email" class="vp-muted">
-            {{ t('clientes.correoRequerido') }}
+        <div v-if="mode === 'create'" class="vp-field">
+          <label for="access-email">{{ t('clients.email') }}</label>
+          <InputText id="access-email" v-model="email" type="email" autofocus />
+          <small v-if="!selectedClient?.email" class="vp-muted">
+            {{ t('clients.emailRequired') }}
           </small>
         </div>
 
-        <Message v-if="error" severity="error" :closable="false" class="aviso">{{ error }}</Message>
+        <Message v-if="error" severity="error" :closable="false" class="notice">{{ error }}</Message>
       </template>
 
       <!-- Después: la contraseña, una sola vez -->
       <template v-else>
-        <p class="vp-small vp-muted nota">{{ t('clientes.entregar') }}</p>
-        <div class="contrasena">
+        <p class="vp-small vp-muted note">{{ t('clients.handOver') }}</p>
+        <div class="password">
           <div>
-            <p class="vp-caption vp-muted">{{ t('clientes.contrasenaTemporal') }}</p>
-            <p class="contrasena__valor">{{ contrasena }}</p>
+            <p class="vp-caption vp-muted">{{ t('clients.temporaryPassword') }}</p>
+            <p class="password__value">{{ password }}</p>
           </div>
           <Button
-            :label="copiada ? t('clientes.copiada') : t('clientes.copiar')"
-            :icon="copiada ? 'pi pi-check' : 'pi pi-copy'"
+            :label="copied ? t('clients.copied') : t('clients.copy')"
+            :icon="copied ? 'pi pi-check' : 'pi pi-copy'"
             size="small"
             text
-            @click="copiar"
+            @click="copy"
           />
         </div>
-        <p class="vp-caption vp-muted correo-cuenta">{{ correo }}</p>
+        <p class="vp-caption vp-muted email-account">{{ email }}</p>
       </template>
 
       <template #footer>
-        <template v-if="!contrasena">
-          <Button :label="t('comun.cancelar')" text @click="dialogoAbierto = false" />
+        <template v-if="!password">
+          <Button :label="t('common.cancel')" text @click="dialogOpen = false" />
           <Button
-            v-if="modo === 'crear'"
-            :label="t('clientes.crear')"
-            :disabled="!correo.trim()"
-            :loading="enviando"
-            @click="crearAcceso"
+            v-if="mode === 'create'"
+            :label="t('clients.create')"
+            :disabled="!email.trim()"
+            :loading="sending"
+            @click="createAccess"
           />
           <Button
             v-else
-            :label="t('clientes.restablecerConfirmar')"
+            :label="t('clients.resetConfirm')"
             icon="pi pi-key"
             severity="warn"
-            :loading="enviando"
-            @click="restablecer"
+            :loading="sending"
+            @click="reset"
           />
         </template>
-        <Button v-else :label="t('comun.cerrar')" @click="dialogoAbierto = false" />
+        <Button v-else :label="t('common.close')" @click="dialogOpen = false" />
       </template>
     </Dialog>
   </div>
 </template>
 
 <style scoped>
-.nombre { font-weight: 600; }
-.telefono, .documento { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.privacidad { display: flex; gap: var(--vp-space-2); align-items: baseline; margin-bottom: var(--vp-space-2); }
-.nota { margin-bottom: var(--vp-space-3); }
-.aviso { margin-top: var(--vp-space-3); }
-.contrasena {
+.name { font-weight: 600; }
+.phone, .document { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.privacy { display: flex; gap: var(--vp-space-2); align-items: baseline; margin-bottom: var(--vp-space-2); }
+.note { margin-bottom: var(--vp-space-3); }
+.notice { margin-top: var(--vp-space-3); }
+.password {
   display: flex; align-items: center; justify-content: space-between; gap: var(--vp-space-3);
   padding: var(--vp-space-3);
   background: var(--vp-primary-50); border-radius: var(--vp-radius);
 }
-.contrasena__valor {
+.password__value {
   font-family: ui-monospace, 'Cascadia Code', monospace;
   font-size: 20px; font-weight: 600; letter-spacing: .06em;
   color: var(--vp-primary-800);
 }
-.correo-cuenta { margin-top: var(--vp-space-2); }
+.email-account { margin-top: var(--vp-space-2); }
 </style>

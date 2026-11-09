@@ -10,24 +10,24 @@ import 'visit_detail_page.dart';
 class RecordTab extends StatelessWidget {
   const RecordTab({
     super.key,
-    required this.atenciones,
-    required this.textos,
-    required this.clinica,
-    required this.nombreMascota,
+    required this.visits,
+    required this.texts,
+    required this.clinic,
+    required this.petName,
   });
 
-  final List<Visit> atenciones;
-  final AppStrings textos;
-  final String? clinica;
-  final String nombreMascota;
+  final List<Visit> visits;
+  final AppStrings texts;
+  final String? clinic;
+  final String petName;
 
   @override
   Widget build(BuildContext context) {
-    if (atenciones.isEmpty) {
+    if (visits.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text(textos.sinAtenciones,
+          child: Text(texts.noVisits,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -43,16 +43,16 @@ class RecordTab extends StatelessWidget {
         Card(
           child: Column(
             children: [
-              for (var i = 0; i < atenciones.length; i++) ...[
+              for (var i = 0; i < visits.length; i++) ...[
                 if (i > 0) const Divider(height: 1),
-                _FilaAtencion(
-                  atencion: atenciones[i],
-                  textos: textos,
+                _VisitRow(
+                  visit: visits[i],
+                  texts: texts,
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => VisitDetailPage(
-                      atencion: atenciones[i],
-                      textos: textos,
-                      clinica: clinica,
+                      visit: visits[i],
+                      texts: texts,
+                      clinic: clinic,
                     ),
                   )),
                 ),
@@ -61,7 +61,7 @@ class RecordTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(textos.notaHistorial,
+        Text(texts.historyNote,
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
@@ -72,11 +72,11 @@ class RecordTab extends StatelessWidget {
   }
 }
 
-class _FilaAtencion extends StatelessWidget {
-  const _FilaAtencion({required this.atencion, required this.textos, required this.onTap});
+class _VisitRow extends StatelessWidget {
+  const _VisitRow({required this.visit, required this.texts, required this.onTap});
 
-  final Visit atencion;
-  final AppStrings textos;
+  final Visit visit;
+  final AppStrings texts;
   final VoidCallback onTap;
 
   @override
@@ -94,13 +94,13 @@ class _FilaAtencion extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        formatearFecha(atencion.visitDate, esIngles: textos.esIngles),
+                        formatDate(visit.visitDate, isEnglish: texts.isEnglish),
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
                             ?.copyWith(color: VetPassColors.neutral600),
                       ),
-                      if (atencion.hasPrescription) ...[
+                      if (visit.hasPrescription) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -109,7 +109,7 @@ class _FilaAtencion extends StatelessWidget {
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Text(
-                            textos.conReceta,
+                            texts.withPrescription,
                             style: const TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -121,7 +121,7 @@ class _FilaAtencion extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  Text(atencion.reason, style: Theme.of(context).textTheme.titleMedium),
+                  Text(visit.reason, style: Theme.of(context).textTheme.titleMedium),
                 ],
               ),
             ),

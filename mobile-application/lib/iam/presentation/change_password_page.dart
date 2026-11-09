@@ -17,108 +17,108 @@ class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({
     super.key,
     required this.session,
-    required this.idioma,
-    this.obligatorio = false,
+    required this.language,
+    this.required = false,
   });
 
   final Session session;
-  final IdiomaController idioma;
-  final bool obligatorio;
+  final LanguageController language;
+  final bool required;
 
   @override
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
 }
 
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
-  final _actual = TextEditingController();
-  final _nueva = TextEditingController();
-  final _confirmacion = TextEditingController();
+  final _current = TextEditingController();
+  final _new = TextEditingController();
+  final _confirmation = TextEditingController();
 
   bool _visible = false;
-  bool _guardando = false;
-  String? _errorActual;
-  String? _errorNueva;
-  String? _errorConfirmacion;
+  bool _saving = false;
+  String? _currentError;
+  String? _newError;
+  String? _confirmationError;
   String? _error;
 
   @override
   void dispose() {
-    _actual.dispose();
-    _nueva.dispose();
-    _confirmacion.dispose();
+    _current.dispose();
+    _new.dispose();
+    _confirmation.dispose();
     super.dispose();
   }
 
-  bool get _completo =>
-      _actual.text.isNotEmpty && _nueva.text.isNotEmpty && _confirmacion.text.isNotEmpty;
+  bool get _full =>
+      _current.text.isNotEmpty && _new.text.isNotEmpty && _confirmation.text.isNotEmpty;
 
-  Future<void> _guardar(AppStrings textos) async {
+  Future<void> _save(AppStrings texts) async {
     setState(() {
-      _errorActual = _errorNueva = _errorConfirmacion = _error = null;
+      _currentError = _newError = _confirmationError = _error = null;
     });
 
-    if (_nueva.text != _confirmacion.text) {
-      setState(() => _errorConfirmacion = textos.contrasenasNoCoinciden);
+    if (_new.text != _confirmation.text) {
+      setState(() => _confirmationError = texts.passwordsDoNotMatch);
       return;
     }
 
-    setState(() => _guardando = true);
+    setState(() => _saving = true);
     try {
-      await widget.session.cambiarContrasena(_actual.text, _nueva.text);
+      await widget.session.changePassword(_current.text, _new.text);
       if (!mounted) return;
 
-      final mensajero = ScaffoldMessenger.of(context);
+      final messenger = ScaffoldMessenger.of(context);
       // En modo obligatorio la sesión cambia de estado y la aplicación pasa
       // sola a Mis mascotas; desde el Perfil se vuelve atrás.
-      if (!widget.obligatorio) Navigator.of(context).pop();
-      mensajero.showSnackBar(SnackBar(content: Text(textos.contrasenaActualizada)));
-    } on ApiException catch (fallo) {
-      if (fallo.noAutorizado) {
-        await widget.session.cerrarSesion(expirada: true);
+      if (!widget.required) Navigator.of(context).pop();
+      messenger.showSnackBar(SnackBar(content: Text(texts.passwordUpdated)));
+    } on ApiException catch (failure) {
+      if (failure.unauthorized) {
+        await widget.session.signOut(expired: true);
         return;
       }
       setState(() {
-        switch (fallo.code) {
+        switch (failure.code) {
           case 'invalid-current-password':
-            _errorActual = textos.contrasenaActualIncorrecta;
+            _currentError = texts.currentPasswordIncorrect;
           case 'weak-password':
-            _errorNueva = textos.contrasenaDebil;
+            _newError = texts.weakPassword;
           case 'password-not-changed':
-            _errorNueva = textos.contrasenaIgual;
+            _newError = texts.samePassword;
           default:
-            _error = fallo.sinRed ? textos.sinConexion : fallo.toString();
+            _error = failure.noNetwork ? texts.offline : failure.toString();
         }
       });
     } finally {
-      if (mounted) setState(() => _guardando = false);
+      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: widget.idioma,
-      builder: (context, _) => _construir(context, widget.idioma.textos),
+      listenable: widget.language,
+      builder: (context, _) => _build(context, widget.language.texts),
     );
   }
 
-  Widget _construir(BuildContext context, AppStrings textos) {
-    final tema = Theme.of(context).textTheme;
+  Widget _build(BuildContext context, AppStrings texts) {
+    final theme = Theme.of(context).textTheme;
 
     return PopScope(
-      canPop: !widget.obligatorio,
+      canPop: !widget.required,
       child: Scaffold(
         appBar: AppBar(
-          automaticallyImplyLeading: !widget.obligatorio,
-          title: Text(widget.obligatorio
-              ? textos.contrasenaObligatoriaTitulo
-              : textos.cambiarContrasena),
+          automaticallyImplyLeading: !widget.required,
+          title: Text(widget.required
+              ? texts.requiredPasswordTitle
+              : texts.changePassword),
         ),
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (widget.obligatorio)
+              if (widget.required)
                 Container(
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 16),
@@ -132,16 +132,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       const Icon(Icons.lock_reset, color: VetPassColors.primary),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: Text(textos.contrasenaObligatoriaNota,
-                              style: tema.bodyMedium)),
+                          child: Text(texts.requiredPasswordNote,
+                              style: theme.bodyMedium)),
                     ],
                   ),
                 )
               else
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(textos.cambiarContrasenaNota,
-                      style: tema.bodyMedium?.copyWith(color: VetPassColors.neutral600)),
+                  child: Text(texts.changePasswordNote,
+                      style: theme.bodyMedium?.copyWith(color: VetPassColors.neutral600)),
                 ),
               if (_error != null)
                 Padding(
@@ -150,66 +150,66 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                       style: const TextStyle(color: VetPassColors.dangerText)),
                 ),
               TextField(
-                controller: _actual,
+                controller: _current,
                 obscureText: !_visible,
                 autofillHints: const [AutofillHints.password],
-                onChanged: (_) => setState(() => _errorActual = null),
+                onChanged: (_) => setState(() => _currentError = null),
                 decoration: InputDecoration(
-                  labelText: widget.obligatorio
-                      ? textos.contrasenaTemporal
-                      : textos.contrasenaActual,
-                  errorText: _errorActual,
+                  labelText: widget.required
+                      ? texts.temporaryPassword
+                      : texts.currentPassword,
+                  errorText: _currentError,
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: _nueva,
+                controller: _new,
                 obscureText: !_visible,
                 autofillHints: const [AutofillHints.newPassword],
-                onChanged: (_) => setState(() => _errorNueva = null),
+                onChanged: (_) => setState(() => _newError = null),
                 decoration: InputDecoration(
-                  labelText: textos.contrasenaNueva,
-                  helperText: textos.contrasenaPolitica,
-                  errorText: _errorNueva,
+                  labelText: texts.newPassword,
+                  helperText: texts.passwordPolicy,
+                  errorText: _newError,
                   errorMaxLines: 2,
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: _confirmacion,
+                controller: _confirmation,
                 obscureText: !_visible,
                 autofillHints: const [AutofillHints.newPassword],
-                onChanged: (_) => setState(() => _errorConfirmacion = null),
-                onSubmitted: (_) => _completo && !_guardando ? _guardar(textos) : null,
+                onChanged: (_) => setState(() => _confirmationError = null),
+                onSubmitted: (_) => _full && !_saving ? _save(texts) : null,
                 decoration: InputDecoration(
-                  labelText: textos.contrasenaConfirmar,
-                  errorText: _errorConfirmacion,
+                  labelText: texts.confirmPassword,
+                  errorText: _confirmationError,
                 ),
               ),
               const SizedBox(height: 8),
               CheckboxListTile(
                 value: _visible,
                 onChanged: (v) => setState(() => _visible = v ?? false),
-                title: Text(textos.mostrar, style: tema.bodyMedium),
+                title: Text(texts.show, style: theme.bodyMedium),
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
                 dense: true,
               ),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: _completo && !_guardando ? () => _guardar(textos) : null,
-                child: _guardando
+                onPressed: _full && !_saving ? () => _save(texts) : null,
+                child: _saving
                     ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(textos.guardarContrasena),
+                    : Text(texts.savePassword),
               ),
-              if (widget.obligatorio) ...[
+              if (widget.required) ...[
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: widget.session.cerrarSesion,
-                  child: Text(textos.cerrarSesion),
+                  onPressed: widget.session.signOut,
+                  child: Text(texts.signOut),
                 ),
               ],
             ],

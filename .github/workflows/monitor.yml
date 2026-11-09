@@ -1,0 +1,83 @@
+# Monitoreo continuo (sección 7.4 del informe): cada 30 minutos comprueba los
+# productos publicados y registra el tiempo de respuesta de cada uno. Si algo
+# falla, abre un incidente; cuando se recupera, lo cierra.
+name: Monitor
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+    inputs:
+      simulate-failure:
+        description: Agrega una comprobación que falla a propósito, para probar la alerta.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: monitor
+
+jobs:
+  check:
+    name: Check production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: .github/actions
+      - name: Check each product
+        id: check
+        env:
+          SIMULATE_FAILURE: ${{ inputs.simulate-failure }}
+        run: |
+          failed=0
+          report="| Producto | Comprobación | Código | Tiempo (s) | Resultado |"$'\n'"|---|---|---|---|---|"
+          problems=""
+
+          # probe NOMBRE URL CÓDIGO_ESPERADO [TEXTO_ESPERADO]
+          probe() {
+            local name=$1 url=$2 expected=$3 text=${4:-}
+            # --retry: la API puede estar en arranque en frío.
+            local out code time ok=yes
+            out=$(curl -s --retry 3 --retry-delay 5 --retry-all-errors --max-time 30 \
+              -o /tmp/body -w '%{http_code} %{time_total}' "$url") || true
+            code=${out% *}; time=${out#* }
+            [ "$code" = "$expected" ] || ok=no
+            if [ -n "$text" ] && ! grep -q "$text" /tmp/body; then ok=no; fi
+            if [ $ok = yes ]; then
+              report+=$'\n'"| $name | \`$url\` | $code | $time | ✅ |"
+            else
+              failed=1
+              report+=$'\n'"| $name | \`$url\` | $code | $time | ❌ |"
+              problems+="- **$name**: \`$url\` respondió $code (se esperaba $expected${text:+ con \`$text\`})."$'\n'
+            fi
+          }
+
+          probe API https://vetpass-api.vercel.app/api/v1/health 200 '"timeZone":"America/Lima"'
+          probe 'API y base de datos' https://vetpass-api.vercel.app/api/v1/health/ready 200 '"database":"ok"'
+          probe 'API protegida' https://vetpass-api.vercel.app/api/v1/clients 401
+          probe Web https://vetpass-web.vercel.app 200
+          probe Landing https://vetpass-landing.vercel.app 200
+          if [ "$SIMULATE_FAILURE" = true ]; then
+            probe 'Simulación' https://vetpass-api.vercel.app/api/v1/simulated-failure 200
+          fi
+
+          echo "$report" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo 'problems<<EOF'
+            printf '%s' "$problems"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          echo "status=$([ $failed = 1 ] && echo failing || echo ok)" >> "$GITHUB_OUTPUT"
+      - name: Alert the team
+        uses: ./.github/actions/incident
+        with:
+          status: ${{ steps.check.outputs.status }}
+          details: ${{ steps.check.outputs.problems }}
+          source: Monitor
+      - name: Fail the run when production fails
+        if: ${{ steps.check.outputs.status == 'failing' }}
+        run: exit 1

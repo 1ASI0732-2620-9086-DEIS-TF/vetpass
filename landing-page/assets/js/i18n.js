@@ -168,6 +168,8 @@ window.VetPassI18n = (() => {
     'legal.p1r': 'Contact details of the client of the clinic, identification data of their pets and the clinical information recorded by the veterinary staff: applied doses, visits and prescriptions.',
     'legal.p2p': 'Who accesses the information',
     'legal.p2r': 'The staff of the clinic that registered the patient and the owner of the pet, each with their corresponding permissions. Clinical information is not shared with third parties.',
+    'legal.p3p': 'Usage measurement',
+    'legal.p3r': 'The site and the web application count visits and measure loading times with Vercel Web Analytics and Speed Insights. The measurement is aggregated, uses no cookies and stores no data that identifies visitors.',
     'legal.inicio': 'Home'
   };
 

@@ -33,15 +33,15 @@ public class VetPassDbContext(DbContextOptions<VetPassDbContext> options) : DbCo
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
     public DbSet<PrescriptionItem> PrescriptionItems => Set<PrescriptionItem>();
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(builder);
-        builder.HasDefaultSchema(Schema);
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema(Schema);
 
-        ConfigureIdentityAndAccess(builder);
-        ConfigurePatients(builder);
-        ConfigureVaccination(builder);
-        ConfigureMedicalRecords(builder);
+        ConfigureIdentityAndAccess(modelBuilder);
+        ConfigurePatients(modelBuilder);
+        ConfigureVaccination(modelBuilder);
+        ConfigureMedicalRecords(modelBuilder);
     }
 
     private static void ConfigureIdentityAndAccess(ModelBuilder builder)

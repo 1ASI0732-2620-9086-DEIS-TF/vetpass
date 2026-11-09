@@ -81,8 +81,8 @@ function open(patient) {
       <div class="vp-field">
         <label for="f-species" class="vp-caption vp-muted">{{ t('patients.species') }}</label>
         <Select
-          input-id="f-species"
           v-model="species"
+          input-id="f-species"
           :options="speciesOptions"
           option-label="label"
           option-value="value"
@@ -91,8 +91,8 @@ function open(patient) {
       <div class="vp-field">
         <label for="f-status" class="vp-caption vp-muted">{{ t('patients.cardStatus') }}</label>
         <Select
-          input-id="f-status"
           v-model="status"
+          input-id="f-status"
           :options="statusOptions"
           option-label="label"
           option-value="value"

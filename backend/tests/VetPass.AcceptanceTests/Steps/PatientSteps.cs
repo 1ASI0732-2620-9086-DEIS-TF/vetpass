@@ -57,7 +57,12 @@ public sealed class PatientSteps(ScenarioState state)
     public async Task WhenTheStaffRegistersThePet(string species, string name, string birth, string owner) =>
         await state.KeepAsync(await state.Client!.PostAsJsonAsync("/api/v1/pets", new
         {
-            clientId = await Hooks.ClientIdAsync(owner), name, species, breed = "Mestizo", sex = "Male", birthDate = birth
+            clientId = await Hooks.ClientIdAsync(owner),
+            name,
+            species,
+            breed = "Mestizo",
+            sex = "Male",
+            birthDate = birth
         }));
 
     [Given("the {string} {string} born on {string} is registered for {string}")]

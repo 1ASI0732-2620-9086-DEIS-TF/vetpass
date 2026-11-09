@@ -14,7 +14,7 @@ public class ContractTests(ApiFixture fixture) : ApiTest(fixture)
         var rabies = DoseOf(await CardAsync(staff, rocky), "Antirrábica", 1).GetProperty("id").GetGuid();
 
         var response = await staff.PostAsJsonAsync($"/api/v1/pets/{rocky}/vaccination-card/doses/{rabies}/application",
-            new { applicationDate = VetPassApiFactory.Today, batchCode = "R-1300" });
+            new { applicationDate = VetPassApiFactory.Today, batchCode = "R-1300" }, cancellationToken: Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         var problem = await JsonAsync(response);
@@ -33,7 +33,7 @@ public class ContractTests(ApiFixture fixture) : ApiTest(fixture)
         var third = DoseOf(await CardAsync(staff, rocky), "Quíntuple", 3).GetProperty("id").GetGuid();
 
         var response = await staff.PostAsJsonAsync($"/api/v1/pets/{rocky}/vaccination-card/doses/{third}/application",
-            new { applicationDate = VetPassApiFactory.Today, batchCode = "A-1" });
+            new { applicationDate = VetPassApiFactory.Today, batchCode = "A-1" }, cancellationToken: Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
         var problem = await JsonAsync(response);
@@ -50,8 +50,11 @@ public class ContractTests(ApiFixture fixture) : ApiTest(fixture)
 
         var response = await staff.PostAsJsonAsync("/api/v1/clients", new
         {
-            fullName = "Cliente", documentType, documentNumber = document, phoneNumber = phone
-        });
+            fullName = "Cliente",
+            documentType,
+            documentNumber = document,
+            phoneNumber = phone
+        }, cancellationToken: Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         (await JsonAsync(response)).GetProperty("code").GetString().ShouldBe(code);

@@ -9,7 +9,7 @@ public class SecurityTests(ApiFixture fixture) : ApiTest(fixture)
 {
     [Fact]
     public async Task WithoutToken_IsUnauthorized() =>
-        (await Api.CreateClient().GetAsync("/api/v1/pets")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await Api.CreateClient().GetAsync("/api/v1/pets", cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
 
     [Fact]
     public async Task ForgedToken_IsUnauthorized()
@@ -17,14 +17,14 @@ public class SecurityTests(ApiFixture fixture) : ApiTest(fixture)
         var client = Api.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", FakeIdentityProvider.ForgedToken());
 
-        (await client.GetAsync("/api/v1/pets")).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await client.GetAsync("/api/v1/pets", cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task WrongPassword_IsUnauthorized()
     {
         var response = await Api.CreateClient().PostAsJsonAsync("/api/v1/authentication/sign-in",
-            new { email = VetPassApiFactory.StaffEmail, password = "NoEsLaClave1" });
+            new { email = VetPassApiFactory.StaffEmail, password = "NoEsLaClave1" }, cancellationToken: Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
@@ -35,12 +35,12 @@ public class SecurityTests(ApiFixture fixture) : ApiTest(fixture)
         var rocky = await PetIdAsync(await StaffAsync(), "Rocky");
         var owner = await OwnerAsync();
 
-        var mine = await owner.GetFromJsonAsync<JsonElement>("/api/v1/me/pets");
+        var mine = await owner.GetFromJsonAsync<JsonElement>("/api/v1/me/pets", cancellationToken: Ct);
         mine.EnumerateArray().Select(p => p.GetProperty("name").GetString()).ShouldBe(["Kiara", "Simón"], ignoreOrder: true);
 
-        (await owner.GetAsync($"/api/v1/pets/{rocky}")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await owner.GetAsync($"/api/v1/pets/{rocky}/vaccination-card")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await owner.GetAsync($"/api/v1/pets/{rocky}/visits")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.GetAsync($"/api/v1/pets/{rocky}", cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.GetAsync($"/api/v1/pets/{rocky}/vaccination-card", cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.GetAsync($"/api/v1/pets/{rocky}/visits", cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -48,8 +48,8 @@ public class SecurityTests(ApiFixture fixture) : ApiTest(fixture)
     {
         var owner = await OwnerAsync();
 
-        (await owner.GetAsync("/api/v1/clients")).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
-        (await owner.PostAsJsonAsync("/api/v1/clients", NewClient("70000002"))).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.GetAsync("/api/v1/clients", cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        (await owner.PostAsJsonAsync("/api/v1/clients", NewClient("70000002"), cancellationToken: Ct)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -58,9 +58,9 @@ public class SecurityTests(ApiFixture fixture) : ApiTest(fixture)
         var staff = await StaffAsync();
         var rocky = await PetIdAsync(staff, "Rocky");
         var secondDose = DoseOf(await CardAsync(staff, rocky), "Quíntuple", 2).GetProperty("id").GetGuid();
-        var visit = (await staff.GetFromJsonAsync<JsonElement>($"/api/v1/pets/{rocky}/visits"))
+        var visit = (await staff.GetFromJsonAsync<JsonElement>($"/api/v1/pets/{rocky}/visits", cancellationToken: Ct))
             .EnumerateArray().First(v => !v.GetProperty("hasPrescription").GetBoolean()).GetProperty("id").GetGuid();
-        var clients = await staff.GetFromJsonAsync<JsonElement>("/api/v1/clients");
+        var clients = await staff.GetFromJsonAsync<JsonElement>("/api/v1/clients", cancellationToken: Ct);
         Guid ClientId(string name) => clients.EnumerateArray()
             .First(c => c.GetProperty("fullName").GetString() == name).GetProperty("id").GetGuid();
 
@@ -69,31 +69,34 @@ public class SecurityTests(ApiFixture fixture) : ApiTest(fixture)
 
         var responses = new Dictionary<string, HttpResponseMessage>
         {
-            ["GET pet"] = await stranger.GetAsync($"/api/v1/pets/{rocky}"),
-            ["GET card"] = await stranger.GetAsync($"/api/v1/pets/{rocky}/vaccination-card"),
-            ["GET visits"] = await stranger.GetAsync($"/api/v1/pets/{rocky}/visits"),
-            ["GET visit"] = await stranger.GetAsync($"/api/v1/visits/{visit}"),
-            ["GET client"] = await stranger.GetAsync($"/api/v1/clients/{ClientId("Jorge Aliaga")}"),
+            ["GET pet"] = await stranger.GetAsync($"/api/v1/pets/{rocky}", cancellationToken: Ct),
+            ["GET card"] = await stranger.GetAsync($"/api/v1/pets/{rocky}/vaccination-card", cancellationToken: Ct),
+            ["GET visits"] = await stranger.GetAsync($"/api/v1/pets/{rocky}/visits", cancellationToken: Ct),
+            ["GET visit"] = await stranger.GetAsync($"/api/v1/visits/{visit}", cancellationToken: Ct),
+            ["GET client"] = await stranger.GetAsync($"/api/v1/clients/{ClientId("Jorge Aliaga")}", cancellationToken: Ct),
             ["POST dose"] = await stranger.PostAsJsonAsync(
                 $"/api/v1/pets/{rocky}/vaccination-card/doses/{secondDose}/application",
-                new { applicationDate = VetPassApiFactory.Today, batchCode = "X-1" }),
+                new { applicationDate = VetPassApiFactory.Today, batchCode = "X-1" }, cancellationToken: Ct),
             ["POST visit"] = await stranger.PostAsJsonAsync($"/api/v1/pets/{rocky}/visits",
-                new { visitDate = VetPassApiFactory.Today, reason = "Ajena", diagnosis = "Ajena" }),
-            ["POST prescription"] = await stranger.PostAsJsonAsync($"/api/v1/visits/{visit}/prescription", new { items = item }),
+                new { visitDate = VetPassApiFactory.Today, reason = "Ajena", diagnosis = "Ajena" }, cancellationToken: Ct),
+            ["POST prescription"] = await stranger.PostAsJsonAsync($"/api/v1/visits/{visit}/prescription", new { items = item }, cancellationToken: Ct),
             ["POST pet"] = await stranger.PostAsJsonAsync("/api/v1/pets", new
             {
-                clientId = ClientId("Jorge Aliaga"), name = "Ajena", species = "Canine", sex = "Male",
+                clientId = ClientId("Jorge Aliaga"),
+                name = "Ajena",
+                species = "Canine",
+                sex = "Male",
                 birthDate = VetPassApiFactory.Today.AddDays(-30)
-            }),
+            }, cancellationToken: Ct),
             ["POST owner account"] = await stranger.PostAsJsonAsync("/api/v1/authentication/owner-accounts",
-                new { email = "jorge@ajena.pe", fullName = "Jorge", clientId = ClientId("Jorge Aliaga") }),
+                new { email = "jorge@ajena.pe", fullName = "Jorge", clientId = ClientId("Jorge Aliaga") }, cancellationToken: Ct),
             ["POST password reset"] = await stranger.PostAsync(
-                $"/api/v1/authentication/owner-accounts/{ClientId("Valeria Campos")}/password-reset", null),
+                $"/api/v1/authentication/owner-accounts/{ClientId("Valeria Campos")}/password-reset", null, cancellationToken: Ct),
         };
 
         responses.Where(r => r.Value.StatusCode != HttpStatusCode.Forbidden)
             .Select(r => $"{r.Key}: {(int)r.Value.StatusCode}").ShouldBeEmpty();
-        (await stranger.GetFromJsonAsync<JsonElement>("/api/v1/pets")).GetArrayLength().ShouldBe(0);
+        (await stranger.GetFromJsonAsync<JsonElement>("/api/v1/pets", cancellationToken: Ct)).GetArrayLength().ShouldBe(0);
         DoseOf(await CardAsync(staff, rocky), "Quíntuple", 2).GetProperty("status").GetString().ShouldBe("Pending");
     }
 

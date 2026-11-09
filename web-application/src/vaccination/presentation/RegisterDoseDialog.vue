@@ -33,7 +33,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'registered', 'another-dose']);
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
 const date = ref(new Date());
 const batch = ref('');
@@ -135,8 +135,8 @@ function anotherDose() { emit('another-dose'); close(); }
       <div class="vp-field">
         <label for="d-date">{{ t('dose.applicationDate') }}</label>
         <DatePicker
-          input-id="d-date"
           v-model="date"
+          input-id="d-date"
           date-format="dd/mm/yy"
           :max-date="new Date()"
           show-icon

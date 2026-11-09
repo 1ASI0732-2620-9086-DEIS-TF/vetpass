@@ -229,8 +229,8 @@ async function save() {
           <div v-if="clientMode === 'existing'" class="vp-field">
             <label for="client">{{ t('registration.selectClient') }}</label>
             <Select
-              input-id="client"
               v-model="clientId"
+              input-id="client"
               :options="clientOptions"
               option-label="label"
               option-value="id"
@@ -322,8 +322,8 @@ async function save() {
             <div class="vp-field">
               <label for="m-species">{{ t('patients.species') }}</label>
               <Select
-                input-id="m-species"
                 v-model="pet.species"
+                input-id="m-species"
                 :options="speciesOptions"
                 option-label="label"
                 option-value="value"
@@ -336,8 +336,8 @@ async function save() {
             <div class="vp-field">
               <label for="m-sex">{{ t('registration.sex') }}</label>
               <Select
-                input-id="m-sex"
                 v-model="pet.sex"
+                input-id="m-sex"
                 :options="sexOptions"
                 option-label="label"
                 option-value="value"
@@ -346,8 +346,8 @@ async function save() {
             <div class="vp-field">
               <label for="m-birth">{{ t('registration.birthDate') }}</label>
               <DatePicker
-                input-id="m-birth"
                 v-model="pet.birthDate"
+                input-id="m-birth"
                 date-format="dd/mm/yy"
                 :max-date="new Date()"
                 :invalid="Boolean(fieldErrors.birth)"

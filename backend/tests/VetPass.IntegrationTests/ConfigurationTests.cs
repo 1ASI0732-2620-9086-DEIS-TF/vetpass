@@ -5,7 +5,7 @@ public class ConfigurationTests(ApiFixture fixture) : ApiTest(fixture)
     [Fact]
     public async Task Health_ReportsTheClinicDateAndTimeZone()
     {
-        var health = await Api.CreateClient().GetFromJsonAsync<JsonElement>("/api/v1/health");
+        var health = await Api.CreateClient().GetFromJsonAsync<JsonElement>("/api/v1/health", cancellationToken: Ct);
 
         health.GetProperty("status").GetString().ShouldBe("ok");
         health.GetProperty("today").GetString().ShouldBe("2026-10-07");
@@ -21,7 +21,7 @@ public class ConfigurationTests(ApiFixture fixture) : ApiTest(fixture)
         request.Headers.Add("Origin", origin);
         request.Headers.Add("Access-Control-Request-Method", "GET");
 
-        var response = await Api.CreateClient().SendAsync(request);
+        var response = await Api.CreateClient().SendAsync(request, cancellationToken: Ct);
 
         response.Headers.Contains("Access-Control-Allow-Origin").ShouldBe(allowed);
     }
@@ -29,7 +29,7 @@ public class ConfigurationTests(ApiFixture fixture) : ApiTest(fixture)
     [Fact]
     public async Task OpenApiDocument_IsPublished()
     {
-        var document = await Api.CreateClient().GetFromJsonAsync<JsonElement>("/swagger/v1/swagger.json");
+        var document = await Api.CreateClient().GetFromJsonAsync<JsonElement>("/swagger/v1/swagger.json", cancellationToken: Ct);
 
         document.GetProperty("paths").EnumerateObject().Count().ShouldBe(17);
     }

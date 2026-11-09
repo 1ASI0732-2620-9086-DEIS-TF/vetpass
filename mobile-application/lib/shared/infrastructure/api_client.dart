@@ -9,9 +9,9 @@ class ApiException implements Exception {
   final String? code;
   final String? detail;
 
-  bool get noAutorizado => status == 401;
-  bool get prohibido => status == 403;
-  bool get sinRed => status == 0;
+  bool get unauthorized => status == 401;
+  bool get forbidden => status == 403;
+  bool get noNetwork => status == 0;
 
   @override
   String toString() => detail ?? 'HTTP $status';
@@ -21,11 +21,11 @@ class ApiException implements Exception {
 /// servicio: ni siquiera con el proveedor de identidad, que queda detrás de
 /// la API.
 class ApiClient {
-  ApiClient({String? baseUrl, http.Client? cliente})
+  ApiClient({String? baseUrl, http.Client? client})
       : baseUrl = baseUrl ??
             const String.fromEnvironment('VETPASS_API',
                 defaultValue: 'http://localhost:5199/api/v1'),
-        _http = cliente ?? http.Client();
+        _http = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
@@ -33,58 +33,58 @@ class ApiClient {
 
   /// Se invoca cuando la API rechaza el token de la sesión (401). Devuelve
   /// true si consiguió renovarla; entonces la petición se repite una vez.
-  Future<bool> Function()? renovarSesion;
+  Future<bool> Function()? renewSession;
 
-  set token(String? valor) => _token = valor;
+  set token(String? value) => _token = value;
 
   Map<String, String> _cabeceras({bool conToken = true}) => {
         'Content-Type': 'application/json',
         if (conToken && _token != null) 'Authorization': 'Bearer $_token',
       };
 
-  Future<dynamic> get(String ruta) => _enviar(() =>
-      _http.get(Uri.parse('$baseUrl$ruta'), headers: _cabeceras()));
+  Future<dynamic> get(String path) => _enviar(() =>
+      _http.get(Uri.parse('$baseUrl$path'), headers: _cabeceras()));
 
   /// [sinSesion] es para las operaciones que no dependen de la sesión
   /// —iniciarla o renovarla—: no envían el token ni intentan renovarlo.
-  Future<dynamic> post(String ruta, Map<String, dynamic> cuerpo, {bool sinSesion = false}) =>
+  Future<dynamic> post(String path, Map<String, dynamic> body, {bool signedOut = false}) =>
       _enviar(
-        () => _http.post(Uri.parse('$baseUrl$ruta'),
-            headers: _cabeceras(conToken: !sinSesion), body: jsonEncode(cuerpo)),
-        renovable: !sinSesion,
+        () => _http.post(Uri.parse('$baseUrl$path'),
+            headers: _cabeceras(conToken: !signedOut), body: jsonEncode(body)),
+        renovable: !signedOut,
       );
 
-  Future<dynamic> _enviar(Future<http.Response> Function() peticion,
+  Future<dynamic> _enviar(Future<http.Response> Function() request,
       {bool renovable = true}) async {
-    var respuesta = await _ejecutar(peticion);
+    var response = await _run(request);
 
     // El token de acceso dura una hora. Vencido, se renueva con el de
     // refresco y se repite la petición, sin que el dueño lo note.
-    if (respuesta.statusCode == 401 && renovable && _token != null && renovarSesion != null) {
-      if (await renovarSesion!()) respuesta = await _ejecutar(peticion);
+    if (response.statusCode == 401 && renovable && _token != null && renewSession != null) {
+      if (await renewSession!()) response = await _run(request);
     }
 
-    if (respuesta.statusCode >= 200 && respuesta.statusCode < 300) {
-      if (respuesta.body.isEmpty) return null;
-      return jsonDecode(utf8.decode(respuesta.bodyBytes));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(utf8.decode(response.bodyBytes));
     }
 
-    String? codigo;
-    String? detalle;
+    String? code;
+    String? detail;
     try {
-      final problema = jsonDecode(utf8.decode(respuesta.bodyBytes));
-      codigo = problema['code'] as String?;
-      detalle = problema['detail'] as String?;
+      final problem = jsonDecode(utf8.decode(response.bodyBytes));
+      code = problem['code'] as String?;
+      detail = problem['detail'] as String?;
     } catch (_) {
       // Una respuesta sin cuerpo legible deja solo el código de estado.
     }
 
-    throw ApiException(respuesta.statusCode, code: codigo, detail: detalle);
+    throw ApiException(response.statusCode, code: code, detail: detail);
   }
 
-  Future<http.Response> _ejecutar(Future<http.Response> Function() peticion) async {
+  Future<http.Response> _run(Future<http.Response> Function() request) async {
     try {
-      return await peticion();
+      return await request();
     } catch (_) {
       throw ApiException(0);
     }

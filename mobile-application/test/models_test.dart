@@ -8,7 +8,7 @@ import 'package:vetpass_mobile/vaccination/domain/vaccination_card.dart';
 /// use the shape of real responses of `GET /me/pets` and the vaccination card.
 void main() {
   test('Pet reads the resource of the API', () {
-    final pet = Pet.desdeJson({
+    final pet = Pet.fromJson({
       'id': 'p1',
       'name': 'Kiara',
       'species': 'Canine',
@@ -23,7 +23,7 @@ void main() {
   });
 
   test('VaccinationCard reads its doses and the next one', () {
-    final card = VaccinationCard.desdeJson({
+    final card = VaccinationCard.fromJson({
       'status': 'Pending',
       'nextDose': {
         'id': 'd2', 'vaccineName': 'Quíntuple', 'sequenceNumber': 2, 'isBooster': false,
@@ -41,15 +41,15 @@ void main() {
 
     expect(card.status, 'Pending');
     expect(card.nextDose!.sequenceNumber, 2);
-    expect(card.doses.single.aplicada, isTrue);
+    expect(card.doses.single.applied, isTrue);
     expect(card.doses.single.batchCode, 'A-4471');
   });
 
   test('dates follow the format of each language', () {
-    expect(formatearFecha('2026-10-07', esIngles: false), '07/10/2026');
-    expect(formatearFecha('2026-10-07', esIngles: true), '10/07/2026');
-    expect(formatearFecha(null, esIngles: false), '—');
-    expect(formatearFechaLarga('2026-09-23', esIngles: false), '23 de septiembre de 2026');
-    expect(formatearFechaLarga('2026-09-23', esIngles: true), 'September 23, 2026');
+    expect(formatDate('2026-10-07', isEnglish: false), '07/10/2026');
+    expect(formatDate('2026-10-07', isEnglish: true), '10/07/2026');
+    expect(formatDate(null, isEnglish: false), '—');
+    expect(formatLongDate('2026-09-23', isEnglish: false), '23 de septiembre de 2026');
+    expect(formatLongDate('2026-09-23', isEnglish: true), 'September 23, 2026');
   });
 }

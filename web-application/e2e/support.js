@@ -21,8 +21,8 @@ export const freshDni = () => String(70_000_000 + Math.floor(Math.random() * 9_9
 export async function signIn(page) {
   await page.addInitScript(() => localStorage.setItem('vetpass.idioma', 'es'));
   await page.goto('/acceso');
-  await page.locator('#correo').fill(STAFF.email);
-  await page.locator('#contrasena').fill(STAFF.password);
+  await page.locator('#email').fill(STAFF.email);
+  await page.locator('#password').fill(STAFF.password);
   await page.getByRole('button', { name: 'Ingresar' }).click();
   await expect(page.getByRole('heading', { name: 'Pacientes' })).toBeVisible();
 }

@@ -39,29 +39,29 @@ export function configureHttp({ getToken, onUnauthorized }) {
  * la fecha más temprana admisible— de modo que se presentan tal cual.
  */
 export function problemOf(error) {
-  const datos = error?.response?.data;
-  if (!datos) return { code: 'network', detail: null, status: 0 };
+  const details = error?.response?.data;
+  if (!details) return { code: 'network', detail: null, status: 0 };
 
   return {
     status: error.response.status,
-    code: datos.code ?? null,
-    title: datos.title ?? null,
-    detail: datos.detail ?? primerErrorDeValidacion(datos),
-    ageInWeeks: datos.ageInWeeks,
-    requiredWeeks: datos.requiredWeeks,
-    earliestAdmissibleDate: datos.earliestAdmissibleDate,
-    ageInYears: datos.ageInYears,
-    maximumAgeInYears: datos.maximumAgeInYears,
-    species: datos.species,
-    existingClientId: datos.existingClientId,
-    existingClientName: datos.existingClientName,
-    pendingSequenceNumber: datos.pendingSequenceNumber
+    code: details.code ?? null,
+    title: details.title ?? null,
+    detail: details.detail ?? firstValidationError(details),
+    ageInWeeks: details.ageInWeeks,
+    requiredWeeks: details.requiredWeeks,
+    earliestAdmissibleDate: details.earliestAdmissibleDate,
+    ageInYears: details.ageInYears,
+    maximumAgeInYears: details.maximumAgeInYears,
+    species: details.species,
+    existingClientId: details.existingClientId,
+    existingClientName: details.existingClientName,
+    pendingSequenceNumber: details.pendingSequenceNumber
   };
 }
 
-function primerErrorDeValidacion(datos) {
-  const errores = datos.errors;
-  if (!errores) return null;
-  const primera = Object.values(errores)[0];
-  return Array.isArray(primera) ? primera[0] : String(primera);
+function firstValidationError(details) {
+  const errors = details.errors;
+  if (!errors) return null;
+  const first = Object.values(errors)[0];
+  return Array.isArray(first) ? first[0] : String(first);
 }

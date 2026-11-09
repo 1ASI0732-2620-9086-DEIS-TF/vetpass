@@ -1,9 +1,9 @@
 import { http } from '../../shared/infrastructure/http';
 
 export const medicalRecordsApi = {
-  listarAtenciones: (petId) => http.get(`/pets/${petId}/visits`),
+  listVisits: (petId) => http.get(`/pets/${petId}/visits`),
 
-  registrarAtencion: (petId, atencion) => http.post(`/pets/${petId}/visits`, atencion),
+  registerVisit: (petId, visit) => http.post(`/pets/${petId}/visits`, visit),
 
-  emitirReceta: (visitId, items) => http.post(`/visits/${visitId}/prescription`, { items })
+  issuePrescription: (visitId, items) => http.post(`/visits/${visitId}/prescription`, { items })
 };

@@ -1,22 +1,22 @@
 <script setup>
 import { useI18n } from 'vue-i18n';
-import { cambiarIdioma } from '../i18n';
+import { changeLanguage } from '../i18n';
 
 const { locale, t } = useI18n();
 </script>
 
 <template>
-  <div class="lang" role="group" :aria-label="t('nav.idioma')">
+  <div class="lang" role="group" :aria-label="t('nav.language')">
     <button
-      v-for="idioma in ['es', 'en']"
-      :key="idioma"
+      v-for="language in ['es', 'en']"
+      :key="language"
       type="button"
       class="lang__btn"
-      :aria-pressed="locale === idioma"
-      :lang="idioma"
-      @click="cambiarIdioma(idioma)"
+      :aria-pressed="locale === language"
+      :lang="language"
+      @click="changeLanguage(language)"
     >
-      {{ idioma.toUpperCase() }}
+      {{ language.toUpperCase() }}
     </button>
   </div>
 </template>

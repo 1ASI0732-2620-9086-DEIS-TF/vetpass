@@ -13,107 +13,107 @@ import Button from 'primevue/button';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import StatusTag from '../../shared/presentation/StatusTag.vue';
-import { formatearFecha, esHoy, etiquetaDosis } from '../../shared/i18n';
+import { formatDate, isToday, doseLabel } from '../../shared/i18n';
 
 const props = defineProps({
-  cartilla: { type: Object, default: null },
-  paciente: { type: Object, default: null }
+  card: { type: Object, default: null },
+  patient: { type: Object, default: null }
 });
 
-const emit = defineEmits(['registrar-dosis']);
+const emit = defineEmits(['register-dose']);
 
 const { t } = useI18n();
 
-const especie = computed(() => (props.cartilla?.species === 'Canine'
-  ? t('especie.canino') : t('especie.felino')));
+const species = computed(() => (props.card?.species === 'Canine'
+  ? t('species.canineMasculine') : t('species.felineMasculine')));
 
-const proxima = computed(() => {
-  const dosis = props.cartilla?.nextDose;
-  if (!dosis) return null;
+const next = computed(() => {
+  const dose = props.card?.nextDose;
+  if (!dose) return null;
 
-  const fecha = esHoy(dosis.expectedDate)
-    ? t('cartilla.hoy', { fecha: formatearFecha(dosis.expectedDate) })
-    : formatearFecha(dosis.expectedDate);
+  const date = isToday(dose.expectedDate)
+    ? t('card.today', { date: formatDate(dose.expectedDate) })
+    : formatDate(dose.expectedDate);
 
-  return t('cartilla.proximaDosis', { fecha });
+  return t('card.nextDose', { date });
 });
 
 /** La dosis pendiente más temprana de la misma vacuna: la que va primero. */
-function anteriorPendiente(dosis) {
-  return props.cartilla.doses
-    .filter((d) => d.vaccineId === dosis.vaccineId && d.sequenceNumber < dosis.sequenceNumber
+function previousPending(dose) {
+  return props.card.doses
+    .filter((d) => d.vaccineId === dose.vaccineId && d.sequenceNumber < dose.sequenceNumber
       && d.status !== 'Applied')
     .sort((a, b) => a.sequenceNumber - b.sequenceNumber)[0];
 }
 
-const claseFila = (dosis) => (esHoy(dosis.expectedDate) && dosis.status === 'Pending'
+const rowClass = (dose) => (isToday(dose.expectedDate) && dose.status === 'Pending'
   ? 'vp-row-today' : null);
 </script>
 
 <template>
-  <section v-if="cartilla" class="vp-card">
-    <header class="encabezado">
+  <section v-if="card" class="vp-card">
+    <header class="header">
       <div>
-        <h3>{{ t('cartilla.esquema', { especie }) }}</h3>
-        <p v-if="proxima" class="vp-small vp-muted">{{ proxima }}</p>
-        <p v-else class="vp-small vp-muted">{{ t('cartilla.sinPendientes') }}</p>
+        <h3>{{ t('card.schedule', { species }) }}</h3>
+        <p v-if="next" class="vp-small vp-muted">{{ next }}</p>
+        <p v-else class="vp-small vp-muted">{{ t('card.nothingPending') }}</p>
       </div>
     </header>
 
-    <DataTable :value="cartilla.doses" data-key="id" :row-class="claseFila">
-      <Column :header="t('cartilla.vacuna')">
+    <DataTable :value="card.doses" data-key="id" :row-class="rowClass">
+      <Column :header="t('card.vaccine')">
         <template #body="{ data }">
-          <span class="vacuna">{{ etiquetaDosis(data, t) }}</span>
+          <span class="vaccine">{{ doseLabel(data, t) }}</span>
         </template>
       </Column>
 
-      <Column :header="t('cartilla.fecha')">
+      <Column :header="t('card.date')">
         <template #body="{ data }">
-          <span v-if="data.applicationDate">{{ formatearFecha(data.applicationDate) }}</span>
+          <span v-if="data.applicationDate">{{ formatDate(data.applicationDate) }}</span>
           <span v-else class="vp-muted">
-            {{ t('cartilla.esperada', { fecha: formatearFecha(data.expectedDate) }) }}
+            {{ t('card.expected', { date: formatDate(data.expectedDate) }) }}
           </span>
         </template>
       </Column>
 
-      <Column :header="t('cartilla.lote')">
+      <Column :header="t('card.batch')">
         <template #body="{ data }">{{ data.batchCode ?? '—' }}</template>
       </Column>
 
-      <Column :header="t('cartilla.estado')">
+      <Column :header="t('card.status')">
         <template #body="{ data }">
-          <StatusTag :estado="data.status === 'Applied' ? 'Applied' : (data.isOverdue ? 'Overdue' : 'Pending')" />
+          <StatusTag :status="data.status === 'Applied' ? 'Applied' : (data.isOverdue ? 'Overdue' : 'Pending')" />
         </template>
       </Column>
 
-      <Column class="columna-accion">
+      <Column class="column-action">
         <template #body="{ data }">
           <Button
             v-if="data.status === 'Pending' && data.isNextInSequence"
-            :label="t('cartilla.registrarDosis')"
+            :label="t('card.registerDose')"
             size="small"
             outlined
-            @click="emit('registrar-dosis', data)"
+            @click="emit('register-dose', data)"
           />
-          <span v-else-if="data.status === 'Pending' && anteriorPendiente(data)" class="vp-caption vp-muted en-espera">
+          <span v-else-if="data.status === 'Pending' && previousPending(data)" class="vp-caption vp-muted en-waiting">
             <i class="pi pi-lock" aria-hidden="true" />
-            {{ t('cartilla.antesLaDosis', { dosis: etiquetaDosis(anteriorPendiente(data), t) }) }}
+            {{ t('card.beforeTheDose', { dose: doseLabel(previousPending(data), t) }) }}
           </span>
         </template>
       </Column>
     </DataTable>
 
-    <footer class="pie vp-caption vp-muted">{{ t('cartilla.nota') }}</footer>
+    <footer class="footer vp-caption vp-muted">{{ t('card.note') }}</footer>
   </section>
 </template>
 
 <style scoped>
-.encabezado { padding: var(--vp-space-4); border-bottom: 1px solid var(--vp-neutral-200); }
+.header { padding: var(--vp-space-4); border-bottom: 1px solid var(--vp-neutral-200); }
 /* El nombre de la especie llega en minúscula porque en español va dentro de la
    frase; aquí encabeza, de modo que la mayúscula la pone la presentación. */
-.encabezado h3::first-letter { text-transform: uppercase; }
-.vacuna { font-weight: 600; }
-.pie { padding: var(--vp-space-3) var(--vp-space-4); border-top: 1px solid var(--vp-neutral-200); }
-:deep(.columna-accion) { text-align: right; }
-.en-espera { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.header h3::first-letter { text-transform: uppercase; }
+.vaccine { font-weight: 600; }
+.footer { padding: var(--vp-space-3) var(--vp-space-4); border-top: 1px solid var(--vp-neutral-200); }
+:deep(.column-action) { text-align: right; }
+.en-waiting { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
 </style>

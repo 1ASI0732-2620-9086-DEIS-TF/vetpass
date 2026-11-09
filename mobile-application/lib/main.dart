@@ -13,48 +13,48 @@ import 'shared/presentation/theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final preferencias = await SharedPreferences.getInstance();
-  final guardado = preferencias.getString('vetpass.idioma');
-  final delSistema = PlatformDispatcher.instance.locale.languageCode == 'en' ? 'en' : 'es';
+  final preferences = await SharedPreferences.getInstance();
+  final saved = preferences.getString('vetpass.idioma');
+  final fromSystem = PlatformDispatcher.instance.locale.languageCode == 'en' ? 'en' : 'es';
 
-  final idioma = IdiomaController(guardado ?? delSistema);
-  idioma.addListener(() => preferencias.setString('vetpass.idioma', idioma.value));
+  final language = LanguageController(saved ?? fromSystem);
+  language.addListener(() => preferences.setString('vetpass.idioma', language.value));
 
   final session = Session(ApiClient());
-  await session.restaurar();
+  await session.restore();
 
   // Al terminar la sesión se descartan las pantallas abiertas encima —una
   // mascota, una atención—, para que el inicio de sesión quede a la vista.
   session.addListener(() {
-    if (!session.autenticado) navegador.currentState?.popUntil((ruta) => ruta.isFirst);
+    if (!session.authenticated) navigator.currentState?.popUntil((path) => path.isFirst);
   });
 
-  runApp(VetPassApp(session: session, idioma: idioma));
+  runApp(VetPassApp(session: session, language: language));
 }
 
-final navegador = GlobalKey<NavigatorState>();
+final navigator = GlobalKey<NavigatorState>();
 
 class VetPassApp extends StatelessWidget {
-  const VetPassApp({super.key, required this.session, required this.idioma});
+  const VetPassApp({super.key, required this.session, required this.language});
 
   final Session session;
-  final IdiomaController idioma;
+  final LanguageController language;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([session, idioma]),
+      listenable: Listenable.merge([session, language]),
       builder: (context, _) => MaterialApp(
-        navigatorKey: navegador,
+        navigatorKey: navigator,
         title: 'VetPass',
         debugShowCheckedModeBanner: false,
         theme: buildVetPassTheme(),
         // Con una contraseña temporal, el dueño elige la suya antes de entrar.
-        home: !session.autenticado
-            ? SignInPage(session: session, idioma: idioma)
-            : session.debeCambiarContrasena
-                ? ChangePasswordPage(session: session, idioma: idioma, obligatorio: true)
-                : HomeShell(session: session, idioma: idioma),
+        home: !session.authenticated
+            ? SignInPage(session: session, language: language)
+            : session.mustChangePassword
+                ? ChangePasswordPage(session: session, language: language, required: true)
+                : HomeShell(session: session, language: language),
       ),
     );
   }

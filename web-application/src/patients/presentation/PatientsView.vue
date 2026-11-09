@@ -16,48 +16,48 @@ import Select from 'primevue/select';
 import ProgressSpinner from 'primevue/progressspinner';
 import StatusTag from '../../shared/presentation/StatusTag.vue';
 import { patientsApi } from '../infrastructure/patients.api';
-import { formatearFecha, formatearEdad } from '../../shared/i18n';
+import { formatDate, formatAge } from '../../shared/i18n';
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const pacientes = ref([]);
-const cargando = ref(false);
-const especie = ref(null);
-const estado = ref(null);
+const patients = ref([]);
+const loading = ref(false);
+const species = ref(null);
+const status = ref(null);
 
-const opcionesEspecie = computed(() => [
-  { etiqueta: t('pacientes.todas'), valor: null },
-  { etiqueta: t('especie.Canine'), valor: 'Canine' },
-  { etiqueta: t('especie.Feline'), valor: 'Feline' }
+const speciesOptions = computed(() => [
+  { label: t('patients.allSpecies'), value: null },
+  { label: t('species.Canine'), value: 'Canine' },
+  { label: t('species.Feline'), value: 'Feline' }
 ]);
 
-const opcionesEstado = computed(() => [
-  { etiqueta: t('pacientes.todos'), valor: null },
-  { etiqueta: t('estado.UpToDate'), valor: 'UpToDate' },
-  { etiqueta: t('estado.Pending'), valor: 'Pending' },
-  { etiqueta: t('estado.Overdue'), valor: 'Overdue' }
+const statusOptions = computed(() => [
+  { label: t('patients.allStatuses'), value: null },
+  { label: t('status.UpToDate'), value: 'UpToDate' },
+  { label: t('status.Pending'), value: 'Pending' },
+  { label: t('status.Overdue'), value: 'Overdue' }
 ]);
 
-async function cargar() {
-  cargando.value = true;
+async function load() {
+  loading.value = true;
   try {
-    const { data } = await patientsApi.buscar({
+    const { data } = await patientsApi.search({
       search: route.query.q?.toString(),
-      species: especie.value ?? undefined,
-      cardStatus: estado.value ?? undefined
+      species: species.value ?? undefined,
+      cardStatus: status.value ?? undefined
     });
-    pacientes.value = data;
+    patients.value = data;
   } finally {
-    cargando.value = false;
+    loading.value = false;
   }
 }
 
-watch([() => route.query.q, especie, estado], cargar, { immediate: true });
+watch([() => route.query.q, species, status], load, { immediate: true });
 
-function abrir(paciente) {
-  router.push({ name: 'paciente', params: { petId: paciente.id } });
+function open(patient) {
+  router.push({ name: 'patient', params: { petId: patient.id } });
 }
 </script>
 
@@ -65,96 +65,96 @@ function abrir(paciente) {
   <div class="vp-page">
     <header class="vp-head">
       <div>
-        <h1>{{ t('pacientes.titulo') }}</h1>
-        <p v-if="!cargando" class="vp-small vp-muted">
-          {{ pacientes.length }} {{ t('pacientes.conteo', pacientes.length) }}
+        <h1>{{ t('patients.title') }}</h1>
+        <p v-if="!loading" class="vp-small vp-muted">
+          {{ patients.length }} {{ t('patients.count', patients.length) }}
         </p>
       </div>
       <Button
-        :label="t('pacientes.registrar')"
+        :label="t('patients.register')"
         icon="pi pi-plus"
-        @click="router.push({ name: 'nuevo-paciente' })"
+        @click="router.push({ name: 'new-patient' })"
       />
     </header>
 
-    <div class="filtros">
+    <div class="filters">
       <div class="vp-field">
-        <label for="f-especie" class="vp-caption vp-muted">{{ t('pacientes.especie') }}</label>
+        <label for="f-species" class="vp-caption vp-muted">{{ t('patients.species') }}</label>
         <Select
-          input-id="f-especie"
-          v-model="especie"
-          :options="opcionesEspecie"
-          option-label="etiqueta"
-          option-value="valor"
+          input-id="f-species"
+          v-model="species"
+          :options="speciesOptions"
+          option-label="label"
+          option-value="value"
         />
       </div>
       <div class="vp-field">
-        <label for="f-estado" class="vp-caption vp-muted">{{ t('pacientes.estadoCartilla') }}</label>
+        <label for="f-status" class="vp-caption vp-muted">{{ t('patients.cardStatus') }}</label>
         <Select
-          input-id="f-estado"
-          v-model="estado"
-          :options="opcionesEstado"
-          option-label="etiqueta"
-          option-value="valor"
+          input-id="f-status"
+          v-model="status"
+          :options="statusOptions"
+          option-label="label"
+          option-value="value"
         />
       </div>
     </div>
 
-    <div v-if="cargando" class="cargando">
-      <ProgressSpinner style="width: 40px; height: 40px" :aria-label="t('comun.cargando')" />
+    <div v-if="loading" class="loading">
+      <ProgressSpinner style="width: 40px; height: 40px" :aria-label="t('common.loading')" />
     </div>
 
     <div v-else class="vp-card">
       <DataTable
-        :value="pacientes"
+        :value="patients"
         data-key="id"
         selection-mode="single"
         :row-hover="true"
-        @row-click="abrir($event.data)"
+        @row-click="open($event.data)"
       >
         <template #empty>
-          <div class="vacio">
-            <p>{{ t('pacientes.sinResultados') }}</p>
-            <p class="vp-small vp-muted">{{ t('pacientes.sinResultadosAccion') }}</p>
+          <div class="empty">
+            <p>{{ t('patients.noResults') }}</p>
+            <p class="vp-small vp-muted">{{ t('patients.noResultsAction') }}</p>
             <Button
-              class="vacio__accion"
-              :label="t('pacientes.registrar')"
+              class="empty__action"
+              :label="t('patients.register')"
               icon="pi pi-plus"
               outlined
-              @click="router.push({ name: 'nuevo-paciente' })"
+              @click="router.push({ name: 'new-patient' })"
             />
           </div>
         </template>
 
-        <Column field="name" :header="t('pacientes.mascota')">
+        <Column field="name" :header="t('patients.pet')">
           <template #body="{ data }">
-            <span class="nombre">{{ data.name }}</span>
+            <span class="name">{{ data.name }}</span>
             <span v-if="data.breed" class="vp-caption vp-muted"> · {{ data.breed }}</span>
           </template>
         </Column>
 
-        <Column field="species" :header="t('pacientes.especie')">
-          <template #body="{ data }">{{ t(`especie.${data.species}`) }}</template>
+        <Column field="species" :header="t('patients.species')">
+          <template #body="{ data }">{{ t(`species.${data.species}`) }}</template>
         </Column>
 
-        <Column field="owner.fullName" :header="t('pacientes.dueno')">
+        <Column field="owner.fullName" :header="t('patients.owner')">
           <template #body="{ data }">{{ data.owner.fullName }}</template>
         </Column>
 
-        <Column field="cardStatus" :header="t('pacientes.estadoCartilla')">
+        <Column field="cardStatus" :header="t('patients.cardStatus')">
           <template #body="{ data }">
-            <StatusTag v-if="data.cardStatus" :estado="data.cardStatus" />
+            <StatusTag v-if="data.cardStatus" :status="data.cardStatus" />
             <span v-else class="vp-muted">—</span>
           </template>
         </Column>
 
-        <Column field="birthDate" :header="t('registro.fechaNacimiento')">
-          <template #body="{ data }">{{ formatearFecha(data.birthDate) }}</template>
+        <Column field="birthDate" :header="t('registration.birthDate')">
+          <template #body="{ data }">{{ formatDate(data.birthDate) }}</template>
         </Column>
 
         <!-- Ordenar por edad es ordenar por nacimiento, al revés. -->
-        <Column :header="t('pacientes.edad')">
-          <template #body="{ data }"><span class="edad">{{ formatearEdad(data.birthDate, t) }}</span></template>
+        <Column :header="t('patients.age')">
+          <template #body="{ data }"><span class="age">{{ formatAge(data.birthDate, t) }}</span></template>
         </Column>
       </DataTable>
     </div>
@@ -162,12 +162,12 @@ function abrir(paciente) {
 </template>
 
 <style scoped>
-.filtros { display: flex; gap: var(--vp-space-3); flex-wrap: wrap; margin-bottom: var(--vp-space-3); }
-.filtros .vp-field { min-width: 180px; }
-.cargando { display: grid; place-items: center; padding: var(--vp-space-6); }
-.nombre { font-weight: 600; }
-.edad { white-space: nowrap; }
-.vacio { padding: var(--vp-space-5); text-align: center; display: grid; gap: var(--vp-space-2); }
-.vacio__accion { justify-self: center; margin-top: var(--vp-space-2); }
+.filters { display: flex; gap: var(--vp-space-3); flex-wrap: wrap; margin-bottom: var(--vp-space-3); }
+.filters .vp-field { min-width: 180px; }
+.loading { display: grid; place-items: center; padding: var(--vp-space-6); }
+.name { font-weight: 600; }
+.age { white-space: nowrap; }
+.empty { padding: var(--vp-space-5); text-align: center; display: grid; gap: var(--vp-space-2); }
+.empty__action { justify-self: center; margin-top: var(--vp-space-2); }
 :deep(.p-datatable-tbody > tr) { cursor: pointer; }
 </style>

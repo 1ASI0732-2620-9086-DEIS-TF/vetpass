@@ -11,18 +11,18 @@ import '../domain/vaccination_card.dart';
 class VaccinationCardTab extends StatelessWidget {
   const VaccinationCardTab({
     super.key,
-    required this.cartilla,
-    required this.textos,
-    required this.clinica,
+    required this.card,
+    required this.texts,
+    required this.clinic,
   });
 
-  final VaccinationCard cartilla;
-  final AppStrings textos;
-  final String? clinica;
+  final VaccinationCard card;
+  final AppStrings texts;
+  final String? clinic;
 
   @override
   Widget build(BuildContext context) {
-    final proxima = cartilla.nextDose;
+    final next = card.nextDose;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -33,14 +33,14 @@ class VaccinationCardTab extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                StatusChip(estado: cartilla.status, textos: textos, deCartilla: true),
+                StatusChip(status: card.status, texts: texts, ofCard: true),
                 const SizedBox(height: 12),
                 Text(
-                  proxima == null
-                      ? textos.sinPendientes
-                      : '${textos.proximaDosis}: '
-                          '${textos.etiquetaDosis(proxima.vaccineName, proxima.sequenceNumber, proxima.isBooster)} · '
-                          '${formatearFecha(proxima.expectedDate, esIngles: textos.esIngles)}',
+                  next == null
+                      ? texts.nothingPending
+                      : '${texts.nextDose}: '
+                          '${texts.doseLabel(next.vaccineName, next.sequenceNumber, next.isBooster)} · '
+                          '${formatDate(next.expectedDate, isEnglish: texts.isEnglish)}',
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -54,17 +54,17 @@ class VaccinationCardTab extends StatelessWidget {
         Card(
           child: Column(
             children: [
-              for (var i = 0; i < cartilla.doses.length; i++) ...[
+              for (var i = 0; i < card.doses.length; i++) ...[
                 if (i > 0) const Divider(height: 1),
-                _FilaDosis(dosis: cartilla.doses[i], textos: textos),
+                _DoseRow(dose: card.doses[i], texts: texts),
               ],
             ],
           ),
         ),
         const SizedBox(height: 16),
-        if (clinica != null)
+        if (clinic != null)
           Text(
-            textos.registroEmitido(clinica!),
+            texts.issuedRecord(clinic!),
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme
@@ -76,19 +76,19 @@ class VaccinationCardTab extends StatelessWidget {
   }
 }
 
-class _FilaDosis extends StatelessWidget {
-  const _FilaDosis({required this.dosis, required this.textos});
+class _DoseRow extends StatelessWidget {
+  const _DoseRow({required this.dose, required this.texts});
 
-  final Dose dosis;
-  final AppStrings textos;
+  final Dose dose;
+  final AppStrings texts;
 
   @override
   Widget build(BuildContext context) {
-    final detalle = dosis.aplicada
-        ? '${formatearFecha(dosis.applicationDate, esIngles: textos.esIngles)}'
-            '${dosis.batchCode != null ? ' · ${textos.lote} ${dosis.batchCode}' : ''}'
-        : '${textos.fechaEsperada}: '
-            '${formatearFecha(dosis.expectedDate, esIngles: textos.esIngles)}';
+    final detail = dose.applied
+        ? '${formatDate(dose.applicationDate, isEnglish: texts.isEnglish)}'
+            '${dose.batchCode != null ? ' · ${texts.batch} ${dose.batchCode}' : ''}'
+        : '${texts.expectedDate}: '
+            '${formatDate(dose.expectedDate, isEnglish: texts.isEnglish)}';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -99,12 +99,12 @@ class _FilaDosis extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  textos.etiquetaDosis(
-                      dosis.vaccineName, dosis.sequenceNumber, dosis.isBooster),
+                  texts.doseLabel(
+                      dose.vaccineName, dose.sequenceNumber, dose.isBooster),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 2),
-                Text(detalle,
+                Text(detail,
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
@@ -114,9 +114,9 @@ class _FilaDosis extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           StatusChip(
-            estado: dosis.aplicada ? 'Applied' : (dosis.isOverdue ? 'Overdue' : 'Pending'),
-            textos: textos,
-            compacto: true,
+            status: dose.applied ? 'Applied' : (dose.isOverdue ? 'Overdue' : 'Pending'),
+            texts: texts,
+            compact: true,
           ),
         ],
       ),

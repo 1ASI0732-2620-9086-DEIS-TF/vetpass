@@ -7,21 +7,21 @@ import 'change_password_page.dart';
 
 /// Perfil y cierre de sesión. Recoge también el idioma, que es la decisión
 /// que la sección 4.2.2 del informe exige ofrecer en ambas aplicaciones.
-final _terminos = Uri.parse('https://vetpass-landing.vercel.app/terminos.html');
+final _terms = Uri.parse('https://vetpass-landing.vercel.app/terminos.html');
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key, required this.session, required this.idioma});
+  const ProfilePage({super.key, required this.session, required this.language});
 
   final Session session;
-  final IdiomaController idioma;
+  final LanguageController language;
 
   @override
   Widget build(BuildContext context) {
-    final textos = idioma.textos;
-    final usuario = session.usuario;
+    final texts = language.texts;
+    final user = session.user;
 
     return Scaffold(
-      appBar: AppBar(title: Text(textos.perfil)),
+      appBar: AppBar(title: Text(texts.profile)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -34,7 +34,7 @@ class ProfilePage extends StatelessWidget {
                     radius: 28,
                     backgroundColor: VetPassColors.primary,
                     child: Text(
-                      _iniciales(usuario?.fullName ?? ''),
+                      _initials(user?.fullName ?? ''),
                       style: const TextStyle(
                           color: Colors.white, fontWeight: FontWeight.w600, fontSize: 18),
                     ),
@@ -44,10 +44,10 @@ class ProfilePage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(usuario?.fullName ?? '',
+                        Text(user?.fullName ?? '',
                             style: Theme.of(context).textTheme.titleLarge),
                         const SizedBox(height: 2),
-                        Text(usuario?.email ?? '',
+                        Text(user?.email ?? '',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyMedium
@@ -59,15 +59,15 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-          if (usuario?.clinicName != null) ...[
+          if (user?.clinicName != null) ...[
             const SizedBox(height: 16),
             Card(
               child: ListTile(
                 leading: const Icon(Icons.local_hospital_outlined,
                     color: VetPassColors.primary),
-                title: Text(textos.veterinariaVinculada,
+                title: Text(texts.linkedClinic,
                     style: Theme.of(context).textTheme.labelSmall),
-                subtitle: Text(usuario!.clinicName!,
+                subtitle: Text(user!.clinicName!,
                     style: Theme.of(context).textTheme.titleMedium),
               ),
             ),
@@ -79,17 +79,17 @@ class ProfilePage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(textos.idiomaEtiqueta,
+                  Text(texts.languageLabel,
                       style: Theme.of(context).textTheme.titleMedium),
                   ListenableBuilder(
-                    listenable: idioma,
+                    listenable: language,
                     builder: (context, _) => SegmentedButton<String>(
                       segments: const [
                         ButtonSegment(value: 'es', label: Text('ES')),
                         ButtonSegment(value: 'en', label: Text('EN')),
                       ],
-                      selected: {idioma.value},
-                      onSelectionChanged: (s) => idioma.value = s.first,
+                      selected: {language.value},
+                      onSelectionChanged: (s) => language.value = s.first,
                       showSelectedIcon: false,
                       style: const ButtonStyle(visualDensity: VisualDensity.compact),
                     ),
@@ -102,11 +102,11 @@ class ProfilePage extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.lock_outline, color: VetPassColors.primary),
-              title: Text(textos.cambiarContrasena,
+              title: Text(texts.changePassword,
                   style: Theme.of(context).textTheme.titleMedium),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => ChangePasswordPage(session: session, idioma: idioma),
+                builder: (_) => ChangePasswordPage(session: session, language: language),
               )),
             ),
           ),
@@ -114,18 +114,18 @@ class ProfilePage extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const Icon(Icons.description_outlined, color: VetPassColors.primary),
-              title: Text(textos.terminos, style: Theme.of(context).textTheme.titleMedium),
+              title: Text(texts.terms, style: Theme.of(context).textTheme.titleMedium),
               trailing: const Icon(Icons.open_in_new, size: 20),
               // El acuerdo de servicio vive en la landing page; la app enlaza
               // a él, como exige el enunciado para todas las aplicaciones.
-              onTap: () => launchUrl(_terminos, mode: LaunchMode.externalApplication),
+              onTap: () => launchUrl(_terms, mode: LaunchMode.externalApplication),
             ),
           ),
           const SizedBox(height: 24),
           OutlinedButton.icon(
-            onPressed: session.cerrarSesion,
+            onPressed: session.signOut,
             icon: const Icon(Icons.logout),
-            label: Text(textos.cerrarSesion),
+            label: Text(texts.signOut),
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(48),
               foregroundColor: VetPassColors.dangerText,
@@ -133,7 +133,7 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          Text(textos.soloConsulta,
+          Text(texts.readOnly,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -144,7 +144,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  String _iniciales(String nombre) => nombre
+  String _initials(String name) => name
       .split(' ')
       .where((p) => p.isNotEmpty)
       .take(2)

@@ -2,14 +2,14 @@ import { http } from '../../shared/infrastructure/http';
 
 export const patientsApi = {
   /** Búsqueda por nombre de mascota o de dueño, con sus filtros (US08). */
-  buscar: ({ search, species, cardStatus } = {}) =>
+  search: ({ search, species, cardStatus } = {}) =>
     http.get('/pets', { params: { search: search || undefined, species, cardStatus } }),
 
-  obtener: (petId) => http.get(`/pets/${petId}`),
+  get: (petId) => http.get(`/pets/${petId}`),
 
-  registrarMascota: (mascota) => http.post('/pets', mascota),
+  registerPet: (pet) => http.post('/pets', pet),
 
-  listarClientes: () => http.get('/clients'),
+  listClients: () => http.get('/clients'),
 
-  registrarCliente: (cliente) => http.post('/clients', cliente)
+  registerClient: (client) => http.post('/clients', client)
 };

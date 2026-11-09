@@ -14,65 +14,65 @@ import 'pet_page.dart';
 /// No incorpora buscador: el dueño gestiona un número reducido de mascotas y
 /// el listado cabe en una pantalla (sección 4.2.4).
 class MyPetsPage extends StatefulWidget {
-  const MyPetsPage({super.key, required this.session, required this.idioma});
+  const MyPetsPage({super.key, required this.session, required this.language});
 
   final Session session;
-  final IdiomaController idioma;
+  final LanguageController language;
 
   @override
   State<MyPetsPage> createState() => _MyPetsPageState();
 }
 
 class _MyPetsPageState extends State<MyPetsPage> {
-  late Future<List<Pet>> _mascotas;
+  late Future<List<Pet>> _pets;
 
   @override
   void initState() {
     super.initState();
-    _mascotas = PatientsApi(widget.session.api).misMascotas();
+    _pets = PatientsApi(widget.session.api).myPets();
   }
 
-  Future<void> _recargar() async {
-    setState(() => _mascotas = PatientsApi(widget.session.api).misMascotas());
-    await _mascotas;
+  Future<void> _reload() async {
+    setState(() => _pets = PatientsApi(widget.session.api).myPets());
+    await _pets;
   }
 
   @override
   Widget build(BuildContext context) {
-    final textos = widget.idioma.textos;
+    final texts = widget.language.texts;
 
     return Scaffold(
-      appBar: AppBar(title: Text(textos.misMascotas)),
+      appBar: AppBar(title: Text(texts.myPets)),
       body: RefreshIndicator(
-        onRefresh: _recargar,
+        onRefresh: _reload,
         child: FutureBuilder<List<Pet>>(
-          future: _mascotas,
+          future: _pets,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 
             if (snapshot.hasError) {
-              return _Mensaje(texto: textos.sinConexion, icono: Icons.cloud_off);
+              return _Message(text: texts.offline, icon: Icons.cloud_off);
             }
 
-            final mascotas = snapshot.data ?? const <Pet>[];
-            if (mascotas.isEmpty) {
-              return _Mensaje(texto: textos.sinMascotas, icono: Icons.pets_outlined);
+            final pets = snapshot.data ?? const <Pet>[];
+            if (pets.isEmpty) {
+              return _Message(text: texts.noPets, icon: Icons.pets_outlined);
             }
 
             return ListView.separated(
               padding: const EdgeInsets.all(16),
-              itemCount: mascotas.length,
+              itemCount: pets.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, indice) => _TarjetaMascota(
-                mascota: mascotas[indice],
-                textos: textos,
+              itemBuilder: (context, index) => _PetCard(
+                pet: pets[index],
+                texts: texts,
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => PetPage(
                     session: widget.session,
-                    idioma: widget.idioma,
-                    mascota: mascotas[indice],
+                    language: widget.language,
+                    pet: pets[index],
                   ),
                 )),
               ),
@@ -84,19 +84,19 @@ class _MyPetsPageState extends State<MyPetsPage> {
   }
 }
 
-class _TarjetaMascota extends StatelessWidget {
-  const _TarjetaMascota({required this.mascota, required this.textos, required this.onTap});
+class _PetCard extends StatelessWidget {
+  const _PetCard({required this.pet, required this.texts, required this.onTap});
 
-  final Pet mascota;
-  final AppStrings textos;
+  final Pet pet;
+  final AppStrings texts;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final descripcion = [
-      textos.especie(mascota.species),
-      if (mascota.breed != null) mascota.breed!,
-      textos.edad(mascota.ageInWeeks),
+    final description = [
+      texts.species(pet.species),
+      if (pet.breed != null) pet.breed!,
+      texts.age(pet.ageInWeeks),
     ].join(' · ');
 
     return Card(
@@ -123,16 +123,16 @@ class _TarjetaMascota extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(mascota.name, style: Theme.of(context).textTheme.titleLarge),
+                    Text(pet.name, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 2),
-                    Text(descripcion,
+                    Text(description,
                         style: Theme.of(context)
                             .textTheme
                             .bodyMedium
                             ?.copyWith(color: VetPassColors.neutral600)),
-                    if (mascota.cardStatus != null) ...[
+                    if (pet.cardStatus != null) ...[
                       const SizedBox(height: 10),
-                      StatusChip(estado: mascota.cardStatus!, textos: textos),
+                      StatusChip(status: pet.cardStatus!, texts: texts),
                     ],
                   ],
                 ),
@@ -146,11 +146,11 @@ class _TarjetaMascota extends StatelessWidget {
   }
 }
 
-class _Mensaje extends StatelessWidget {
-  const _Mensaje({required this.texto, required this.icono});
+class _Message extends StatelessWidget {
+  const _Message({required this.text, required this.icon});
 
-  final String texto;
-  final IconData icono;
+  final String text;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -158,9 +158,9 @@ class _Mensaje extends StatelessWidget {
       padding: const EdgeInsets.all(32),
       children: [
         const SizedBox(height: 80),
-        Icon(icono, size: 48, color: VetPassColors.neutral600),
+        Icon(icon, size: 48, color: VetPassColors.neutral600),
         const SizedBox(height: 16),
-        Text(texto,
+        Text(text,
             textAlign: TextAlign.center,
             style: Theme.of(context)
                 .textTheme

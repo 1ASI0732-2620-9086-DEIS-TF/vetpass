@@ -1,0 +1,47 @@
+# Alertas y notificaciones (secciones 7.4.3 y 7.4.4 del informe): un fallo en
+# producción abre un issue «incident» asignado al equipo, y GitHub avisa a cada
+# integrante por correo y en su aplicación. Si el incidente sigue abierto, se
+# comenta en el mismo issue; al recuperarse, se cierra.
+name: Incident
+description: Abre, actualiza o cierra el issue de incidente de producción.
+
+inputs:
+  status:
+    description: '`failing` para abrir o comentar el incidente, `ok` para cerrarlo.'
+    required: true
+  details:
+    description: Qué falló, en Markdown.
+    required: false
+    default: ''
+  source:
+    description: Workflow que detectó el problema.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        STATUS: ${{ inputs.status }}
+        DETAILS: ${{ inputs.details }}
+        SOURCE: ${{ inputs.source }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        ASSIGNEES: Nelsoondev,Guille-berrs,joacuba,jndesouza
+      run: |
+        gh label create incident --color B60205 \
+          --description 'Producción no responde como debe' 2>/dev/null || true
+        open=$(gh issue list --label incident --state open --json number --jq '.[0].number // empty')
+
+        if [ "$STATUS" = failing ]; then
+          body=$(printf '%s\n\n%s\n\nDetectado por **%s** · [ejecución](%s)' \
+            "$DETAILS" "Revisa los Runtime Logs del proyecto en Vercel y el estado de Supabase." "$SOURCE" "$RUN_URL")
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh issue create --title "Incidente: producción no responde" --label incident \
+              --assignee "$ASSIGNEES" --body "$body"
+          fi
+        elif [ -n "$open" ]; then
+          gh issue close "$open" --comment "Producción vuelve a responder. Comprobado por **$SOURCE** · [ejecución]($RUN_URL)"
+        fi

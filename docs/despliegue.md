@@ -42,6 +42,27 @@ Para volver atrás: en el proyecto de Vercel, **Deployments → Instant Rollback
 sobre el último despliegue correcto; después se revierte el commit con un
 `hotfix/` para que `main` coincida con lo publicado.
 
+## Monitoreo y alertas
+
+| Qué | Cómo | Dónde se ve |
+|---|---|---|
+| Disponibilidad | `monitor.yml` comprueba cada 30 minutos la API (`/health` y `/health/ready`, que consulta la base), la web y la landing, y anota el tiempo de respuesta | Resumen de cada ejecución en GitHub Actions |
+| Tras cada despliegue | `post-deploy.yml` comprueba el producto recién publicado | GitHub Actions |
+| Alertas | Si una comprobación falla, se abre un issue `incident` asignado al equipo; si sigue fallando, se comenta en el mismo; al recuperarse, se cierra | Issues del repositorio |
+| Notificaciones | GitHub avisa a los asignados por correo y en su aplicación | Bandeja de cada integrante |
+| Uso real | Vercel Web Analytics y Speed Insights, sin cookies | Pestañas Analytics y Speed Insights de `vetpass-web` y `vetpass-landing` |
+| Errores de la API | Runtime Logs de Vercel | Proyecto `vetpass-api` en Vercel |
+
+Para probar la alerta: **Actions → Monitor → Run workflow** con *simulate-failure*.
+El issue se abre, y la siguiente ejecución normal lo cierra.
+
+`schedule` solo corre en la rama por defecto (`main`), y GitHub lo desactiva tras
+60 días sin actividad en el repositorio. La consulta a la base cada 30 minutos
+también evita que el proyecto gratuito de Supabase se pause por inactividad.
+
+Analytics y Speed Insights se activan una vez en el panel de cada proyecto de
+Vercel (**Analytics → Enable** y **Speed Insights → Enable**).
+
 ## RESTful API
 
 La API corre como contenedor en Vercel Functions (`runtime: container`, en

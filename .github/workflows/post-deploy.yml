@@ -6,6 +6,7 @@ on: deployment_status
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   smoke:
@@ -15,6 +16,9 @@ jobs:
     env:
       ENVIRONMENT: ${{ github.event.deployment.environment }}
     steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: .github/actions
       - name: Check the deployed product
         run: |
           # --retry: la API puede estar en arranque en frío.
@@ -27,6 +31,9 @@ jobs:
               echo "$health"
               grep -q '"status":"ok"' <<< "$health"
               grep -q '"timeZone":"America/Lima"' <<< "$health"
+              ready=$(fetch https://vetpass-api.vercel.app/api/v1/health/ready)
+              echo "$ready"
+              grep -q '"database":"ok"' <<< "$ready"
               # Una ruta protegida debe seguir pidiendo un token.
               [ "$(status https://vetpass-api.vercel.app/api/v1/clients)" = 401 ]
               ;;
@@ -37,3 +44,13 @@ jobs:
               [ "$(status https://vetpass-landing.vercel.app)" = 200 ]
               ;;
           esac
+      # Si el producto recién publicado falla, se avisa al equipo (sección 7.4.3).
+      - name: Alert the team
+        if: ${{ failure() }}
+        uses: ./.github/actions/incident
+        with:
+          status: failing
+          source: Post-deploy
+          details: >-
+            El despliegue de producción de **${{ env.ENVIRONMENT }}** no pasó la
+            comprobación posterior. Considera el Instant Rollback de Vercel.

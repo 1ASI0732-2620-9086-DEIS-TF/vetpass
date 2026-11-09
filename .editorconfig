@@ -1,0 +1,40 @@
+# Convenciones de formato del repositorio (sección 5.1.3 del informe).
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.{cs,csproj,props,slnx}]
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+
+# Análisis estático del backend (AnalysisLevel latest-recommended).
+# Cada regla que se relaja lleva su motivo.
+[*.cs]
+# «Shared» solo choca con una palabra reservada de Visual Basic; la API es solo C#.
+dotnet_diagnostic.CA1716.severity = none
+# Registro con LoggerMessage: mejora el rendimiento en rutas calientes, y aquí se
+# registra solo al arrancar y ante errores. Se mantiene como sugerencia.
+dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
+
+# Las migraciones las genera EF Core: no se editan a mano.
+[**/Migrations/*.cs]
+generated_code = true
+
+# Pruebas: los nombres con guiones bajos (Method_Scenario_Result) son la
+# convención de xUnit, y los pasos de Reqnroll se enlazan como métodos de instancia.
+[backend/tests/**.cs]
+dotnet_diagnostic.CA1707.severity = none
+dotnet_diagnostic.CA1822.severity = none
+dotnet_diagnostic.CA1816.severity = none
+# Los datos de las pruebas son fijos y se escriben en formato invariante.
+dotnet_diagnostic.CA1305.severity = none
+dotnet_diagnostic.CA1862.severity = none

@@ -71,8 +71,8 @@ async function signIn() {
         <div class="vp-field">
           <label for="password">{{ t('access.password') }}</label>
           <Password
-            input-id="password"
             v-model="password"
+            input-id="password"
             toggle-mask
             :feedback="false"
             autocomplete="current-password"

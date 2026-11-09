@@ -8,6 +8,10 @@
     <AssemblyName>VetPass.API</AssemblyName>
     <UserSecretsId>vetpass-api</UserSecretsId>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Análisis estático (sección 6.2.1): reglas recomendadas de calidad y
+         estilo de .NET. El CI compila con -warnaserror. -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <!-- Los comentarios de documentación describen decisiones de diseño y no
          cubren cada miembro público; no se exige lo segundo. -->
     <NoWarn>$(NoWarn);CS1591</NoWarn>

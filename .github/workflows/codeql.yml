@@ -1,0 +1,37 @@
+# Seguridad del código (sección 6.2.1.2): CodeQL busca inyecciones, XSS, manejo
+# inseguro de datos y errores en los workflows. Los hallazgos aparecen en la
+# pestaña Security del repositorio.
+name: CodeQL
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Dart no está soportado por CodeQL: la app móvil se revisa con flutter analyze.
+        language: [csharp, javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}

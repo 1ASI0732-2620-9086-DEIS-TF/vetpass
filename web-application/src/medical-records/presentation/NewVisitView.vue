@@ -130,8 +130,8 @@ async function save() {
             <div class="vp-field">
               <label for="a-date">{{ t('visit.date') }}</label>
               <DatePicker
-                input-id="a-date"
                 v-model="visit.visitDate"
+                input-id="a-date"
                 date-format="dd/mm/yy"
                 :max-date="new Date()"
                 show-icon
@@ -140,8 +140,8 @@ async function save() {
             <div class="vp-field">
               <label for="a-weight">{{ t('visit.weight') }}</label>
               <InputNumber
-                input-id="a-weight"
                 v-model="visit.weightKg"
+                input-id="a-weight"
                 :min-fraction-digits="1"
                 :max-fraction-digits="2"
                 :min="0"

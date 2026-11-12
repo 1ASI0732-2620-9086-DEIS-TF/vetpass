@@ -21,7 +21,7 @@ public class PersistenceTests(ApiFixture fixture) : ApiTest(fixture)
     {
         var staff = await StaffAsync();
 
-        var pets = await staff.GetFromJsonAsync<JsonElement>($"/api/v1/pets?search={search}");
+        var pets = await staff.GetFromJsonAsync<JsonElement>($"/api/v1/pets?search={search}", cancellationToken: Ct);
 
         pets.EnumerateArray().Select(p => p.GetProperty("name").GetString()).ShouldContain(expected);
     }
@@ -31,7 +31,7 @@ public class PersistenceTests(ApiFixture fixture) : ApiTest(fixture)
     {
         var staff = await StaffAsync();
 
-        var response = await staff.PostAsJsonAsync("/api/v1/clients", NewClient("45879123"));
+        var response = await staff.PostAsJsonAsync("/api/v1/clients", NewClient("45879123"), cancellationToken: Ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.Conflict);
         (await JsonAsync(response)).GetProperty("existingClientName").GetString().ShouldBe("Valeria Campos");
@@ -43,8 +43,8 @@ public class PersistenceTests(ApiFixture fixture) : ApiTest(fixture)
         var staff = await StaffAsync();
 
         var responses = await Task.WhenAll(
-            staff.PostAsJsonAsync("/api/v1/clients", NewClient("70000001", "912345671")),
-            staff.PostAsJsonAsync("/api/v1/clients", NewClient("70000001", "912345672")));
+            staff.PostAsJsonAsync("/api/v1/clients", NewClient("70000001", "912345671"), cancellationToken: Ct),
+            staff.PostAsJsonAsync("/api/v1/clients", NewClient("70000001", "912345672"), cancellationToken: Ct));
 
         responses.Count(r => r.StatusCode == HttpStatusCode.Created).ShouldBe(1);
         responses.Count(r => r.StatusCode == HttpStatusCode.Conflict).ShouldBe(1);

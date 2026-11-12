@@ -25,7 +25,7 @@ abstract final class VetPassColors {
 }
 
 ThemeData buildVetPassTheme() {
-  final esquema = ColorScheme.fromSeed(
+  final schedule = ColorScheme.fromSeed(
     seedColor: VetPassColors.primary,
     primary: VetPassColors.primary,
     onPrimary: Colors.white,
@@ -33,11 +33,11 @@ ThemeData buildVetPassTheme() {
     onSurface: VetPassColors.neutral900,
   );
 
-  final base = ThemeData(colorScheme: esquema, useMaterial3: true);
+  final base = ThemeData(colorScheme: schedule, useMaterial3: true);
 
   // Poppins para titulares y elementos de marca, Inter para cuerpo e interfaz,
   // con la escala tipográfica de la sección 4.1.1.
-  final texto = base.textTheme.copyWith(
+  final text = base.textTheme.copyWith(
     headlineMedium: _poppins(28, 36, FontWeight.w600),
     headlineSmall: _poppins(24, 32, FontWeight.w600),
     titleLarge: _poppins(20, 28, FontWeight.w600),
@@ -51,14 +51,14 @@ ThemeData buildVetPassTheme() {
 
   return base.copyWith(
     scaffoldBackgroundColor: VetPassColors.surface,
-    textTheme: texto,
+    textTheme: text,
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       foregroundColor: VetPassColors.neutral900,
       elevation: 0,
       scrolledUnderElevation: 1,
-      titleTextStyle: texto.titleLarge,
+      titleTextStyle: text.titleLarge,
     ),
     // Tarjetas con elevación de nivel 1 (sección 4.1.3.2).
     cardTheme: CardThemeData(
@@ -105,19 +105,19 @@ ThemeData buildVetPassTheme() {
   );
 }
 
-TextStyle _poppins(double tamano, double alto, FontWeight peso) => TextStyle(
+TextStyle _poppins(double size, double height, FontWeight weight) => TextStyle(
       fontFamily: 'Poppins',
-      fontSize: tamano,
-      height: alto / tamano,
-      fontWeight: peso,
+      fontSize: size,
+      height: height / size,
+      fontWeight: weight,
     );
 
 /// Inter se empaqueta como fuente variable: el peso se pide por el eje `wght`,
 /// además de por `fontWeight`, que es lo que la fuente interpola.
-TextStyle _inter(double tamano, double alto, FontWeight peso) => TextStyle(
+TextStyle _inter(double size, double height, FontWeight weight) => TextStyle(
       fontFamily: 'Inter',
-      fontSize: tamano,
-      height: alto / tamano,
-      fontWeight: peso,
-      fontVariations: [FontVariation('wght', peso.value.toDouble())],
+      fontSize: size,
+      height: height / size,
+      fontWeight: weight,
+      fontVariations: [FontVariation('wght', weight.value.toDouble())],
     );

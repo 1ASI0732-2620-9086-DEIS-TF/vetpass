@@ -17,37 +17,37 @@ class PetPage extends StatefulWidget {
   const PetPage({
     super.key,
     required this.session,
-    required this.idioma,
-    required this.mascota,
+    required this.language,
+    required this.pet,
   });
 
   final Session session;
-  final IdiomaController idioma;
-  final Pet mascota;
+  final LanguageController language;
+  final Pet pet;
 
   @override
   State<PetPage> createState() => _PetPageState();
 }
 
 class _PetPageState extends State<PetPage> {
-  late Future<(VaccinationCard, List<Visit>)> _datos;
+  late Future<(VaccinationCard, List<Visit>)> _details;
 
   @override
   void initState() {
     super.initState();
-    _datos = _cargar();
+    _details = _load();
   }
 
-  Future<(VaccinationCard, List<Visit>)> _cargar() async {
-    final cartilla = VaccinationApi(widget.session.api).cartillaDe(widget.mascota.id);
-    final historial = MedicalRecordsApi(widget.session.api).historialDe(widget.mascota.id);
-    return (await cartilla, await historial);
+  Future<(VaccinationCard, List<Visit>)> _load() async {
+    final card = VaccinationApi(widget.session.api).cardOf(widget.pet.id);
+    final history = MedicalRecordsApi(widget.session.api).historyOf(widget.pet.id);
+    return (await card, await history);
   }
 
   @override
   Widget build(BuildContext context) {
-    final textos = widget.idioma.textos;
-    final clinica = widget.session.usuario?.clinicName;
+    final texts = widget.language.texts;
+    final clinic = widget.session.user?.clinicName;
 
     return DefaultTabController(
       length: 2,
@@ -56,9 +56,9 @@ class _PetPageState extends State<PetPage> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(widget.mascota.name),
+              Text(widget.pet.name),
               Text(
-                '${textos.especie(widget.mascota.species)} · ${textos.edad(widget.mascota.ageInWeeks)}',
+                '${texts.species(widget.pet.species)} · ${texts.age(widget.pet.ageInWeeks)}',
                 style: Theme.of(context)
                     .textTheme
                     .labelSmall
@@ -70,11 +70,11 @@ class _PetPageState extends State<PetPage> {
             labelColor: VetPassColors.primary,
             unselectedLabelColor: VetPassColors.neutral600,
             indicatorColor: VetPassColors.primary,
-            tabs: [Tab(text: textos.cartilla), Tab(text: textos.historial)],
+            tabs: [Tab(text: texts.card), Tab(text: texts.history)],
           ),
         ),
         body: FutureBuilder<(VaccinationCard, List<Visit>)>(
-          future: _datos,
+          future: _details,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -83,20 +83,20 @@ class _PetPageState extends State<PetPage> {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Text(textos.sinConexion, textAlign: TextAlign.center),
+                  child: Text(texts.offline, textAlign: TextAlign.center),
                 ),
               );
             }
 
-            final (cartilla, historial) = snapshot.data!;
+            final (card, history) = snapshot.data!;
             return TabBarView(
               children: [
-                VaccinationCardTab(cartilla: cartilla, textos: textos, clinica: clinica),
+                VaccinationCardTab(card: card, texts: texts, clinic: clinic),
                 RecordTab(
-                  atenciones: historial,
-                  textos: textos,
-                  clinica: clinica,
-                  nombreMascota: widget.mascota.name,
+                  visits: history,
+                  texts: texts,
+                  clinic: clinic,
+                  petName: widget.pet.name,
                 ),
               ],
             );

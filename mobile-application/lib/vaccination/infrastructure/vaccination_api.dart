@@ -6,8 +6,8 @@ class VaccinationApi {
 
   final ApiClient _api;
 
-  Future<VaccinationCard> cartillaDe(String petId) async {
-    final datos = await _api.get('/pets/$petId/vaccination-card') as Map<String, dynamic>;
-    return VaccinationCard.desdeJson(datos);
+  Future<VaccinationCard> cardOf(String petId) async {
+    final details = await _api.get('/pets/$petId/vaccination-card') as Map<String, dynamic>;
+    return VaccinationCard.fromJson(details);
   }
 }

@@ -9,8 +9,8 @@ class PatientsApi {
   /// Las mascotas del cliente en sesión. La API resuelve de quién son a partir
   /// del token, de modo que esta pantalla no puede alcanzar las de otro
   /// cliente (US05-E2).
-  Future<List<Pet>> misMascotas() async {
-    final datos = await _api.get('/me/pets') as List;
-    return datos.map((p) => Pet.desdeJson(p as Map<String, dynamic>)).toList();
+  Future<List<Pet>> myPets() async {
+    final details = await _api.get('/me/pets') as List;
+    return details.map((p) => Pet.fromJson(p as Map<String, dynamic>)).toList();
   }
 }

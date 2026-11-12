@@ -9,7 +9,7 @@ namespace VetPass.API.Shared.Infrastructure.Persistence.EFC.Repositories;
 /// </summary>
 public abstract class BaseRepository<TEntity>(VetPassDbContext context) where TEntity : class
 {
-    protected readonly VetPassDbContext Context = context;
+    protected VetPassDbContext Context { get; } = context;
 
     public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default) =>
         await Context.Set<TEntity>().AddAsync(entity, cancellationToken);

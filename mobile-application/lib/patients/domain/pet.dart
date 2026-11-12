@@ -22,7 +22,7 @@ class Pet {
   /// (US12-E2).
   final String? cardStatus;
 
-  factory Pet.desdeJson(Map<String, dynamic> json) => Pet(
+  factory Pet.fromJson(Map<String, dynamic> json) => Pet(
         id: json['id'] as String,
         name: json['name'] as String,
         species: json['species'] as String,

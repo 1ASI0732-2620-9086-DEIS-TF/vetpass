@@ -26,14 +26,14 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.use(ConfirmationService);
 
-const sesion = useAuthStore(pinia);
-sesion.restaurar();
+const session = useAuthStore(pinia);
+session.restore();
 
 configureHttp({
-  getToken: () => sesion.token,
+  getToken: () => session.token,
   onUnauthorized: () => {
-    sesion.cerrarSesion();
-    if (router.currentRoute.value.name !== 'acceso') router.push({ name: 'acceso' });
+    session.signOut();
+    if (router.currentRoute.value.name !== 'access') router.push({ name: 'access' });
   }
 });
 

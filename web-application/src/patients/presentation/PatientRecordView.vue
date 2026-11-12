@@ -20,7 +20,7 @@ import VaccinationCardPanel from '../../vaccination/presentation/VaccinationCard
 import RegisterDoseDialog from '../../vaccination/presentation/RegisterDoseDialog.vue';
 import MedicalRecordPanel from '../../medical-records/presentation/MedicalRecordPanel.vue';
 import { patientsApi } from '../infrastructure/patients.api';
-import { formatearEdad } from '../../shared/i18n';
+import { formatAge } from '../../shared/i18n';
 import { vaccinationApi } from '../../vaccination/infrastructure/vaccination.api';
 import { medicalRecordsApi } from '../../medical-records/infrastructure/medical-records.api';
 
@@ -30,71 +30,71 @@ const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
 
-const paciente = ref(null);
-const cartilla = ref(null);
-const atenciones = ref([]);
-const cargando = ref(true);
+const patient = ref(null);
+const card = ref(null);
+const visits = ref([]);
+const loading = ref(true);
 
-const dialogoAbierto = ref(false);
-const dosisElegida = ref(null);
+const dialogOpen = ref(false);
+const selectedDose = ref(null);
 
-const migas = computed(() => [
-  { label: t('pacientes.titulo'), route: { name: 'pacientes' } },
-  { label: paciente.value?.name ?? '' }
+const breadcrumb = computed(() => [
+  { label: t('patients.title'), route: { name: 'patients' } },
+  { label: patient.value?.name ?? '' }
 ]);
-const inicio = { icon: 'pi pi-home', route: { name: 'pacientes' } };
+const home = { icon: 'pi pi-home', route: { name: 'patients' } };
 
-const descripcion = computed(() => {
-  const p = paciente.value;
+const description = computed(() => {
+  const p = patient.value;
   if (!p) return '';
 
   // La edad de calendario, como en el listado. Mientras es cachorro se añaden
   // las semanas, que es como el esquema mide su edad.
-  const edad = p.ageInWeeks < 16
-    ? `${formatearEdad(p.birthDate, t)} (${t('ficha.semanas', { n: p.ageInWeeks })})`
-    : formatearEdad(p.birthDate, t);
+  const age = p.ageInWeeks < 16
+    ? `${formatAge(p.birthDate, t)} (${t('profile.weeks', { n: p.ageInWeeks })})`
+    : formatAge(p.birthDate, t);
 
-  return [t(`especie.${p.species}`), p.breed, t(`sexo.${p.sex}`), edad,
-    `${t('ficha.dueno')}: ${p.owner.fullName}`].filter(Boolean).join(' · ');
+  return [t(`species.${p.species}`), p.breed, t(`sex.${p.sex}`), age,
+    `${t('profile.owner')}: ${p.owner.fullName}`].filter(Boolean).join(' · ');
 });
 
-async function cargar() {
-  cargando.value = true;
+async function load() {
+  loading.value = true;
   try {
-    const [respuestaPaciente, respuestaCartilla, respuestaAtenciones] = await Promise.all([
-      patientsApi.obtener(props.petId),
-      vaccinationApi.obtenerCartilla(props.petId),
-      medicalRecordsApi.listarAtenciones(props.petId)
+    const [patientResponse, cardResponse, visitsResponse] = await Promise.all([
+      patientsApi.get(props.petId),
+      vaccinationApi.getCard(props.petId),
+      medicalRecordsApi.listVisits(props.petId)
     ]);
-    paciente.value = respuestaPaciente.data;
-    cartilla.value = respuestaCartilla.data;
-    atenciones.value = respuestaAtenciones.data;
+    patient.value = patientResponse.data;
+    card.value = cardResponse.data;
+    visits.value = visitsResponse.data;
   } finally {
-    cargando.value = false;
+    loading.value = false;
   }
 }
 
-watch(() => props.petId, cargar, { immediate: true });
+watch(() => props.petId, load, { immediate: true });
 
-function abrirDialogo(dosis) {
-  dosisElegida.value = dosis;
-  dialogoAbierto.value = true;
+function openDialog(dose) {
+  selectedDose.value = dose;
+  dialogOpen.value = true;
 }
 
-async function trasRegistrar() {
+async function afterRegister() {
   toast.add({
     severity: 'success',
-    summary: t('dosis.registrada', { nombre: paciente.value.name }),
+    summary: t('dose.registered', { name: patient.value.name }),
     life: 4000
   });
-  const { data } = await vaccinationApi.obtenerCartilla(props.petId);
-  cartilla.value = data;
+  const { data } = await vaccinationApi.getCard(props.petId);
+  card.value = data;
 }
 </script>
 
 <template>
   <div class="vp-page">
-    <Breadcrumb :home="inicio" :model="migas" class="migas">
+    <Breadcrumb :home="home" :model="breadcrumb" class="breadcrumb">
       <template #item="{ item }">
         <RouterLink v-if="item.route" :to="item.route">
           <i v-if="item.icon" :class="item.icon" aria-hidden="true" />
@@ -104,69 +104,69 @@ async function trasRegistrar() {
       </template>
     </Breadcrumb>
 
-    <div v-if="cargando" class="cargando">
-      <ProgressSpinner style="width: 40px; height: 40px" :aria-label="t('comun.cargando')" />
+    <div v-if="loading" class="loading">
+      <ProgressSpinner style="width: 40px; height: 40px" :aria-label="t('common.loading')" />
     </div>
 
-    <template v-else-if="paciente">
-      <header class="ficha">
-        <div class="ficha__identidad">
-          <span class="ficha__avatar" aria-hidden="true">
-            <i :class="paciente.species === 'Canine' ? 'pi pi-heart-fill' : 'pi pi-heart'" />
+    <template v-else-if="patient">
+      <header class="profile">
+        <div class="profile__identity">
+          <span class="profile__avatar" aria-hidden="true">
+            <i :class="patient.species === 'Canine' ? 'pi pi-heart-fill' : 'pi pi-heart'" />
           </span>
           <div>
-            <h1>{{ paciente.name }}</h1>
-            <p class="vp-small vp-muted">{{ descripcion }}</p>
+            <h1>{{ patient.name }}</h1>
+            <p class="vp-small vp-muted">{{ description }}</p>
           </div>
         </div>
-        <StatusTag v-if="cartilla" :estado="cartilla.status" cartilla />
+        <StatusTag v-if="card" :status="card.status" card />
       </header>
 
-      <Tabs value="cartilla">
+      <Tabs value="card">
         <TabList>
-          <Tab value="cartilla">{{ t('ficha.cartilla') }}</Tab>
-          <Tab value="historial">{{ t('ficha.historial') }}</Tab>
+          <Tab value="card">{{ t('profile.card') }}</Tab>
+          <Tab value="history">{{ t('profile.history') }}</Tab>
         </TabList>
         <TabPanels>
-          <TabPanel value="cartilla">
+          <TabPanel value="card">
             <VaccinationCardPanel
-              :cartilla="cartilla"
-              :paciente="paciente"
-              @registrar-dosis="abrirDialogo"
+              :card="card"
+              :patient="patient"
+              @register-dose="openDialog"
             />
           </TabPanel>
-          <TabPanel value="historial">
+          <TabPanel value="history">
             <MedicalRecordPanel
-              :atenciones="atenciones"
-              :dueno="paciente.owner.fullName"
-              @nueva-atencion="router.push({ name: 'nueva-atencion', params: { petId } })"
+              :visits="visits"
+              :owner="patient.owner.fullName"
+              @new-visit="router.push({ name: 'new-visit', params: { petId } })"
             />
           </TabPanel>
         </TabPanels>
       </Tabs>
 
       <RegisterDoseDialog
-        v-model:visible="dialogoAbierto"
+        v-model:visible="dialogOpen"
         :pet-id="petId"
-        :paciente="paciente"
-        :dosis="dosisElegida"
-        @registrada="trasRegistrar"
+        :patient="patient"
+        :dose="selectedDose"
+        @registered="afterRegister"
       />
     </template>
   </div>
 </template>
 
 <style scoped>
-.migas { margin-bottom: var(--vp-space-3); padding: 0; background: none; border: 0; }
-.migas :deep(a) { color: var(--vp-neutral-600); text-decoration: none; }
-.cargando { display: grid; place-items: center; padding: var(--vp-space-6); }
+.breadcrumb { margin-bottom: var(--vp-space-3); padding: 0; background: none; border: 0; }
+.breadcrumb :deep(a) { color: var(--vp-neutral-600); text-decoration: none; }
+.loading { display: grid; place-items: center; padding: var(--vp-space-6); }
 
-.ficha {
+.profile {
   display: flex; align-items: center; justify-content: space-between;
   gap: var(--vp-space-3); flex-wrap: wrap; margin-bottom: var(--vp-space-4);
 }
-.ficha__identidad { display: flex; align-items: center; gap: var(--vp-space-3); }
-.ficha__avatar {
+.profile__identity { display: flex; align-items: center; gap: var(--vp-space-3); }
+.profile__avatar {
   display: grid; place-items: center; width: 48px; height: 48px;
   border-radius: 999px; background: var(--vp-primary-50); color: var(--vp-primary-700);
 }

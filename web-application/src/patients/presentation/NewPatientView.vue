@@ -25,55 +25,55 @@ import InputGroupAddon from 'primevue/inputgroupaddon';
 import Breadcrumb from 'primevue/breadcrumb';
 import { patientsApi } from '../infrastructure/patients.api';
 import { problemOf } from '../../shared/infrastructure/http';
-import { formatearDocumento } from '../../shared/i18n';
+import { formatDocument } from '../../shared/i18n';
 
 const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
 
-const modoCliente = ref('existente');
-const clientes = ref([]);
-const clienteId = ref(null);
-const cliente = ref({ fullName: '', documentType: 'Dni', documentNumber: '', phoneNumber: '', email: '' });
-const mascota = ref({ name: '', species: 'Canine', breed: '', sex: 'Female', birthDate: null });
+const clientMode = ref('existing');
+const clients = ref([]);
+const clientId = ref(null);
+const client = ref({ fullName: '', documentType: 'Dni', documentNumber: '', phoneNumber: '', email: '' });
+const pet = ref({ name: '', species: 'Canine', breed: '', sex: 'Female', birthDate: null });
 
-const guardando = ref(false);
+const saving = ref(false);
 const error = ref('');
-const avisoCliente = ref('');
+const clientNotice = ref('');
 
 // Avisos que la API devuelve sobre un campo concreto: se muestran junto a ese
 // campo y no al pie del formulario, conforme a la sección 4.1.2. El texto se
 // compone a partir del código y de los valores que la API entrega; la regla
 // sigue viviendo solo en la API.
-const erroresCampo = ref({ telefono: '', nacimiento: '', documento: '' });
-const duplicado = ref(null);
-watch(() => cliente.value.phoneNumber, () => { erroresCampo.value.telefono = ''; });
-watch(() => [cliente.value.documentType, cliente.value.documentNumber], () => {
-  erroresCampo.value.documento = '';
-  duplicado.value = null;
+const fieldErrors = ref({ phone: '', birth: '', document: '' });
+const duplicate = ref(null);
+watch(() => client.value.phoneNumber, () => { fieldErrors.value.phone = ''; });
+watch(() => [client.value.documentType, client.value.documentNumber], () => {
+  fieldErrors.value.document = '';
+  duplicate.value = null;
 });
-watch(() => [mascota.value.birthDate, mascota.value.species], () => { erroresCampo.value.nacimiento = ''; });
+watch(() => [pet.value.birthDate, pet.value.species], () => { fieldErrors.value.birth = ''; });
 
-function avisoDeCampo(problema) {
-  switch (problema.code) {
+function fieldNotice(problem) {
+  switch (problem.code) {
     case 'invalid-identity-document':
-      erroresCampo.value.documento = t(`registro.documentoInvalido.${cliente.value.documentType}`);
+      fieldErrors.value.document = t(`registration.invalidDocument.${client.value.documentType}`);
       return true;
     case 'duplicate-client':
-      duplicado.value = { id: problema.existingClientId, nombre: problema.existingClientName };
-      erroresCampo.value.documento = t('registro.clienteDuplicado', { nombre: problema.existingClientName });
+      duplicate.value = { id: problem.existingClientId, name: problem.existingClientName };
+      fieldErrors.value.document = t('registration.duplicateClient', { name: problem.existingClientName });
       return true;
     case 'invalid-phone-number':
-      erroresCampo.value.telefono = t('registro.telefonoInvalido');
+      fieldErrors.value.phone = t('registration.invalidPhone');
       return true;
     case 'future-birth-date':
-      erroresCampo.value.nacimiento = t('registro.nacimientoFuturo');
+      fieldErrors.value.birth = t('registration.futureBirth');
       return true;
     case 'implausible-birth-date':
-      erroresCampo.value.nacimiento = t('registro.nacimientoImplausible', {
-        edad: problema.ageInYears,
-        maximo: problema.maximumAgeInYears,
-        especie: t(problema.species === 'Canine' ? 'especie.canina' : 'especie.felina')
+      fieldErrors.value.birth = t('registration.implausibleBirth', {
+        age: problem.ageInYears,
+        max: problem.maximumAgeInYears,
+        species: t(problem.species === 'Canine' ? 'species.canineFeminine' : 'species.felineFeminine')
       });
       return true;
     default:
@@ -81,125 +81,125 @@ function avisoDeCampo(problema) {
   }
 }
 
-const migas = computed(() => [{ label: t('pacientes.titulo'), route: { name: 'pacientes' } }]);
-const inicio = { icon: 'pi pi-home', route: { name: 'pacientes' } };
+const breadcrumb = computed(() => [{ label: t('patients.title'), route: { name: 'patients' } }]);
+const home = { icon: 'pi pi-home', route: { name: 'patients' } };
 
-const opcionesModo = computed(() => [
-  { etiqueta: t('registro.clienteExistente'), valor: 'existente' },
-  { etiqueta: t('registro.clienteNuevo'), valor: 'nuevo' }
+const modeOptions = computed(() => [
+  { label: t('registration.existingClient'), value: 'existing' },
+  { label: t('registration.newClient'), value: 'new' }
 ]);
-const opcionesDocumento = computed(() => [
-  { etiqueta: t('documento.corto.Dni'), valor: 'Dni' },
-  { etiqueta: t('documento.corto.ForeignerCard'), valor: 'ForeignerCard' }
+const documentOptions = computed(() => [
+  { label: t('document.short.Dni'), value: 'Dni' },
+  { label: t('document.short.ForeignerCard'), value: 'ForeignerCard' }
 ]);
 
 // El documento acompaña al nombre para distinguir a dos clientes homónimos, y
 // el filtro lo encuentra igual que al nombre.
-const opcionesCliente = computed(() => clientes.value.map((c) => ({
+const clientOptions = computed(() => clients.value.map((c) => ({
   id: c.id,
-  etiqueta: `${c.fullName} · ${formatearDocumento(c, t)}`
+  label: `${c.fullName} · ${formatDocument(c, t)}`
 })));
 
-const opcionesEspecie = computed(() => [
-  { etiqueta: t('especie.Canine'), valor: 'Canine' },
-  { etiqueta: t('especie.Feline'), valor: 'Feline' }
+const speciesOptions = computed(() => [
+  { label: t('species.Canine'), value: 'Canine' },
+  { label: t('species.Feline'), value: 'Feline' }
 ]);
-const opcionesSexo = computed(() => [
-  { etiqueta: t('sexo.Female'), valor: 'Female' },
-  { etiqueta: t('sexo.Male'), valor: 'Male' }
+const sexOptions = computed(() => [
+  { label: t('sex.Female'), value: 'Female' },
+  { label: t('sex.Male'), value: 'Male' }
 ]);
 
-const avisoEsquema = computed(() => {
-  if (!mascota.value.name) return t('registro.avisoSinNombre');
-  return t('registro.aviso', {
-    nombre: mascota.value.name,
-    especie: t(mascota.value.species === 'Canine' ? 'especie.canino' : 'especie.felino')
+const scheduleNotice = computed(() => {
+  if (!pet.value.name) return t('registration.noticeWithoutName');
+  return t('registration.notice', {
+    name: pet.value.name,
+    species: t(pet.value.species === 'Canine' ? 'species.canineMasculine' : 'species.felineMasculine')
   });
 });
 
 onMounted(async () => {
-  const { data } = await patientsApi.listarClientes();
-  clientes.value = data;
-  if (data.length) clienteId.value = data[0].id;
-  else modoCliente.value = 'nuevo';
+  const { data } = await patientsApi.listClients();
+  clients.value = data;
+  if (data.length) clientId.value = data[0].id;
+  else clientMode.value = 'new';
 });
 
 /** El documento ya era de un cliente: se continúa con él. */
-async function usarClienteExistente() {
-  const { id } = duplicado.value;
-  if (!clientes.value.some((c) => c.id === id)) {
-    const { data } = await patientsApi.listarClientes();
-    clientes.value = data;
+async function useExistingClient() {
+  const { id } = duplicate.value;
+  if (!clients.value.some((c) => c.id === id)) {
+    const { data } = await patientsApi.listClients();
+    clients.value = data;
   }
-  clienteId.value = id;
-  modoCliente.value = 'existente';
-  cliente.value = { fullName: '', documentType: 'Dni', documentNumber: '', phoneNumber: '', email: '' };
-  duplicado.value = null;
-  erroresCampo.value.documento = '';
+  clientId.value = id;
+  clientMode.value = 'existing';
+  client.value = { fullName: '', documentType: 'Dni', documentNumber: '', phoneNumber: '', email: '' };
+  duplicate.value = null;
+  fieldErrors.value.document = '';
 }
 
-function comoISO(fecha) {
-  if (!fecha) return null;
-  return new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+function asISO(date) {
+  if (!date) return null;
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
-async function guardar() {
+async function save() {
   error.value = '';
-  erroresCampo.value = { telefono: '', nacimiento: '', documento: '' };
-  duplicado.value = null;
-  avisoCliente.value = '';
-  guardando.value = true;
-  let clienteRecienCreado = false;
+  fieldErrors.value = { phone: '', birth: '', document: '' };
+  duplicate.value = null;
+  clientNotice.value = '';
+  saving.value = true;
+  let justCreatedClient = false;
   try {
-    let duenoId = clienteId.value;
+    let ownerId = clientId.value;
 
-    if (modoCliente.value === 'nuevo') {
-      const { data } = await patientsApi.registrarCliente({
-        fullName: cliente.value.fullName,
-        documentType: cliente.value.documentType,
-        documentNumber: cliente.value.documentNumber,
-        phoneNumber: cliente.value.phoneNumber,
-        email: cliente.value.email || null
+    if (clientMode.value === 'new') {
+      const { data } = await patientsApi.registerClient({
+        fullName: client.value.fullName,
+        documentType: client.value.documentType,
+        documentNumber: client.value.documentNumber,
+        phoneNumber: client.value.phoneNumber,
+        email: client.value.email || null
       });
-      duenoId = data.id;
+      ownerId = data.id;
 
       // El cliente ya existe. Si la mascota es rechazada, un segundo intento
       // debe asociarla a este cliente y no crear otro igual: el formulario
       // pasa a «cliente ya registrado» con él seleccionado.
-      clientes.value = [...clientes.value, data];
-      clienteId.value = data.id;
-      modoCliente.value = 'existente';
-      clienteRecienCreado = true;
+      clients.value = [...clients.value, data];
+      clientId.value = data.id;
+      clientMode.value = 'existing';
+      justCreatedClient = true;
     }
 
-    const { data: creada } = await patientsApi.registrarMascota({
-      clientId: duenoId,
-      name: mascota.value.name,
-      species: mascota.value.species,
-      breed: mascota.value.breed || null,
-      sex: mascota.value.sex,
-      birthDate: comoISO(mascota.value.birthDate)
+    const { data: created } = await patientsApi.registerPet({
+      clientId: ownerId,
+      name: pet.value.name,
+      species: pet.value.species,
+      breed: pet.value.breed || null,
+      sex: pet.value.sex,
+      birthDate: asISO(pet.value.birthDate)
     });
 
     toast.add({
       severity: 'success',
-      summary: t('registro.guardado', { nombre: creada.name }),
+      summary: t('registration.saved', { name: created.name }),
       life: 4000
     });
-    router.push({ name: 'paciente', params: { petId: creada.id } });
-  } catch (fallo) {
-    const problema = problemOf(fallo);
-    if (!avisoDeCampo(problema)) error.value = problema.detail ?? t('comun.errorInesperado');
-    if (clienteRecienCreado) avisoCliente.value = t('registro.clienteYaCreado');
+    router.push({ name: 'patient', params: { petId: created.id } });
+  } catch (failure) {
+    const problem = problemOf(failure);
+    if (!fieldNotice(problem)) error.value = problem.detail ?? t('common.unexpectedError');
+    if (justCreatedClient) clientNotice.value = t('registration.clientAlreadyCreated');
   } finally {
-    guardando.value = false;
+    saving.value = false;
   }
 }
 </script>
 
 <template>
-  <div class="vp-page vp-page--estrecha">
-    <Breadcrumb :home="inicio" :model="migas" class="migas">
+  <div class="vp-page vp-page--narrow">
+    <Breadcrumb :home="home" :model="breadcrumb" class="breadcrumb">
       <template #item="{ item }">
         <RouterLink v-if="item.route" :to="item.route">
           <i v-if="item.icon" :class="item.icon" aria-hidden="true" />
@@ -209,30 +209,30 @@ async function guardar() {
     </Breadcrumb>
 
     <header class="vp-head">
-      <h1>{{ t('registro.titulo') }}</h1>
+      <h1>{{ t('registration.title') }}</h1>
     </header>
 
-    <form @submit.prevent="guardar">
+    <form @submit.prevent="save">
       <section class="vp-card">
         <div class="vp-card__body">
-          <h3>{{ t('registro.datosCliente') }}</h3>
+          <h3>{{ t('registration.clientDetails') }}</h3>
 
           <SelectButton
-            v-model="modoCliente"
-            :options="opcionesModo"
-            option-label="etiqueta"
-            option-value="valor"
+            v-model="clientMode"
+            :options="modeOptions"
+            option-label="label"
+            option-value="value"
             :allow-empty="false"
-            class="modo"
+            class="mode"
           />
 
-          <div v-if="modoCliente === 'existente'" class="vp-field">
-            <label for="cliente">{{ t('registro.seleccionaCliente') }}</label>
+          <div v-if="clientMode === 'existing'" class="vp-field">
+            <label for="client">{{ t('registration.selectClient') }}</label>
             <Select
-              input-id="cliente"
-              v-model="clienteId"
-              :options="opcionesCliente"
-              option-label="etiqueta"
+              v-model="clientId"
+              input-id="client"
+              :options="clientOptions"
+              option-label="label"
               option-value="id"
               filter
               required
@@ -241,70 +241,70 @@ async function guardar() {
 
           <div v-else class="vp-form-grid vp-form-grid--2">
             <div class="vp-field">
-              <label for="c-nombre">{{ t('registro.nombreCompleto') }}</label>
-              <InputText id="c-nombre" v-model="cliente.fullName" required />
+              <label for="c-name">{{ t('registration.fullName') }}</label>
+              <InputText id="c-name" v-model="client.fullName" required />
             </div>
             <div class="vp-field">
-              <label for="c-documento">{{ t('registro.tipoDocumento') }}</label>
+              <label for="c-document">{{ t('registration.documentType') }}</label>
               <InputGroup>
                 <Select
-                  v-model="cliente.documentType"
-                  :options="opcionesDocumento"
-                  option-label="etiqueta"
-                  option-value="valor"
-                  :aria-label="t('registro.tipoDocumento')"
-                  class="tipo-documento"
+                  v-model="client.documentType"
+                  :options="documentOptions"
+                  option-label="label"
+                  option-value="value"
+                  :aria-label="t('registration.documentType')"
+                  class="type-document"
                 />
                 <InputText
-                  id="c-documento"
-                  v-model="cliente.documentNumber"
-                  :inputmode="cliente.documentType === 'Dni' ? 'numeric' : 'text'"
-                  :maxlength="cliente.documentType === 'Dni' ? 8 : 14"
-                  :aria-label="t('registro.numeroDocumento')"
-                  :invalid="Boolean(erroresCampo.documento)"
-                  aria-describedby="c-documento-ayuda"
+                  id="c-document"
+                  v-model="client.documentNumber"
+                  :inputmode="client.documentType === 'Dni' ? 'numeric' : 'text'"
+                  :maxlength="client.documentType === 'Dni' ? 8 : 14"
+                  :aria-label="t('registration.documentNumber')"
+                  :invalid="Boolean(fieldErrors.document)"
+                  aria-describedby="c-document-help"
                   required
                 />
               </InputGroup>
-              <div v-if="erroresCampo.documento" id="c-documento-ayuda" class="campo-error duplicado">
-                <small>{{ erroresCampo.documento }}</small>
+              <div v-if="fieldErrors.document" id="c-document-help" class="field-error duplicate">
+                <small>{{ fieldErrors.document }}</small>
                 <Button
-                  v-if="duplicado"
+                  v-if="duplicate"
                   type="button"
-                  :label="t('registro.usarCliente')"
+                  :label="t('registration.useClient')"
                   icon="pi pi-user"
                   size="small"
                   text
-                  @click="usarClienteExistente"
+                  @click="useExistingClient"
                 />
               </div>
-              <span v-else id="c-documento-ayuda" class="vp-caption vp-muted">
-                {{ t(`registro.documentoAyuda.${cliente.documentType}`) }}
+              <span v-else id="c-document-help" class="vp-caption vp-muted">
+                {{ t(`registration.documentHelp.${client.documentType}`) }}
               </span>
             </div>
             <div class="vp-field">
-              <label for="c-telefono">{{ t('registro.telefono') }}</label>
+              <label for="c-phone">{{ t('registration.phone') }}</label>
               <InputGroup>
                 <InputGroupAddon>+51</InputGroupAddon>
                 <InputText
-                  id="c-telefono"
-                  v-model="cliente.phoneNumber"
+                  id="c-phone"
+                  v-model="client.phoneNumber"
                   inputmode="tel"
                   autocomplete="tel-national"
                   placeholder="987 654 321"
-                  :invalid="Boolean(erroresCampo.telefono)"
-                  aria-describedby="c-telefono-ayuda"
+                  :invalid="Boolean(fieldErrors.phone)"
+                  aria-describedby="c-phone-help"
                   required
                 />
               </InputGroup>
-              <small v-if="erroresCampo.telefono" id="c-telefono-ayuda" class="campo-error">
-                {{ erroresCampo.telefono }}
+              <small v-if="fieldErrors.phone" id="c-phone-help" class="field-error">
+                {{ fieldErrors.phone }}
               </small>
-              <span v-else id="c-telefono-ayuda" class="vp-caption vp-muted">{{ t('registro.telefonoAyuda') }}</span>
+              <span v-else id="c-phone-help" class="vp-caption vp-muted">{{ t('registration.phoneHelp') }}</span>
             </div>
             <div class="vp-field">
-              <label for="c-correo">{{ t('registro.correo') }}</label>
-              <InputText id="c-correo" v-model="cliente.email" type="email" />
+              <label for="c-email">{{ t('registration.email') }}</label>
+              <InputText id="c-email" v-model="client.email" type="email" />
             </div>
           </div>
         </div>
@@ -312,89 +312,89 @@ async function guardar() {
 
       <section class="vp-card">
         <div class="vp-card__body">
-          <h3>{{ t('registro.datosMascota') }}</h3>
+          <h3>{{ t('registration.petDetails') }}</h3>
 
           <div class="vp-form-grid vp-form-grid--2">
             <div class="vp-field">
-              <label for="m-nombre">{{ t('registro.nombre') }}</label>
-              <InputText id="m-nombre" v-model="mascota.name" required />
+              <label for="m-name">{{ t('registration.name') }}</label>
+              <InputText id="m-name" v-model="pet.name" required />
             </div>
             <div class="vp-field">
-              <label for="m-especie">{{ t('pacientes.especie') }}</label>
+              <label for="m-species">{{ t('patients.species') }}</label>
               <Select
-                input-id="m-especie"
-                v-model="mascota.species"
-                :options="opcionesEspecie"
-                option-label="etiqueta"
-                option-value="valor"
+                v-model="pet.species"
+                input-id="m-species"
+                :options="speciesOptions"
+                option-label="label"
+                option-value="value"
               />
             </div>
             <div class="vp-field">
-              <label for="m-raza">{{ t('registro.raza') }}</label>
-              <InputText id="m-raza" v-model="mascota.breed" />
+              <label for="m-breed">{{ t('registration.breed') }}</label>
+              <InputText id="m-breed" v-model="pet.breed" />
             </div>
             <div class="vp-field">
-              <label for="m-sexo">{{ t('registro.sexo') }}</label>
+              <label for="m-sex">{{ t('registration.sex') }}</label>
               <Select
-                input-id="m-sexo"
-                v-model="mascota.sex"
-                :options="opcionesSexo"
-                option-label="etiqueta"
-                option-value="valor"
+                v-model="pet.sex"
+                input-id="m-sex"
+                :options="sexOptions"
+                option-label="label"
+                option-value="value"
               />
             </div>
             <div class="vp-field">
-              <label for="m-nacimiento">{{ t('registro.fechaNacimiento') }}</label>
+              <label for="m-birth">{{ t('registration.birthDate') }}</label>
               <DatePicker
-                input-id="m-nacimiento"
-                v-model="mascota.birthDate"
+                v-model="pet.birthDate"
+                input-id="m-birth"
                 date-format="dd/mm/yy"
                 :max-date="new Date()"
-                :invalid="Boolean(erroresCampo.nacimiento)"
-                aria-describedby="m-nacimiento-error"
+                :invalid="Boolean(fieldErrors.birth)"
+                aria-describedby="m-birth-error"
                 show-icon
                 required
               />
-              <small v-if="erroresCampo.nacimiento" id="m-nacimiento-error" class="campo-error">
-                {{ erroresCampo.nacimiento }}
+              <small v-if="fieldErrors.birth" id="m-birth-error" class="field-error">
+                {{ fieldErrors.birth }}
               </small>
             </div>
           </div>
         </div>
       </section>
 
-      <Message severity="info" :closable="false" class="aviso">
-        <strong>{{ t('registro.avisoTitulo') }}</strong>
-        <span class="vp-small">{{ avisoEsquema }}</span>
+      <Message severity="info" :closable="false" class="notice">
+        <strong>{{ t('registration.noticeTitle') }}</strong>
+        <span class="vp-small">{{ scheduleNotice }}</span>
       </Message>
 
-      <Message v-if="avisoCliente" severity="warn" :closable="false">{{ avisoCliente }}</Message>
+      <Message v-if="clientNotice" severity="warn" :closable="false">{{ clientNotice }}</Message>
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
       <div class="vp-actions">
         <Button
           type="button"
-          :label="t('comun.cancelar')"
+          :label="t('common.cancel')"
           text
-          @click="router.push({ name: 'pacientes' })"
+          @click="router.push({ name: 'patients' })"
         />
-        <Button type="submit" :label="t('registro.guardar')" :loading="guardando" />
+        <Button type="submit" :label="t('registration.save')" :loading="saving" />
       </div>
     </form>
   </div>
 </template>
 
 <style scoped>
-.vp-page--estrecha { max-width: 880px; }
-.migas { margin-bottom: var(--vp-space-3); padding: 0; background: none; border: 0; }
-.migas :deep(a) { color: var(--vp-neutral-600); text-decoration: none; }
+.vp-page--narrow { max-width: 880px; }
+.breadcrumb { margin-bottom: var(--vp-space-3); padding: 0; background: none; border: 0; }
+.breadcrumb :deep(a) { color: var(--vp-neutral-600); text-decoration: none; }
 form { display: grid; gap: var(--vp-space-3); }
 h3 { margin-bottom: var(--vp-space-3); }
-.modo { margin-bottom: var(--vp-space-3); }
-.aviso :deep(.p-message-text) { display: grid; gap: 4px; }
-.campo-error { color: var(--vp-danger); font-size: 13px; line-height: 18px; }
-.duplicado { display: flex; align-items: center; justify-content: space-between; gap: var(--vp-space-2); flex-wrap: wrap; }
+.mode { margin-bottom: var(--vp-space-3); }
+.notice :deep(.p-message-text) { display: grid; gap: 4px; }
+.field-error { color: var(--vp-danger); font-size: 13px; line-height: 18px; }
+.duplicate { display: flex; align-items: center; justify-content: space-between; gap: var(--vp-space-2); flex-wrap: wrap; }
 /* Un aviso bajo un campo no debe estirar a su vecino de fila. */
 .vp-form-grid { align-items: start; }
-.p-inputgroup .tipo-documento { flex: 0 0 6.5rem; width: 6.5rem; }
+.p-inputgroup .type-document { flex: 0 0 6.5rem; width: 6.5rem; }
 </style>

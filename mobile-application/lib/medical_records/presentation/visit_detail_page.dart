@@ -9,44 +9,44 @@ import '../domain/visit.dart';
 class VisitDetailPage extends StatelessWidget {
   const VisitDetailPage({
     super.key,
-    required this.atencion,
-    required this.textos,
-    required this.clinica,
+    required this.visit,
+    required this.texts,
+    required this.clinic,
   });
 
-  final Visit atencion;
-  final AppStrings textos;
-  final String? clinica;
+  final Visit visit;
+  final AppStrings texts;
+  final String? clinic;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(textos.atencion)),
+      appBar: AppBar(title: Text(texts.visit)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
-            formatearFechaLarga(atencion.visitDate, esIngles: textos.esIngles),
+            formatLongDate(visit.visitDate, isEnglish: texts.isEnglish),
             style: Theme.of(context).textTheme.headlineSmall,
           ),
-          if (clinica != null) ...[
+          if (clinic != null) ...[
             const SizedBox(height: 4),
-            Text(clinica!,
+            Text(clinic!,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
                     ?.copyWith(color: VetPassColors.neutral600)),
           ],
           const SizedBox(height: 20),
-          _Bloque(titulo: textos.motivo, texto: atencion.reason),
-          if (atencion.findings != null)
-            _Bloque(titulo: textos.hallazgos, texto: atencion.findings!),
-          _Bloque(titulo: textos.diagnostico, texto: atencion.diagnosis),
-          if (atencion.treatment != null)
-            _Bloque(titulo: textos.tratamiento, texto: atencion.treatment!),
-          if (atencion.weightKg != null)
-            _Bloque(titulo: textos.peso, texto: '${atencion.weightKg} kg'),
-          if (atencion.prescription.isNotEmpty) ...[
+          _Block(title: texts.reason, text: visit.reason),
+          if (visit.findings != null)
+            _Block(title: texts.findings, text: visit.findings!),
+          _Block(title: texts.diagnosis, text: visit.diagnosis),
+          if (visit.treatment != null)
+            _Block(title: texts.treatment, text: visit.treatment!),
+          if (visit.weightKg != null)
+            _Block(title: texts.weight, text: '${visit.weightKg} kg'),
+          if (visit.prescription.isNotEmpty) ...[
             const SizedBox(height: 8),
             Card(
               color: VetPassColors.primarySurface,
@@ -60,7 +60,7 @@ class VisitDetailPage extends StatelessWidget {
                         const Icon(Icons.receipt_long,
                             size: 18, color: VetPassColors.primaryDark),
                         const SizedBox(width: 8),
-                        Text(textos.receta,
+                        Text(texts.prescription,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -68,7 +68,7 @@ class VisitDetailPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    for (final item in atencion.prescription) ...[
+                    for (final item in visit.prescription) ...[
                       Text(item.medication,
                           style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 2),
@@ -77,7 +77,7 @@ class VisitDetailPage extends StatelessWidget {
                               .textTheme
                               .bodyMedium
                               ?.copyWith(color: VetPassColors.neutral600)),
-                      if (item != atencion.prescription.last) const SizedBox(height: 12),
+                      if (item != visit.prescription.last) const SizedBox(height: 12),
                     ],
                   ],
                 ),
@@ -85,7 +85,7 @@ class VisitDetailPage extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 24),
-          Text(textos.soloConsulta,
+          Text(texts.readOnly,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme
@@ -97,11 +97,11 @@ class VisitDetailPage extends StatelessWidget {
   }
 }
 
-class _Bloque extends StatelessWidget {
-  const _Bloque({required this.titulo, required this.texto});
+class _Block extends StatelessWidget {
+  const _Block({required this.title, required this.text});
 
-  final String titulo;
-  final String texto;
+  final String title;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
@@ -110,14 +110,14 @@ class _Bloque extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(titulo.toUpperCase(),
+          Text(title.toUpperCase(),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: VetPassColors.neutral600,
                     letterSpacing: .6,
                     fontWeight: FontWeight.w600,
                   )),
           const SizedBox(height: 4),
-          Text(texto, style: Theme.of(context).textTheme.bodyLarge),
+          Text(text, style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
     );

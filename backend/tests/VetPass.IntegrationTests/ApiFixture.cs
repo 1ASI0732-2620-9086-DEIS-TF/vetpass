@@ -18,6 +18,9 @@ public abstract class ApiTest(ApiFixture fixture) : IAsyncLifetime
 {
     protected VetPassApiFactory Api => fixture.Api;
 
+    /// <summary>Token de la prueba en curso: si xUnit la cancela, la petición también se cancela.</summary>
+    protected static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     public async ValueTask InitializeAsync() => await Api.ResetAsync();
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -44,6 +47,10 @@ public abstract class ApiTest(ApiFixture fixture) : IAsyncLifetime
 
     protected static object NewClient(string document, string phone = "912345678") => new
     {
-        fullName = "Cliente de Prueba", documentType = "Dni", documentNumber = document, phoneNumber = phone, email = (string?)null
+        fullName = "Cliente de Prueba",
+        documentType = "Dni",
+        documentNumber = document,
+        phoneNumber = phone,
+        email = (string?)null
     };
 }

@@ -6,7 +6,7 @@ class PrescriptionItem {
   final String dosage;
   final String duration;
 
-  factory PrescriptionItem.desdeJson(Map<String, dynamic> json) => PrescriptionItem(
+  factory PrescriptionItem.fromJson(Map<String, dynamic> json) => PrescriptionItem(
         medication: json['medication'] as String,
         dosage: json['dosage'] as String,
         duration: json['duration'] as String,
@@ -37,8 +37,8 @@ class Visit {
   final bool hasPrescription;
   final List<PrescriptionItem> prescription;
 
-  factory Visit.desdeJson(Map<String, dynamic> json) {
-    final receta = json['prescription'] as Map<String, dynamic>?;
+  factory Visit.fromJson(Map<String, dynamic> json) {
+    final prescription = json['prescription'] as Map<String, dynamic>?;
     return Visit(
       id: json['id'] as String,
       visitDate: json['visitDate'] as String,
@@ -48,10 +48,10 @@ class Visit {
       treatment: json['treatment'] as String?,
       weightKg: json['weightKg'] as num?,
       hasPrescription: json['hasPrescription'] as bool? ?? false,
-      prescription: receta == null
+      prescription: prescription == null
           ? const []
-          : (receta['items'] as List)
-              .map((i) => PrescriptionItem.desdeJson(i as Map<String, dynamic>))
+          : (prescription['items'] as List)
+              .map((i) => PrescriptionItem.fromJson(i as Map<String, dynamic>))
               .toList(),
     );
   }

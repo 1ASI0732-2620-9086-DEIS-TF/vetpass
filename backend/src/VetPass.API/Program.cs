@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Npgsql;
 using VetPass.API.IAM.Application.Internal.CommandServices;
 using VetPass.API.IAM.Application.Internal.QueryServices;
 using VetPass.API.IAM.Domain.Repositories;
@@ -229,6 +230,27 @@ app.MapControllers();
 // la zona horaria con que la API calcula la cartilla.
 app.MapGet("/api/v1/health", (IClinicClock clock) =>
         Results.Ok(new { status = "ok", today = clock.Today, timeZone = ClinicClock.TimeZoneId }))
+    .AllowAnonymous()
+    .ExcludeFromDescription();
+
+// Comprueba además la base de datos, con una consulta mínima. La usa el
+// monitoreo continuo (sección 7.4 del informe): si la base no responde, la API
+// sigue en línea pero no puede atender, y el monitor lo distingue por el 503.
+app.MapGet("/api/v1/health/ready", async (VetPassDbContext database, ILogger<Program> logger,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            await database.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
+            return Results.Ok(new { status = "ok", database = "ok" });
+        }
+        catch (Exception exception) when (exception is NpgsqlException or InvalidOperationException or TimeoutException)
+        {
+            logger.LogWarning(exception, "La base de datos no respondió a la comprobación de disponibilidad.");
+            return Results.Json(new { status = "unavailable", database = "unreachable" },
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+    })
     .AllowAnonymous()
     .ExcludeFromDescription();
 

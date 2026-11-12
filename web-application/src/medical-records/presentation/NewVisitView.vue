@@ -28,11 +28,11 @@ const { t } = useI18n();
 const router = useRouter();
 const toast = useToast();
 
-const paciente = ref(null);
-const guardando = ref(false);
+const patient = ref(null);
+const saving = ref(false);
 const error = ref('');
 
-const atencion = ref({
+const visit = ref({
   visitDate: new Date(),
   reason: '',
   findings: '',
@@ -41,70 +41,70 @@ const atencion = ref({
   weightKg: null
 });
 
-const receta = ref([]);
+const prescription = ref([]);
 
-const migas = computed(() => [
-  { label: t('pacientes.titulo'), route: { name: 'pacientes' } },
-  { label: paciente.value?.name ?? '', route: { name: 'paciente', params: { petId: props.petId } } },
-  { label: t('atencion.titulo') }
+const breadcrumb = computed(() => [
+  { label: t('patients.title'), route: { name: 'patients' } },
+  { label: patient.value?.name ?? '', route: { name: 'patient', params: { petId: props.petId } } },
+  { label: t('visit.title') }
 ]);
-const inicio = { icon: 'pi pi-home', route: { name: 'pacientes' } };
+const home = { icon: 'pi pi-home', route: { name: 'patients' } };
 
-const avisoReceta = computed(() => t('atencion.avisoReceta', {
-  dueno: paciente.value?.owner?.fullName ?? ''
+const prescriptionNotice = computed(() => t('visit.prescriptionNotice', {
+  owner: patient.value?.owner?.fullName ?? ''
 }));
 
 watch(() => props.petId, async (id) => {
-  const { data } = await patientsApi.obtener(id);
-  paciente.value = data;
+  const { data } = await patientsApi.get(id);
+  patient.value = data;
 }, { immediate: true });
 
-function agregarMedicamento() {
-  receta.value.push({ medication: '', dosage: '', duration: '' });
+function addMedication() {
+  prescription.value.push({ medication: '', dosage: '', duration: '' });
 }
 
-function quitarMedicamento(indice) {
-  receta.value.splice(indice, 1);
+function removeMedication(index) {
+  prescription.value.splice(index, 1);
 }
 
-function comoISO(fecha) {
-  return new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+function asISO(date) {
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
-async function guardar() {
+async function save() {
   error.value = '';
-  guardando.value = true;
+  saving.value = true;
   try {
-    const completos = receta.value.filter(
+    const complete = prescription.value.filter(
       (item) => item.medication.trim() && item.dosage.trim() && item.duration.trim());
 
-    await medicalRecordsApi.registrarAtencion(props.petId, {
-      visitDate: comoISO(atencion.value.visitDate),
-      reason: atencion.value.reason,
-      findings: atencion.value.findings || null,
-      diagnosis: atencion.value.diagnosis,
-      treatment: atencion.value.treatment || null,
-      weightKg: atencion.value.weightKg,
-      prescription: completos.length ? completos : null
+    await medicalRecordsApi.registerVisit(props.petId, {
+      visitDate: asISO(visit.value.visitDate),
+      reason: visit.value.reason,
+      findings: visit.value.findings || null,
+      diagnosis: visit.value.diagnosis,
+      treatment: visit.value.treatment || null,
+      weightKg: visit.value.weightKg,
+      prescription: complete.length ? complete : null
     });
 
     toast.add({
       severity: 'success',
-      summary: t('atencion.guardada', { nombre: paciente.value.name }),
+      summary: t('visit.saved', { name: patient.value.name }),
       life: 4000
     });
-    router.push({ name: 'paciente', params: { petId: props.petId } });
-  } catch (fallo) {
-    error.value = problemOf(fallo).detail ?? t('comun.errorInesperado');
+    router.push({ name: 'patient', params: { petId: props.petId } });
+  } catch (failure) {
+    error.value = problemOf(failure).detail ?? t('common.unexpectedError');
   } finally {
-    guardando.value = false;
+    saving.value = false;
   }
 }
 </script>
 
 <template>
-  <div class="vp-page vp-page--estrecha">
-    <Breadcrumb :home="inicio" :model="migas" class="migas">
+  <div class="vp-page vp-page--narrow">
+    <Breadcrumb :home="home" :model="breadcrumb" class="breadcrumb">
       <template #item="{ item }">
         <RouterLink v-if="item.route" :to="item.route">
           <i v-if="item.icon" :class="item.icon" aria-hidden="true" />
@@ -116,32 +116,32 @@ async function guardar() {
 
     <header class="vp-head">
       <div>
-        <h1>{{ t('atencion.titulo') }}</h1>
-        <p v-if="paciente" class="vp-small vp-muted">
-          {{ paciente.name }} · {{ t(`especie.${paciente.species}`) }}
+        <h1>{{ t('visit.title') }}</h1>
+        <p v-if="patient" class="vp-small vp-muted">
+          {{ patient.name }} · {{ t(`species.${patient.species}`) }}
         </p>
       </div>
     </header>
 
-    <form @submit.prevent="guardar">
+    <form @submit.prevent="save">
       <section class="vp-card">
         <div class="vp-card__body vp-form-grid">
           <div class="vp-form-grid vp-form-grid--2">
             <div class="vp-field">
-              <label for="a-fecha">{{ t('atencion.fecha') }}</label>
+              <label for="a-date">{{ t('visit.date') }}</label>
               <DatePicker
-                input-id="a-fecha"
-                v-model="atencion.visitDate"
+                v-model="visit.visitDate"
+                input-id="a-date"
                 date-format="dd/mm/yy"
                 :max-date="new Date()"
                 show-icon
               />
             </div>
             <div class="vp-field">
-              <label for="a-peso">{{ t('atencion.peso') }}</label>
+              <label for="a-weight">{{ t('visit.weight') }}</label>
               <InputNumber
-                input-id="a-peso"
-                v-model="atencion.weightKg"
+                v-model="visit.weightKg"
+                input-id="a-weight"
                 :min-fraction-digits="1"
                 :max-fraction-digits="2"
                 :min="0"
@@ -151,53 +151,53 @@ async function guardar() {
           </div>
 
           <div class="vp-field">
-            <label for="a-motivo">{{ t('atencion.motivo') }}</label>
-            <InputText id="a-motivo" v-model="atencion.reason" required />
+            <label for="a-reason">{{ t('visit.reason') }}</label>
+            <InputText id="a-reason" v-model="visit.reason" required />
           </div>
 
           <div class="vp-field">
-            <label for="a-hallazgos">{{ t('atencion.hallazgos') }}</label>
-            <Textarea id="a-hallazgos" v-model="atencion.findings" rows="3" auto-resize />
+            <label for="a-findings">{{ t('visit.findings') }}</label>
+            <Textarea id="a-findings" v-model="visit.findings" rows="3" auto-resize />
           </div>
 
           <div class="vp-field">
-            <label for="a-diagnostico">{{ t('atencion.diagnostico') }}</label>
-            <Textarea id="a-diagnostico" v-model="atencion.diagnosis" rows="2" auto-resize required />
+            <label for="a-diagnosis">{{ t('visit.diagnosis') }}</label>
+            <Textarea id="a-diagnosis" v-model="visit.diagnosis" rows="2" auto-resize required />
           </div>
 
           <div class="vp-field">
-            <label for="a-tratamiento">{{ t('atencion.tratamiento') }}</label>
-            <Textarea id="a-tratamiento" v-model="atencion.treatment" rows="2" auto-resize />
+            <label for="a-treatment">{{ t('visit.treatment') }}</label>
+            <Textarea id="a-treatment" v-model="visit.treatment" rows="2" auto-resize />
           </div>
         </div>
       </section>
 
       <section class="vp-card">
         <div class="vp-card__body">
-          <h3>{{ t('atencion.receta') }}</h3>
+          <h3>{{ t('visit.prescription') }}</h3>
 
-          <table v-if="receta.length" class="receta">
+          <table v-if="prescription.length" class="prescription">
             <thead>
               <tr>
-                <th>{{ t('atencion.medicamento') }}</th>
-                <th>{{ t('atencion.dosificacion') }}</th>
-                <th>{{ t('atencion.duracion') }}</th>
-                <th><span class="sr-only">{{ t('atencion.quitar') }}</span></th>
+                <th>{{ t('visit.medication') }}</th>
+                <th>{{ t('visit.dosage') }}</th>
+                <th>{{ t('visit.duration') }}</th>
+                <th><span class="sr-only">{{ t('visit.remove') }}</span></th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, indice) in receta" :key="indice">
-                <td><InputText v-model="item.medication" :aria-label="t('atencion.medicamento')" fluid /></td>
-                <td><InputText v-model="item.dosage" :aria-label="t('atencion.dosificacion')" fluid /></td>
-                <td><InputText v-model="item.duration" :aria-label="t('atencion.duracion')" fluid /></td>
+              <tr v-for="(item, index) in prescription" :key="index">
+                <td><InputText v-model="item.medication" :aria-label="t('visit.medication')" fluid /></td>
+                <td><InputText v-model="item.dosage" :aria-label="t('visit.dosage')" fluid /></td>
+                <td><InputText v-model="item.duration" :aria-label="t('visit.duration')" fluid /></td>
                 <td>
                   <Button
                     type="button"
                     icon="pi pi-trash"
                     text
                     severity="danger"
-                    :aria-label="t('atencion.quitar')"
-                    @click="quitarMedicamento(indice)"
+                    :aria-label="t('visit.remove')"
+                    @click="removeMedication(index)"
                   />
                 </td>
               </tr>
@@ -206,13 +206,13 @@ async function guardar() {
 
           <Button
             type="button"
-            :label="t('atencion.agregar')"
+            :label="t('visit.add')"
             icon="pi pi-plus"
             text
-            @click="agregarMedicamento"
+            @click="addMedication"
           />
 
-          <p v-if="receta.length" class="vp-caption vp-muted aviso">{{ avisoReceta }}</p>
+          <p v-if="prescription.length" class="vp-caption vp-muted notice">{{ prescriptionNotice }}</p>
         </div>
       </section>
 
@@ -221,31 +221,31 @@ async function guardar() {
       <div class="vp-actions">
         <Button
           type="button"
-          :label="t('comun.cancelar')"
+          :label="t('common.cancel')"
           text
-          @click="router.push({ name: 'paciente', params: { petId } })"
+          @click="router.push({ name: 'patient', params: { petId } })"
         />
-        <Button type="submit" :label="t('atencion.guardar')" :loading="guardando" />
+        <Button type="submit" :label="t('visit.save')" :loading="saving" />
       </div>
     </form>
   </div>
 </template>
 
 <style scoped>
-.vp-page--estrecha { max-width: 880px; }
-.migas { margin-bottom: var(--vp-space-3); padding: 0; background: none; border: 0; }
-.migas :deep(a) { color: var(--vp-neutral-600); text-decoration: none; }
+.vp-page--narrow { max-width: 880px; }
+.breadcrumb { margin-bottom: var(--vp-space-3); padding: 0; background: none; border: 0; }
+.breadcrumb :deep(a) { color: var(--vp-neutral-600); text-decoration: none; }
 form { display: grid; gap: var(--vp-space-3); }
 h3 { margin-bottom: var(--vp-space-3); }
-.receta { width: 100%; border-collapse: collapse; margin-bottom: var(--vp-space-2); }
-.receta th {
+.prescription { width: 100%; border-collapse: collapse; margin-bottom: var(--vp-space-2); }
+.prescription th {
   text-align: left; padding-bottom: var(--vp-space-1);
   font-size: 12px; font-weight: 600; color: var(--vp-neutral-600);
   text-transform: uppercase; letter-spacing: .04em;
 }
-.receta td { padding: 4px 8px 4px 0; vertical-align: top; }
-.receta td:last-child { width: 48px; padding-right: 0; }
-.aviso { margin-top: var(--vp-space-2); }
+.prescription td { padding: 4px 8px 4px 0; vertical-align: top; }
+.prescription td:last-child { width: 48px; padding-right: 0; }
+.notice { margin-top: var(--vp-space-2); }
 .sr-only {
   position: absolute; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); white-space: nowrap;

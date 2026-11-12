@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview --port 4173",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
     "@primevue/themes": "^4.5.4",
@@ -21,8 +22,12 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.64.0",
     "@vitejs/plugin-vue": "^6.0.8",
+    "eslint": "^9.39.5",
+    "eslint-plugin-vue": "^10.12.0",
+    "globals": "^17.14.0",
     "happy-dom": "^20.14.5",
     "vite": "^8.3.0",
     "vitest": "^5.0.3"

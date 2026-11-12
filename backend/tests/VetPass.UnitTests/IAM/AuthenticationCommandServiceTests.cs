@@ -12,6 +12,8 @@ namespace VetPass.UnitTests.IAM;
 /// <summary>Password change (US17) and reset by the clinic (US18).</summary>
 public class AuthenticationCommandServiceTests
 {
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
     private static readonly Guid Clinic = Guid.NewGuid();
     private static readonly Guid OtherClinic = Guid.NewGuid();
     private static readonly Guid Client = Guid.NewGuid();
@@ -33,7 +35,7 @@ public class AuthenticationCommandServiceTests
     [Fact]
     public async Task ChangePassword_WithTheCurrentPassword_ReplacesItAndClearsTheMark()
     {
-        await _service.ChangePasswordAsync(_owner.Id, "Temporal123", "Perrito2026");
+        await _service.ChangePasswordAsync(_owner.Id, "Temporal123", "Perrito2026", cancellationToken: Ct);
 
         _identity.Passwords[_owner.Id].ShouldBe("Perrito2026");
         _owner.RequiresPasswordChange.ShouldBeFalse();
@@ -58,7 +60,7 @@ public class AuthenticationCommandServiceTests
     {
         _owner.MarkPasswordChanged();
 
-        var account = await _service.ResetOwnerPasswordAsync(Client, Clinic);
+        var account = await _service.ResetOwnerPasswordAsync(Client, Clinic, cancellationToken: Ct);
 
         account.TemporaryPassword.Length.ShouldBe(12);
         _identity.Passwords[_owner.Id].ShouldBe(account.TemporaryPassword);
@@ -79,7 +81,7 @@ public class AuthenticationCommandServiceTests
     public async Task CreateAccount_IssuesATemporaryPassword()
     {
         var created = await _service.CreateAccountAsync(
-            new CreateAccountCommand("jorge@correo.com", "Jorge", Role.PetOwner, Clinic, Guid.NewGuid()));
+            new CreateAccountCommand("jorge@correo.com", "Jorge", Role.PetOwner, Clinic, Guid.NewGuid()), cancellationToken: Ct);
 
         created.TemporaryPassword.Length.ShouldBe(12);
         created.Profile.RequiresPasswordChange.ShouldBeTrue();

@@ -22,75 +22,75 @@ import DatePicker from 'primevue/datepicker';
 import Message from 'primevue/message';
 import { vaccinationApi } from '../infrastructure/vaccination.api';
 import { problemOf } from '../../shared/infrastructure/http';
-import { formatearFecha, etiquetaDosis } from '../../shared/i18n';
+import { formatDate, doseLabel } from '../../shared/i18n';
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
   petId: { type: String, required: true },
-  paciente: { type: Object, default: null },
-  dosis: { type: Object, default: null }
+  patient: { type: Object, default: null },
+  dose: { type: Object, default: null }
 });
 
-const emit = defineEmits(['update:visible', 'registrada', 'otra-dosis']);
+const emit = defineEmits(['update:visible', 'registered', 'another-dose']);
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 
-const fecha = ref(new Date());
-const lote = ref('');
-const enviando = ref(false);
-const rechazo = ref(null);
+const date = ref(new Date());
+const batch = ref('');
+const sending = ref(false);
+const rejection = ref(null);
 
-watch(() => props.visible, (abierto) => {
-  if (!abierto) return;
-  fecha.value = new Date();
-  lote.value = '';
-  rechazo.value = null;
+watch(() => props.visible, (open) => {
+  if (!open) return;
+  date.value = new Date();
+  batch.value = '';
+  rejection.value = null;
 });
 
-const fechaISO = computed(() => {
-  const f = fecha.value;
+const dateISO = computed(() => {
+  const f = date.value;
   if (!f) return null;
   return new Date(f.getTime() - f.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 });
 
-const hoyISO = new Date().toLocaleDateString('sv-SE');
+const todayISO = new Date().toLocaleDateString('sv-SE');
 
 /** Aviso previo al envío, contra la fecha más temprana que la API admite. */
-const avisoLocal = computed(() => {
-  if (!props.dosis || !fechaISO.value) return null;
+const localNotice = computed(() => {
+  if (!props.dose || !dateISO.value) return null;
 
-  if (fechaISO.value > hoyISO) {
-    return { severidad: 'error', texto: t('dosis.futura', { fecha: formatearFecha(hoyISO) }) };
+  if (dateISO.value > todayISO) {
+    return { severity: 'error', text: t('dose.future', { date: formatDate(todayISO) }) };
   }
 
-  const minima = props.dosis.earliestAdmissibleDate;
-  if (minima && fechaISO.value < minima) {
+  const min = props.dose.earliestAdmissibleDate;
+  if (min && dateISO.value < min) {
     return {
-      severidad: 'warn',
-      texto: t('dosis.aun_no', { fecha: formatearFecha(minima) })
+      severity: 'warn',
+      text: t('dose.notYet', { date: formatDate(min) })
     };
   }
 
-  return { severidad: 'success', texto: t('dosis.valida') };
+  return { severity: 'success', text: t('dose.valid') };
 });
 
-const puedeRegistrar = computed(() =>
-  Boolean(lote.value.trim()) && avisoLocal.value?.severidad === 'success' && !rechazo.value);
+const canRegister = computed(() =>
+  Boolean(batch.value.trim()) && localNotice.value?.severity === 'success' && !rejection.value);
 
-async function registrar() {
-  enviando.value = true;
-  rechazo.value = null;
+async function register() {
+  sending.value = true;
+  rejection.value = null;
   try {
-    await vaccinationApi.registrarDosis(props.petId, props.dosis.id, {
-      applicationDate: fechaISO.value,
-      batchCode: lote.value.trim()
+    await vaccinationApi.registerDose(props.petId, props.dose.id, {
+      applicationDate: dateISO.value,
+      batchCode: batch.value.trim()
     });
-    emit('registrada');
-    cerrar();
-  } catch (fallo) {
-    rechazo.value = problemOf(fallo);
+    emit('registered');
+    close();
+  } catch (failure) {
+    rejection.value = problemOf(failure);
   } finally {
-    enviando.value = false;
+    sending.value = false;
   }
 }
 
@@ -98,99 +98,99 @@ async function registrar() {
  * El rechazo en el idioma de la interfaz cuando el código lo permite; si no,
  * el detalle que redactó la API.
  */
-const textoRechazo = computed(() => {
-  const r = rechazo.value;
-  if (r?.code === 'dose-out-of-order' && props.dosis) {
-    const faltante = { ...props.dosis, sequenceNumber: r.pendingSequenceNumber, isBooster: false };
-    return t('dosis.fueraDeOrden', { dosis: etiquetaDosis(faltante, t) });
+const rejectionText = computed(() => {
+  const r = rejection.value;
+  if (r?.code === 'dose-out-of-order' && props.dose) {
+    const missing = { ...props.dose, sequenceNumber: r.pendingSequenceNumber, isBooster: false };
+    return t('dose.outOfOrder', { dose: doseLabel(missing, t) });
   }
   return r?.detail;
 });
 
-function cerrar() { emit('update:visible', false); }
+function close() { emit('update:visible', false); }
 
-function otraDosis() { emit('otra-dosis'); cerrar(); }
+function anotherDose() { emit('another-dose'); close(); }
 </script>
 
 <template>
   <Dialog
     :visible="visible"
     modal
-    :header="t('dosis.titulo')"
+    :header="t('dose.title')"
     :style="{ width: '32rem' }"
     :breakpoints="{ '640px': '95vw' }"
     @update:visible="emit('update:visible', $event)"
   >
-    <p v-if="paciente" class="vp-small vp-muted paciente">
-      {{ paciente.name }} · {{ t(`especie.${paciente.species}`) }} ·
-      {{ t('ficha.semanas', { n: paciente.ageInWeeks }) }}
+    <p v-if="patient" class="vp-small vp-muted patient">
+      {{ patient.name }} · {{ t(`species.${patient.species}`) }} ·
+      {{ t('profile.weeks', { n: patient.ageInWeeks }) }}
     </p>
 
-    <form class="formulario" @submit.prevent="registrar">
+    <form class="form" @submit.prevent="register">
       <div class="vp-field">
-        <label for="d-vacuna">{{ t('dosis.vacuna') }}</label>
-        <InputText id="d-vacuna" :value="dosis ? etiquetaDosis(dosis, t) : ''" readonly />
+        <label for="d-vaccine">{{ t('dose.vaccine') }}</label>
+        <InputText id="d-vaccine" :value="dose ? doseLabel(dose, t) : ''" readonly />
       </div>
 
       <div class="vp-field">
-        <label for="d-fecha">{{ t('dosis.fechaAplicacion') }}</label>
+        <label for="d-date">{{ t('dose.applicationDate') }}</label>
         <DatePicker
-          input-id="d-fecha"
-          v-model="fecha"
+          v-model="date"
+          input-id="d-date"
           date-format="dd/mm/yy"
           :max-date="new Date()"
           show-icon
         />
-        <span class="vp-caption vp-muted">{{ t('dosis.historica') }}</span>
+        <span class="vp-caption vp-muted">{{ t('dose.historical') }}</span>
       </div>
 
       <!-- Resultado de la validación: el mensaje nombra la regla y su valor
            exigido, no un aviso genérico (sección 4.6.3). -->
       <Message
-        v-if="rechazo"
+        v-if="rejection"
         severity="error"
         :closable="false"
-        class="resultado"
+        class="result"
       >
-        <strong>{{ rechazo.title }}</strong>
-        <span class="vp-small">{{ textoRechazo }}</span>
+        <strong>{{ rejection.title }}</strong>
+        <span class="vp-small">{{ rejectionText }}</span>
       </Message>
 
       <Message
-        v-else-if="avisoLocal"
-        :severity="avisoLocal.severidad"
+        v-else-if="localNotice"
+        :severity="localNotice.severity"
         :closable="false"
-        class="resultado"
+        class="result"
       >
-        <span class="vp-small">{{ avisoLocal.texto }}</span>
+        <span class="vp-small">{{ localNotice.text }}</span>
       </Message>
 
       <div class="vp-field">
-        <label for="d-lote">{{ t('dosis.lote') }}</label>
-        <InputText id="d-lote" v-model="lote" required />
+        <label for="d-batch">{{ t('dose.batch') }}</label>
+        <InputText id="d-batch" v-model="batch" required />
       </div>
     </form>
 
     <template #footer>
       <Button
-        v-if="rechazo"
-        :label="t('dosis.otra')"
+        v-if="rejection"
+        :label="t('dose.another')"
         text
-        @click="otraDosis"
+        @click="anotherDose"
       />
-      <Button :label="t('comun.cancelar')" text @click="cerrar" />
+      <Button :label="t('common.cancel')" text @click="close" />
       <Button
-        :label="t('dosis.registrar')"
-        :disabled="!puedeRegistrar"
-        :loading="enviando"
-        @click="registrar"
+        :label="t('dose.register')"
+        :disabled="!canRegister"
+        :loading="sending"
+        @click="register"
       />
     </template>
   </Dialog>
 </template>
 
 <style scoped>
-.paciente { margin-bottom: var(--vp-space-3); }
-.formulario { display: grid; gap: var(--vp-space-3); }
-.resultado :deep(.p-message-text) { display: grid; gap: 2px; }
+.patient { margin-bottom: var(--vp-space-3); }
+.form { display: grid; gap: var(--vp-space-3); }
+.result :deep(.p-message-text) { display: grid; gap: 2px; }
 </style>

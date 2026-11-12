@@ -9,9 +9,9 @@ import { useAuthStore } from '../iam/application/auth.store';
 const routes = [
   {
     path: '/acceso',
-    name: 'acceso',
+    name: 'access',
     component: () => import('../iam/presentation/SignInView.vue'),
-    meta: { publica: true, titulo: 'Iniciar sesión — VetPass' }
+    meta: { public: true, title: 'Iniciar sesión — VetPass' }
   },
   {
     path: '/',
@@ -20,35 +20,35 @@ const routes = [
       { path: '', redirect: { name: 'pacientes' } },
       {
         path: 'pacientes',
-        name: 'pacientes',
+        name: 'patients',
         component: () => import('../patients/presentation/PatientsView.vue'),
-        meta: { titulo: 'Pacientes — VetPass' }
+        meta: { title: 'Pacientes — VetPass' }
       },
       {
         path: 'pacientes/nuevo',
-        name: 'nuevo-paciente',
+        name: 'new-patient',
         component: () => import('../patients/presentation/NewPatientView.vue'),
-        meta: { titulo: 'Registrar mascota — VetPass' }
+        meta: { title: 'Registrar mascota — VetPass' }
       },
       {
         path: 'pacientes/:petId',
-        name: 'paciente',
+        name: 'patient',
         component: () => import('../patients/presentation/PatientRecordView.vue'),
         props: true,
-        meta: { titulo: 'Cartilla de vacunación — VetPass' }
+        meta: { title: 'Cartilla de vacunación — VetPass' }
       },
       {
         path: 'pacientes/:petId/atenciones/nueva',
-        name: 'nueva-atencion',
+        name: 'new-visit',
         component: () => import('../medical-records/presentation/NewVisitView.vue'),
         props: true,
-        meta: { titulo: 'Nueva atención — VetPass' }
+        meta: { title: 'Nueva atención — VetPass' }
       },
       {
         path: 'clientes',
-        name: 'clientes',
+        name: 'clients',
         component: () => import('../patients/presentation/ClientsView.vue'),
-        meta: { titulo: 'Clientes — VetPass' }
+        meta: { title: 'Clientes — VetPass' }
       }
     ]
   },
@@ -61,22 +61,22 @@ export const router = createRouter({
   scrollBehavior: () => ({ top: 0 })
 });
 
-router.beforeEach((destino) => {
-  const sesion = useAuthStore();
+router.beforeEach((destination) => {
+  const session = useAuthStore();
 
-  if (!destino.meta.publica && !sesion.autenticado) {
-    return { name: 'acceso', query: { destino: destino.fullPath } };
+  if (!destination.meta.public && !session.authenticated) {
+    return { name: 'access', query: { destination: destination.fullPath } };
   }
 
-  if (destino.name === 'acceso' && sesion.autenticado) {
-    return { name: 'pacientes' };
+  if (destination.name === 'access' && session.authenticated) {
+    return { name: 'patients' };
   }
 
   return true;
 });
 
-router.afterEach((destino) => {
+router.afterEach((destination) => {
   // Las páginas de la aplicación no se indexan: contienen información clínica
   // de pacientes (sección 4.2.3).
-  if (destino.meta.titulo) document.title = destino.meta.titulo;
+  if (destination.meta.title) document.title = destination.meta.title;
 });

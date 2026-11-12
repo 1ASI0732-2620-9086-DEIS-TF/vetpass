@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using VetPass.API.IAM.Domain.Model.Aggregates;
@@ -17,7 +18,7 @@ namespace VetPass.API.Shared.Interfaces.ASP.Middleware;
 /// </summary>
 public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IExceptionHandler
 {
-    public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception,
+    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception,
         CancellationToken cancellationToken)
     {
         if (exception is not DomainException domainException) return false;
@@ -42,14 +43,14 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
             Title = TitleFor(status),
             Detail = domainException.Message,
             Type = $"https://vetpass.pe/problems/{domainException.Code}",
-            Instance = context.Request.Path
+            Instance = httpContext.Request.Path
         };
         problem.Extensions["code"] = domainException.Code;
 
         AddRuleDetails(problem, exception);
 
-        context.Response.StatusCode = status;
-        await context.Response.WriteAsJsonAsync(problem, cancellationToken);
+        httpContext.Response.StatusCode = status;
+        await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
         return true;
     }
 
@@ -75,7 +76,7 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
             case MinimumAgeNotReachedException age:
                 problem.Extensions["ageInWeeks"] = age.AgeInWeeks;
                 problem.Extensions["requiredWeeks"] = age.RequiredWeeks;
-                problem.Extensions["earliestAdmissibleDate"] = age.EarliestAdmissibleDate.ToString("yyyy-MM-dd");
+                problem.Extensions["earliestAdmissibleDate"] = age.EarliestAdmissibleDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 break;
             case Patients.Application.Internal.CommandServices.DuplicateClientException duplicate:
                 problem.Extensions["existingClientId"] = duplicate.ExistingClientId;
@@ -93,7 +94,7 @@ public class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IE
             case MinimumIntervalNotMetException interval:
                 problem.Extensions["elapsedWeeks"] = interval.ElapsedWeeks;
                 problem.Extensions["requiredWeeks"] = interval.RequiredWeeks;
-                problem.Extensions["earliestAdmissibleDate"] = interval.EarliestAdmissibleDate.ToString("yyyy-MM-dd");
+                problem.Extensions["earliestAdmissibleDate"] = interval.EarliestAdmissibleDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                 break;
         }
     }

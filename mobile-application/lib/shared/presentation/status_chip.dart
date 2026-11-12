@@ -10,20 +10,20 @@ import 'theme.dart';
 class StatusChip extends StatelessWidget {
   const StatusChip({
     super.key,
-    required this.estado,
-    required this.textos,
-    this.deCartilla = false,
-    this.compacto = false,
+    required this.status,
+    required this.texts,
+    this.ofCard = false,
+    this.compact = false,
   });
 
-  final String estado;
-  final AppStrings textos;
-  final bool deCartilla;
-  final bool compacto;
+  final String status;
+  final AppStrings texts;
+  final bool ofCard;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final (color, fondo, icono) = switch (estado) {
+    final (color, background, icon) = switch (status) {
       'UpToDate' || 'Applied' => (
           VetPassColors.successText, VetPassColors.successSurface, Icons.check_circle_outline),
       'Pending' => (
@@ -33,25 +33,25 @@ class StatusChip extends StatelessWidget {
       _ => (VetPassColors.neutral600, VetPassColors.surface, Icons.circle_outlined),
     };
 
-    final etiqueta = deCartilla ? textos.estadoCartilla(estado) : textos.estado(estado);
+    final label = ofCard ? texts.cardStatus(status) : texts.status(status);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: compacto ? 8 : 10, vertical: compacto ? 2 : 4),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 10, vertical: compact ? 2 : 4),
       decoration: BoxDecoration(
-        color: fondo,
+        color: background,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: color),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icono, size: compacto ? 13 : 15, color: color),
+          Icon(icon, size: compact ? 13 : 15, color: color),
           const SizedBox(width: 6),
           Text(
-            etiqueta,
+            label,
             style: TextStyle(
               color: color,
-              fontSize: compacto ? 12 : 13,
+              fontSize: compact ? 12 : 13,
               fontWeight: FontWeight.w600,
             ),
           ),

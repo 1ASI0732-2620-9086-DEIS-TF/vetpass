@@ -1,0 +1,31 @@
+# Dependencias al día (sección 6.2.1.2): Dependabot propone cada semana las
+# actualizaciones, agrupadas por ecosistema, como pull requests hacia develop.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /backend
+    target-branch: develop
+    schedule: { interval: weekly }
+    groups:
+      nuget: { patterns: ['*'], update-types: [minor, patch] }
+
+  - package-ecosystem: npm
+    directory: /web-application
+    target-branch: develop
+    schedule: { interval: weekly }
+    groups:
+      npm: { patterns: ['*'], update-types: [minor, patch] }
+
+  - package-ecosystem: pub
+    directory: /mobile-application
+    target-branch: develop
+    schedule: { interval: weekly }
+    groups:
+      pub: { patterns: ['*'], update-types: [minor, patch] }
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule: { interval: weekly }
+    groups:
+      actions: { patterns: ['*'] }

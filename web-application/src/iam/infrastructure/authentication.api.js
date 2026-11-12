@@ -6,11 +6,11 @@ export const authenticationApi = {
 
   /** Crea el acceso móvil de un dueño. Devuelve su contraseña temporal, que
    *  solo viaja en esta respuesta (US05). */
-  crearAccesoDeDueno: (email, fullName, clientId) =>
+  createOwnerAccess: (email, fullName, clientId) =>
     http.post('/authentication/owner-accounts', { email, fullName, clientId }),
 
   /** Reemplaza la contraseña olvidada de un dueño por una temporal nueva, que
    *  también viaja solo en esta respuesta (US18). */
-  restablecerContrasenaDeDueno: (clientId) =>
+  resetOwnerPassword: (clientId) =>
     http.post(`/authentication/owner-accounts/${clientId}/password-reset`)
 };

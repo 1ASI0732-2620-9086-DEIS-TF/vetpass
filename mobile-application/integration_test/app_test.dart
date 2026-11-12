@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:vetpass_mobile/iam/presentation/profile_page.dart';
 import 'package:vetpass_mobile/main.dart' as app;
 import 'package:vetpass_mobile/medical_records/presentation/visit_detail_page.dart';
 
@@ -88,6 +89,13 @@ void main() {
     await tester.tap(find.text('EN'));
     await waitFor(tester, find.text('Change password'));
 
+    // El perfil es una lista que solo construye lo que está en pantalla, y
+    // «Sign out» la cierra: según el tamaño de pantalla puede quedar fuera.
+    await tester.scrollUntilVisible(
+      find.text('Sign out'),
+      200,
+      scrollable: find.descendant(of: find.byType(ProfilePage), matching: find.byType(Scrollable)),
+    );
     await tester.tap(find.text('Sign out'));
     await waitFor(tester, find.text('Sign in to your account'));
   });

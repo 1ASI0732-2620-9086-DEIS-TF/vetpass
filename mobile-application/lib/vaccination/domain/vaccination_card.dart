@@ -22,9 +22,9 @@ class Dose {
   final String status;
   final bool isOverdue;
 
-  bool get aplicada => status == 'Applied';
+  bool get applied => status == 'Applied';
 
-  factory Dose.desdeJson(Map<String, dynamic> json) => Dose(
+  factory Dose.fromJson(Map<String, dynamic> json) => Dose(
         id: json['id'] as String,
         vaccineName: json['vaccineName'] as String,
         sequenceNumber: json['sequenceNumber'] as int,
@@ -49,13 +49,13 @@ class VaccinationCard {
   final Dose? nextDose;
   final List<Dose> doses;
 
-  factory VaccinationCard.desdeJson(Map<String, dynamic> json) => VaccinationCard(
+  factory VaccinationCard.fromJson(Map<String, dynamic> json) => VaccinationCard(
         status: json['status'] as String,
         nextDose: json['nextDose'] == null
             ? null
-            : Dose.desdeJson(json['nextDose'] as Map<String, dynamic>),
+            : Dose.fromJson(json['nextDose'] as Map<String, dynamic>),
         doses: (json['doses'] as List)
-            .map((d) => Dose.desdeJson(d as Map<String, dynamic>))
+            .map((d) => Dose.fromJson(d as Map<String, dynamic>))
             .toList(),
       );
 }

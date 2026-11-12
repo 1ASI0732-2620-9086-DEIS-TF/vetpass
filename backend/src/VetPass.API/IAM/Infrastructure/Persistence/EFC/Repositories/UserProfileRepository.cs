@@ -12,16 +12,24 @@ public class UserProfileRepository(VetPassDbContext context)
     public async Task<UserProfile?> FindByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         await Context.UserProfiles.FirstOrDefaultAsync(profile => profile.Id == id, cancellationToken);
 
-    public async Task<UserProfile?> FindByEmailAsync(string email, CancellationToken cancellationToken = default) =>
-        await Context.UserProfiles
-            .FirstOrDefaultAsync(profile => profile.Email == email.Trim().ToLower(), cancellationToken);
+    public async Task<UserProfile?> FindByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalized = Normalize(email);
+        return await Context.UserProfiles.FirstOrDefaultAsync(profile => profile.Email == normalized, cancellationToken);
+    }
 
     public async Task<UserProfile?> FindByClientIdAsync(Guid clientId,
         CancellationToken cancellationToken = default) =>
         await Context.UserProfiles.FirstOrDefaultAsync(profile => profile.ClientId == clientId, cancellationToken);
 
-    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default) =>
-        await Context.UserProfiles.AnyAsync(profile => profile.Email == email.Trim().ToLower(), cancellationToken);
+    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var normalized = Normalize(email);
+        return await Context.UserProfiles.AnyAsync(profile => profile.Email == normalized, cancellationToken);
+    }
+
+    // Los correos se guardan en minúsculas; la cultura invariante evita, por ejemplo, la «I» turca.
+    private static string Normalize(string email) => email.Trim().ToLowerInvariant();
 
     public async Task<IReadOnlyList<Guid>> ListClientIdsWithAccountAsync(Guid clinicId,
         CancellationToken cancellationToken = default) =>

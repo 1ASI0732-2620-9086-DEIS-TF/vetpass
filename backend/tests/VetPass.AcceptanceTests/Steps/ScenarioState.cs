@@ -15,6 +15,6 @@ public sealed class ScenarioState
     {
         Response = response;
         var text = await response.Content.ReadAsStringAsync();
-        Body = string.IsNullOrWhiteSpace(text) ? default : JsonDocument.Parse(text).RootElement.Clone();
+        Body = string.IsNullOrWhiteSpace(text) ? default : JsonElement.Parse(text);
     }
 }

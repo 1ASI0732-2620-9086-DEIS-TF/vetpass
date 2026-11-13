@@ -17,7 +17,7 @@ const routes = [
     path: '/',
     component: () => import('../shared/presentation/AppLayout.vue'),
     children: [
-      { path: '', redirect: { name: 'pacientes' } },
+      { path: '', redirect: { name: 'patients' } },
       {
         path: 'pacientes',
         name: 'patients',
@@ -52,7 +52,7 @@ const routes = [
       }
     ]
   },
-  { path: '/:pathMatch(.*)*', redirect: { name: 'pacientes' } }
+  { path: '/:pathMatch(.*)*', redirect: { name: 'patients' } }
 ];
 
 export const router = createRouter({

@@ -109,3 +109,12 @@ test('cambia el idioma a inglés', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Patients' })).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'Age' })).toBeVisible();
 });
+
+test('la raíz y una dirección desconocida llevan a los pacientes', async ({ page }) => {
+  // La landing enlaza a la raíz de la aplicación, no a /acceso.
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Pacientes' })).toBeVisible();
+
+  await page.goto('/no-existe');
+  await expect(page.getByRole('heading', { name: 'Pacientes' })).toBeVisible();
+});

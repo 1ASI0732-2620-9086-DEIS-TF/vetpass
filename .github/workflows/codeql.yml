@@ -26,7 +26,7 @@ jobs:
         # Dart no está soportado por CodeQL: la app móvil se revisa con flutter analyze.
         language: [csharp, javascript-typescript, actions]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}

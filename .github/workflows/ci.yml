@@ -24,11 +24,11 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ hashFiles('backend/**/*.csproj') }}
@@ -46,7 +46,7 @@ jobs:
           --coverage --coverage-output-format cobertura
       - name: Test report
         if: ${{ !cancelled() }}
-        uses: dorny/test-reporter@v2
+        uses: dorny/test-reporter@v3
         with:
           name: Backend tests
           path: backend/TestResults/*.trx
@@ -63,7 +63,7 @@ jobs:
       - name: Publish coverage in the job summary
         if: ${{ !cancelled() }}
         run: cat CoverageReport/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: backend-test-results
@@ -78,8 +78,8 @@ jobs:
       run:
         working-directory: web-application
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -99,8 +99,8 @@ jobs:
       run:
         working-directory: mobile-application
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
@@ -116,7 +116,7 @@ jobs:
         run: flutter test
       - name: Build APK
         run: flutter build apk --release --dart-define=VETPASS_API=https://vetpass-api.vercel.app/api/v1
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vetpass-apk
           path: mobile-application/build/app/outputs/flutter-apk/app-release.apk
@@ -125,8 +125,8 @@ jobs:
     name: Duplication (jscpd)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       # Falla si más del 5 % del código está duplicado. Las migraciones y los
@@ -140,7 +140,7 @@ jobs:
       - name: Publish the report in the job summary
         if: ${{ !cancelled() }}
         run: cat jscpd-report/jscpd-report.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: duplication-report
@@ -155,11 +155,11 @@ jobs:
       VETPASS_API_URL: http://127.0.0.1:5199/api/v1
       VITE_API_URL: http://127.0.0.1:5199/api/v1
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/start-backend
         with:
           demo-password: ${{ env.VETPASS_DEMO_PASSWORD }}
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -172,7 +172,7 @@ jobs:
       - name: Playwright
         working-directory: web-application
         run: npx playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
@@ -188,7 +188,7 @@ jobs:
     env:
       VETPASS_DEMO_PASSWORD: VetPass.System2026
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Enable KVM for the emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -197,7 +197,7 @@ jobs:
       - uses: ./.github/actions/start-backend
         with:
           demo-password: ${{ env.VETPASS_DEMO_PASSWORD }}
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21

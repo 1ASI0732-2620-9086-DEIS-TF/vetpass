@@ -15,6 +15,6 @@
   <ItemGroup>
     <!-- La API compila con EF Core 10.0.12, que recibe del paquete de diseño;
          sin esta referencia, las pruebas resolverían la 10.0.4 que pide Npgsql. -->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.15" />
   </ItemGroup>
 </Project>
